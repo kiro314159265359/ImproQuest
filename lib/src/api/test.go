@@ -3,5 +3,5 @@ package api
 import "fmt"
 
 func main() {
-	fmt.Println("hello world")
+	fmt.Println("pull requests work now !")
 }
