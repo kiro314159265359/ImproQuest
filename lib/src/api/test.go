@@ -3,5 +3,5 @@ package api
 import "fmt"
 
 func main() {
-	fmt.Println("pull applications work now ! test?")
+	fmt.Println("pull LOGIN work now ! test?")
 }
