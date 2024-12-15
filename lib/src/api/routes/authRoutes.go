@@ -11,4 +11,5 @@ func AuthRoutes(incomingRoutes *gin.Engine) {
 
 	users.POST("/signup", controller.Signup())
 	users.POST("/login", controller.Login())
+
 }
