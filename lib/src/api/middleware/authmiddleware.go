@@ -1,27 +1,33 @@
 package middleware
 
 import (
-	"fmt"
 	"net/http"
 
+	helper "github.com/HarDizzeR/Project/helpers"
 	"github.com/gin-gonic/gin"
-	helper "kiro.com/helpers"
 )
 
 func Authenticate() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		clientToken := c.Request.Header.Get("token")
+		clientToken, err := c.Cookie("session")
 
-		if clientToken == "" {
+		if err != nil {
 			c.JSON(http.StatusInternalServerError,
-				gin.H{"error": fmt.Sprintf("No auth header provided")})
+				gin.H{"error": err.Error()})
 			c.Abort()
 			return
 		}
 
-		claims, err := helper.ValidateToken(clientToken)
+		if clientToken == "" {
+			c.JSON(http.StatusInternalServerError,
+				gin.H{"error": "No auth header provided"})
+			c.Abort()
+			return
+		}
 
-		if err != "" {
+		claims, ok := helper.ValidateToken(clientToken)
+
+		if ok != "" {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 			c.Abort()
 			return

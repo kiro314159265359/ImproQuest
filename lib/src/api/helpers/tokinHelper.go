@@ -9,10 +9,11 @@ import (
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 
+	"github.com/HarDizzeR/Project/database"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"kiro.com/database"
 )
 
 type SignedDetails struct {
@@ -23,7 +24,7 @@ type SignedDetails struct {
 	jwt.StandardClaims
 }
 
-var userCollection *mongo.Collection = database.OpenCollection(database.Client, "user")
+var userCollection *mongo.Collection = database.OpenCollection(database.Client, "Users")
 
 var SECRET_KEY string = os.Getenv("SECRET_KEY")
 
@@ -69,13 +70,19 @@ func UpdateAllTokins(signedToken string, signedRefreshToken string, userID strin
 
 	upsert := true
 
-	filter := bson.M{"User_id": userID}
+	id, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		log.Panic(err)
+		return
+	}
+
+	filter := bson.M{"_id": id}
 
 	opt := options.UpdateOptions{
 		Upsert: &upsert,
 	}
 
-	_, err := userCollection.UpdateOne(
+	_, err = userCollection.UpdateOne(
 		ctx,
 		filter,
 		bson.D{

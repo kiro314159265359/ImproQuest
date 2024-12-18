@@ -20,5 +20,4 @@ type User struct {
 	Weight        *float64           `json:"Weight" validate:"required,min=50,max=200"`
 	Created_at    time.Time          `json:"Created_at"`
 	Updated_at    time.Time          `json:"Updated_at"`
-	User_id       string             `json:"User_id" validate:"required"`
 }

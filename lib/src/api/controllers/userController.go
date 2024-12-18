@@ -15,12 +15,12 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
 
-	"kiro.com/database"
-	helper "kiro.com/helpers"
-	"kiro.com/models"
+	"github.com/HarDizzeR/Project/database"
+	helper "github.com/HarDizzeR/Project/helpers"
+	"github.com/HarDizzeR/Project/models"
 )
 
-var userCollection *mongo.Collection = database.OpenCollection(database.Client, "user")
+var userCollection *mongo.Collection = database.OpenCollection(database.Client, "Users")
 var validate = validator.New()
 
 func HashPassword(password string) (string, error) {
@@ -94,9 +94,8 @@ func Signup() gin.HandlerFunc {
 		user.Updated_at = time.Now()
 
 		user.ID = primitive.NewObjectID()
-		user.User_id = user.ID.Hex()
 
-		Token, Refresh_token, _ := helper.GenrateAllTokens(*user.Email, *user.UserName, *user.UserType, user.User_id)
+		Token, Refresh_token, _ := helper.GenrateAllTokens(*user.Email, *user.UserName, *user.UserType, user.ID.Hex())
 		user.Token = &Token
 		user.Refresh_token = &Refresh_token
 
@@ -136,8 +135,10 @@ func Login() gin.HandlerFunc {
 		}
 
 		// Token generation and login success
-		token, refreshToken, _ := helper.GenrateAllTokens(*foundUser.Email, *foundUser.UserName, *foundUser.UserType, foundUser.User_id)
-		helper.UpdateAllTokins(token, refreshToken, foundUser.User_id)
+		token, refreshToken, _ := helper.GenrateAllTokens(*foundUser.Email, *foundUser.UserName, *foundUser.UserType, foundUser.ID.Hex())
+		helper.UpdateAllTokins(token, refreshToken, foundUser.ID.Hex())
+
+		c.SetCookie("session", token, 86400, "/", "localhost", false, true)
 
 		c.JSON(http.StatusOK, gin.H{
 			"message":       "Login successful",
@@ -218,7 +219,7 @@ func GetUsers() gin.HandlerFunc {
 
 func GetUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userID := c.Param("User_id")
+		userID := c.Param("id")
 
 		if err := helper.MatchUserToid(c, userID); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -229,7 +230,13 @@ func GetUser() gin.HandlerFunc {
 
 		var user models.User
 
-		err := userCollection.FindOne(ctx, bson.M{"User_id": userID}).Decode(&user)
+		id, err := primitive.ObjectIDFromHex(userID)
+		if err != nil {
+			log.Panic(err)
+			return
+		}
+
+		err = userCollection.FindOne(ctx, bson.M{"_id": id}).Decode(&user)
 
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

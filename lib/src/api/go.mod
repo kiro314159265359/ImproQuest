@@ -1,4 +1,4 @@
-module kiro.com
+module github.com/HarDizzeR/Project
 
 go 1.23.2
 

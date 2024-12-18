@@ -7,7 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
-	routes "kiro.com/routes"
+	routes "github.com/HarDizzeR/Project/routes"
 )
 
 func main() {

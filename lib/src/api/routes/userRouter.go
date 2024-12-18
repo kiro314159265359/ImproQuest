@@ -2,8 +2,8 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
-	controller "kiro.com/controllers"
-	mid "kiro.com/middleware"
+	controller "github.com/HarDizzeR/Project/controllers"
+	mid "github.com/HarDizzeR/Project/middleware"
 )
 
 func UserRoutes(incomingRoutes *gin.Engine) {
@@ -13,5 +13,5 @@ func UserRoutes(incomingRoutes *gin.Engine) {
 	users.Use(mid.Authenticate())
 
 	users.GET("/", controller.GetUsers())
-	users.GET("/:User_id", controller.GetUser())
+	users.GET("/:id", controller.GetUser())
 }

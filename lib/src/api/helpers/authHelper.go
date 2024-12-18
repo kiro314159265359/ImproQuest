@@ -8,10 +8,11 @@ import (
 
 func CheckUserType(c *gin.Context, role string) (err error) {
 
-	userType := c.GetString("UserType")
+	userType := c.GetString("userType")
+
 	err = nil
 	if userType != role {
-		err := errors.New("unathorized to access!")
+		err := errors.New("unathorized to access")
 		return err
 	}
 	return err
@@ -19,12 +20,12 @@ func CheckUserType(c *gin.Context, role string) (err error) {
 
 func MatchUserToid(c *gin.Context, userID string) (err error) {
 
-	userType := c.GetString("UserType")
+	userType := c.GetString("userType")
 	uid := c.GetString("uid")
 	err = nil
 
 	if userType == "USER" && uid != userID {
-		err := errors.New("unathorized to access!")
+		err := errors.New("unathorized to access")
 		return err
 	}
 
