@@ -246,3 +246,92 @@ func GetUser() gin.HandlerFunc {
 	}
 
 }
+
+func DeleteUser() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userID := c.Param("id")
+
+		if err := helper.MatchUserToid(c, userID); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+			return
+		}
+		var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
+		defer cancel()
+
+		var user models.User
+
+		id, err := primitive.ObjectIDFromHex(userID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid format"})
+			return
+		}
+
+		err = userCollection.FindOneAndDelete(ctx, bson.M{"_id": id}).Decode(&user)
+
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"message": "User was deleted successfully", "user": user})
+	}
+
+}
+
+func UpdateUser() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userID := c.Param("id")
+
+		if err := helper.MatchUserToid(c, userID); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+			return
+		}
+
+		var userUpdateData models.User
+		if err := c.BindJSON(&userUpdateData); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+			return
+		}
+
+		if userUpdateData.Password != nil && *userUpdateData.Password != "" {
+			hashedPassword, err := HashPassword(*userUpdateData.Password)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
+				return
+			}
+			*userUpdateData.Password = hashedPassword
+		}
+
+		var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
+		defer cancel()
+
+		id, err := primitive.ObjectIDFromHex(userID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid format"})
+			return
+		}
+
+		update := bson.M{
+			"$set": bson.M{
+				"username": userUpdateData.UserName,
+				"email":    userUpdateData.Email,
+				"height":   userUpdateData.Height,
+				"weight":   userUpdateData.Weight,
+				"gender":   userUpdateData.Gender,
+				"password": *userUpdateData.Password,
+			},
+		}
+
+		result, err := userCollection.UpdateOne(ctx, bson.M{"_id": id}, update)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user"})
+			return
+		}
+
+		if result.MatchedCount == 0 {
+			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"message": "User updated successfully"})
+	}
+}

@@ -2,6 +2,7 @@ package helpers
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/gin-gonic/gin"
 )
@@ -25,7 +26,7 @@ func MatchUserToid(c *gin.Context, userID string) (err error) {
 	err = nil
 
 	if userType == "USER" && uid != userID {
-		err := errors.New("unathorized to access")
+		err = fmt.Errorf("unauthorized to access: userType = %s", userType)
 		return err
 	}
 
