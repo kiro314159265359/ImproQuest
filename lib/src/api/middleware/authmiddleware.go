@@ -27,8 +27,8 @@ func Authenticate() gin.HandlerFunc {
 
 		claims, ok := helper.ValidateToken(clientToken)
 
-		if ok != "" {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		if ok != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": ok})
 			c.Abort()
 			return
 		}

@@ -4,6 +4,8 @@ go 1.23.2
 
 require go.mongodb.org/mongo-driver v1.17.1
 
+require github.com/golang-jwt/jwt v3.2.2+incompatible
+
 require (
 	github.com/bytedance/sonic v1.12.5 // indirect
 	github.com/bytedance/sonic/loader v0.2.1 // indirect

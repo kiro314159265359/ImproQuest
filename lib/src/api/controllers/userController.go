@@ -95,7 +95,7 @@ func Signup() gin.HandlerFunc {
 
 		user.ID = primitive.NewObjectID()
 
-		Token, Refresh_token, _ := helper.GenrateAllTokens(*user.Email, *user.UserName, *user.UserType, user.ID.Hex())
+		Token, Refresh_token, _ := helper.GenerateAllTokens(*user.Email, *user.UserName, *user.UserType, user.ID.Hex())
 		user.Token = &Token
 		user.Refresh_token = &Refresh_token
 
@@ -135,8 +135,12 @@ func Login() gin.HandlerFunc {
 		}
 
 		// Token generation and login success
-		token, refreshToken, _ := helper.GenrateAllTokens(*foundUser.Email, *foundUser.UserName, *foundUser.UserType, foundUser.ID.Hex())
-		helper.UpdateAllTokins(token, refreshToken, foundUser.ID.Hex())
+		token, refreshToken, tokenErr := helper.GenerateAllTokens(*foundUser.Email, *foundUser.UserName, *foundUser.UserType, foundUser.ID.Hex())
+        if tokenErr != nil {
+            c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate tokens"})
+            return
+        }
+        helper.UpdateAllTokens(token, refreshToken, foundUser.ID.Hex())
 
 		c.SetCookie("session", token, 86400, "/", "localhost", false, true)
 

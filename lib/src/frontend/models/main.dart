@@ -62,7 +62,7 @@ class StartScreen extends StatelessWidget {
                   ),
                   child: const Text(
                       "Start Quiz"), // add your text here 'Start Quiz'
-                )
+                ),
               ],
             ),
           ),
