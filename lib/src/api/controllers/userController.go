@@ -296,13 +296,36 @@ func UpdateUser() gin.HandlerFunc {
 			return
 		}
 
+		updateFields := bson.M{}
+
+		if userUpdateData.UserName != nil && *userUpdateData.UserName != "" {
+			updateFields["username"] = *userUpdateData.UserName
+		}
+		if userUpdateData.Email != nil && *userUpdateData.Email != "" {
+			updateFields["email"] = *userUpdateData.Email
+		}
+		if userUpdateData.Height != nil {
+			updateFields["height"] = *userUpdateData.Height
+		}
+		if userUpdateData.Weight != nil {
+			updateFields["weight"] = *userUpdateData.Weight
+		}
+		if userUpdateData.Gender != nil {
+			updateFields["gender"] = *userUpdateData.Gender
+		}
+
 		if userUpdateData.Password != nil && *userUpdateData.Password != "" {
 			hashedPassword, err := HashPassword(*userUpdateData.Password)
 			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Couldn't hash password"})
 				return
 			}
-			*userUpdateData.Password = hashedPassword
+			updateFields["password"] = hashedPassword
+		}
+
+		if len(updateFields) == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "No data provided"})
+			return
 		}
 
 		var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
@@ -313,17 +336,7 @@ func UpdateUser() gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid format"})
 			return
 		}
-
-		update := bson.M{
-			"$set": bson.M{
-				"username": userUpdateData.UserName,
-				"email":    userUpdateData.Email,
-				"height":   userUpdateData.Height,
-				"weight":   userUpdateData.Weight,
-				"gender":   userUpdateData.Gender,
-				"password": *userUpdateData.Password,
-			},
-		}
+		update := bson.M{"$set": updateFields}
 
 		result, err := userCollection.UpdateOne(ctx, bson.M{"_id": id}, update)
 		if err != nil {
