@@ -2,18 +2,30 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
+	"time"
 
+	logger "github.com/HarDizzeR/Project/logger"
 	routes "github.com/HarDizzeR/Project/routes"
+
+
+	ginzap "github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	"go.uber.org/zap"
 )
 
 func main() {
+
+	
+	logger := logger.InitLogger()
+    defer logger.Sync()
+    
+    logger.Info("Starting application")
+
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatalf("Error loading .env file: %v", err)
+		logger.Fatal("Error loading .env file: %v", zap.Error(err))
 	}
 
 	fmt.Println("Loaded environment variables successfully.")
@@ -29,11 +41,13 @@ func main() {
 	}
 
 	if mongodbURL == "" {
-		log.Fatal("MONGODB_URL environment variable not set")
+		logger.Fatal("MONGODB_URL environment variable not set")
 	}
 
+
 	router := gin.New()
-	router.Use(gin.Logger())
+	router.Use(ginzap.Ginzap(logger, time.RFC3339, true))
+	router.Use(ginzap.RecoveryWithZap(logger, true))
 
 	routes.AuthRoutes(router)
 	routes.UserRoutes(router)

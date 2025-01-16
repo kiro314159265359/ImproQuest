@@ -16,6 +16,7 @@ import (
 	"github.com/HarDizzeR/Project/database"
 	helper "github.com/HarDizzeR/Project/helpers"
 	"github.com/HarDizzeR/Project/models"
+	logger "github.com/HarDizzeR/Project/logger"
 )
 
 var userCollection *mongo.Collection = database.OpenCollection(database.Client, "Users")
@@ -23,7 +24,7 @@ var validate = validator.New()
 
 func HashPassword(password string) (string, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
+	if (err != nil) {
 		return "", err
 	}
 	return string(hashedPassword), nil
@@ -56,6 +57,7 @@ func Signup() gin.HandlerFunc {
 
 		validationErr := validate.Struct(user) //validation can be done in diff file
 		if validationErr != nil {
+			logger.Errorf("Validation error: %v", validationErr)
 			c.JSON(http.StatusBadRequest, gin.H{"error": validationErr.Error()})
 			return
 		}
@@ -63,11 +65,13 @@ func Signup() gin.HandlerFunc {
 		count, err := userCollection.CountDocuments(ctx, bson.M{"email": user.Email})
 		defer cancel()
 		if err != nil {
+			logger.Errorf("Error checking email existence: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error while checking the Email"})
 			return
 		}
 
 		if count > 0 {
+			logger.Warnf("Signup attempt with existing email: %s", *user.Email)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "this Email already exists"})
 			return
 		}
@@ -98,10 +102,12 @@ func Signup() gin.HandlerFunc {
 
 		resultInsertionNumber, insertErr := userCollection.InsertOne(ctx, user)
 		if insertErr != nil {
+			logger.Errorf("Failed to create user: %v", insertErr)
 			msg := "User Wasn't Created"
 			c.JSON(http.StatusInternalServerError, gin.H{"Error": msg})
 			return
 		}
+		logger.Infof("New user created: %s", *user.Email)
 		defer cancel()
 		c.JSON(http.StatusOK, resultInsertionNumber)
 	}
@@ -120,6 +126,7 @@ func Login() gin.HandlerFunc {
 		// Retrieve user from the database
 		err := userCollection.FindOne(context.Background(), bson.M{"email": user.Email}).Decode(&foundUser)
 		if err != nil {
+			logger.Warnf("Login attempt failed for email: %s", *user.Email)
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
 			return
 		}
@@ -141,6 +148,7 @@ func Login() gin.HandlerFunc {
 
 		c.SetCookie("session", token, 86400, "/", "localhost", false, true)
 
+		logger.Infof("User logged in successfully: %s", *user.Email)
 		c.JSON(http.StatusOK, gin.H{
 			"message":       "Login successful",
 			"token":         token,
@@ -198,6 +206,7 @@ func GetUsers() gin.HandlerFunc {
 			matchStage, facetStage, projectStage,
 		})
 		if err != nil {
+			logger.Errorf("Failed to list users: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error while listing users"})
 			return
 		}
@@ -269,9 +278,11 @@ func DeleteUser() gin.HandlerFunc {
 		err = userCollection.FindOneAndDelete(ctx, bson.M{"_id": id}).Decode(&user)
 
 		if err != nil {
+			logger.Errorf("Failed to delete user %s: %v", userID, err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
+		logger.Infof("User deleted successfully: %s", userID)
 		c.JSON(http.StatusOK, gin.H{"message": "User was deleted successfully", "user": user})
 	}
 
@@ -336,6 +347,7 @@ func UpdateUser() gin.HandlerFunc {
 
 		result, err := userCollection.UpdateOne(ctx, bson.M{"_id": id}, update)
 		if err != nil {
+			logger.Errorf("Failed to update user %s: %v", userID, err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user"})
 			return
 		}
@@ -345,6 +357,7 @@ func UpdateUser() gin.HandlerFunc {
 			return
 		}
 
+		logger.Infof("User updated successfully: %s", userID)
 		c.JSON(http.StatusOK, gin.H{"message": "User updated successfully"})
 	}
 }

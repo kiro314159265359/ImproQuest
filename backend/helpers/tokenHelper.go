@@ -10,6 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 
 	"github.com/HarDizzeR/Project/database"
+	logger "github.com/HarDizzeR/Project/logger"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
@@ -44,10 +45,14 @@ func GenerateAllTokens(email string, username string, UserType string, uid strin
 	}
 
 	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(SECRET_KEY))
+	if err != nil {
+		logger.Errorf("Failed to generate token: %v", err)
+		return "", "", err
+	}
 
 	Refresh_token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims).SignedString([]byte(SECRET_KEY))
-
 	if err != nil {
+		logger.Errorf("Failed to generate refresh token: %v", err)
 		return "", "", err
 	}
 
@@ -84,6 +89,7 @@ func UpdateAllTokens(signedToken string, signedRefreshToken string, userID strin
 	)
 
 	if err != nil {
+		logger.Errorf("Failed to update tokens in DB: %v", err)
 		return err
 	}
 
@@ -100,12 +106,14 @@ func ValidateToken(SignedToken string) (*SignedDetails, error) {
 	)
 
 	if err != nil {
+		logger.Errorf("Failed to parse token: %v", err)
 		return nil, err
 	}
 
 	claims, ok := token.Claims.(*SignedDetails)
 
 	if !ok || claims.ExpiresAt < time.Now().Local().Unix() {
+		logger.Warnf("Invalid or expired token")
 		return nil, fmt.Errorf("invalid or expired token")
 	}
 

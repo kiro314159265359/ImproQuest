@@ -7,6 +7,12 @@ require github.com/golang-jwt/jwt v3.2.2+incompatible
 require go.mongodb.org/mongo-driver/v2 v2.0.0
 
 require (
+	github.com/gin-contrib/zap v1.1.4 // indirect
+	go.uber.org/multierr v1.11.0 // indirect
+	go.uber.org/zap v1.27.0 // indirect
+)
+
+require (
 	github.com/bytedance/sonic v1.12.5 // indirect
 	github.com/bytedance/sonic/loader v0.2.1 // indirect
 	github.com/cloudwego/base64x v0.1.4 // indirect

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
+	logger "github.com/HarDizzeR/Project/logger"
 )
 
 func CheckUserType(c *gin.Context, role string) (err error) {
@@ -13,7 +14,8 @@ func CheckUserType(c *gin.Context, role string) (err error) {
 
 	err = nil
 	if userType != role {
-		err := errors.New("unathorized to access")
+		logger.Warnf("Unauthorized access attempt: required=%s, got=%s", role, userType)
+		err := errors.New("unauthorized to access")
 		return err
 	}
 	return err
@@ -26,6 +28,7 @@ func MatchUserToid(c *gin.Context, userID string) (err error) {
 	err = nil
 
 	if userType == "USER" && uid != userID {
+		logger.Warnf("Unauthorized user ID match: uid=%s, param=%s", uid, userID)
 		err = fmt.Errorf("unauthorized to access: userType = %s", userType)
 		return err
 	}
