@@ -3,11 +3,11 @@ package models
 import (
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 type User struct {
-	ID            primitive.ObjectID `bson:"_id,omitempty"`
+	ID            bson.ObjectID `bson:"_id,omitempty"`
 	UserName      *string            `json:"UserName" validate:"required,min=2,max=200"`
 	Email         *string            `json:"Email" validate:"email,required"`
 	Password      *string            `json:"Password" validate:"required,min=6"`

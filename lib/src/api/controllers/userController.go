@@ -3,16 +3,14 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/HarDizzeR/Project/database"
@@ -65,7 +63,6 @@ func Signup() gin.HandlerFunc {
 		count, err := userCollection.CountDocuments(ctx, bson.M{"email": user.Email})
 		defer cancel()
 		if err != nil {
-			log.Panic(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error while checking the Email"})
 			return
 		}
@@ -93,7 +90,7 @@ func Signup() gin.HandlerFunc {
 		user.Created_at = time.Now()
 		user.Updated_at = time.Now()
 
-		user.ID = primitive.NewObjectID()
+		user.ID = bson.NewObjectID()
 
 		Token, Refresh_token, _ := helper.GenerateAllTokens(*user.Email, *user.UserName, *user.UserType, user.ID.Hex())
 		user.Token = &Token
@@ -101,7 +98,7 @@ func Signup() gin.HandlerFunc {
 
 		resultInsertionNumber, insertErr := userCollection.InsertOne(ctx, user)
 		if insertErr != nil {
-			msg := fmt.Sprintf("User Wasn't Created")
+			msg := "User Wasn't Created"
 			c.JSON(http.StatusInternalServerError, gin.H{"Error": msg})
 			return
 		}
@@ -162,44 +159,43 @@ func GetUsers() gin.HandlerFunc {
 		ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
 		defer cancel()
 
-		recPerPage, err := strconv.Atoi(c.Query("RecordPerPage"))
-		if err != nil || recPerPage < 1 {
-			recPerPage = 10
+		// Parse and validate pagination parameters
+		recPerPage := 10 // Default value
+		if limit := c.Query("RecordPerPage"); limit != "" {
+			if val, err := strconv.Atoi(limit); err == nil && val > 0 && val <= 100 {
+			recPerPage = val
+			}
 		}
-		page, err1 := strconv.Atoi(c.Query("Page"))
-		if err1 != nil || page < 1 {
-			page = 1
+
+		page := 1 // Default value
+		if pageStr := c.Query("Page"); pageStr != "" {
+			if val, err := strconv.Atoi(pageStr); err == nil && val > 0 {
+			page = val
+			}
 		}
 
 		startIndex := (page - 1) * recPerPage
-		startIndex, err = strconv.Atoi(c.Query("startIndex"))
 
-		matchStage := bson.D{{Key: "$match", Value: bson.D{{}}}}
+		// Use more efficient aggregation pipeline
+		matchStage := bson.D{{Key: "$match", Value: bson.D{}}}
 
-		groupStage := bson.D{
-			{Key: "$group", Value: bson.D{
-				{Key: "_id", Value: "null"}, // Group all documents
-				{Key: "total_count", Value: bson.D{
-					{Key: "$sum", Value: 1}, // Count total documents
-				}},
-				{Key: "data", Value: bson.D{
-					{Key: "$push", Value: "$$ROOT"}, // Push all document fields into the "data" array
-				}},
+		facetStage := bson.D{{Key: "$facet", Value: bson.D{
+			{Key: "metadata", Value: bson.A{
+			bson.D{{Key: "$count", Value: "total"}},
 			}},
-		}
-
-		projectStage := bson.D{
-			{Key: "$project", Value: bson.D{
-				{Key: "_id", Value: 0},         // Exclude `_id`
-				{Key: "total_count", Value: 1}, // Include `total_count`
-				{Key: "user_items", Value: bson.D{
-					{Key: "$slice", Value: bson.A{"$data", startIndex, recPerPage}}, // Slice `data` array
-				}},
+			{Key: "data", Value: bson.A{
+			bson.D{{Key: "$skip", Value: startIndex}},
+			bson.D{{Key: "$limit", Value: recPerPage}},
 			}},
-		}
+		}}}
+
+		projectStage := bson.D{{Key: "$project", Value: bson.D{
+			{Key: "length", Value: bson.D{{Key: "$arrayElemAt", Value: bson.A{"$metadata.total", 0}}}},
+			{Key: "users", Value: "$data"},
+		}}}
 
 		cursor, err := userCollection.Aggregate(ctx, mongo.Pipeline{
-			matchStage, groupStage, projectStage,
+			matchStage, facetStage, projectStage,
 		})
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error while listing users"})
@@ -234,9 +230,9 @@ func GetUser() gin.HandlerFunc {
 
 		var user models.User
 
-		id, err := primitive.ObjectIDFromHex(userID)
+		id, err := bson.ObjectIDFromHex(userID)
 		if err != nil {
-			log.Panic(err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid User ID"})
 			return
 		}
 
@@ -264,7 +260,7 @@ func DeleteUser() gin.HandlerFunc {
 
 		var user models.User
 
-		id, err := primitive.ObjectIDFromHex(userID)
+		id, err := bson.ObjectIDFromHex(userID)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid format"})
 			return
@@ -331,7 +327,7 @@ func UpdateUser() gin.HandlerFunc {
 		var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
 		defer cancel()
 
-		id, err := primitive.ObjectIDFromHex(userID)
+		id, err := bson.ObjectIDFromHex(userID)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid format"})
 			return

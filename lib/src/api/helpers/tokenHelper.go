@@ -7,12 +7,11 @@ import (
 	"time"
 
 	jwt "github.com/golang-jwt/jwt"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 
 	"github.com/HarDizzeR/Project/database"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 type SignedDetails struct {
@@ -68,16 +67,12 @@ func UpdateAllTokens(signedToken string, signedRefreshToken string, userID strin
 
 	upsert := true
 
-	id, err := primitive.ObjectIDFromHex(userID)
+	id, err := bson.ObjectIDFromHex(userID)
 	if err != nil {
 		return err
 	}
 
 	filter := bson.M{"_id": id}
-
-	opt := options.UpdateOptions{
-		Upsert: &upsert,
-	}
 
 	_, err = userCollection.UpdateOne(
 		ctx,
@@ -85,7 +80,7 @@ func UpdateAllTokens(signedToken string, signedRefreshToken string, userID strin
 		bson.D{
 			{Key: "$set", Value: UpdateObj},
 		},
-		&opt,
+		options.UpdateOne().SetUpsert(upsert),
 	)
 
 	if err != nil {
