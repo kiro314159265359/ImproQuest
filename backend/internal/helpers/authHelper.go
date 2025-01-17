@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
-	logger "github.com/HarDizzeR/Project/logger"
+	logger "github.com/HarDizzeR/Project/internal/logger"
 )
 
 func CheckUserType(c *gin.Context, role string) (err error) {

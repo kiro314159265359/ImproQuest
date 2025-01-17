@@ -13,10 +13,10 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/HarDizzeR/Project/database"
-	helper "github.com/HarDizzeR/Project/helpers"
-	"github.com/HarDizzeR/Project/models"
-	logger "github.com/HarDizzeR/Project/logger"
+	"github.com/HarDizzeR/Project/internal/database"
+	helper "github.com/HarDizzeR/Project/internal/helpers"
+	"github.com/HarDizzeR/Project/internal/models"
+	logger "github.com/HarDizzeR/Project/internal/logger"
 )
 
 var userCollection *mongo.Collection = database.OpenCollection(database.Client, "Users")

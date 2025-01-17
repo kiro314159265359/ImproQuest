@@ -1,8 +1,8 @@
 package routes
 
 import (
-	controller "github.com/HarDizzeR/Project/controllers"
-	mid "github.com/HarDizzeR/Project/middleware"
+	controller "github.com/HarDizzeR/Project/internal/controllers"
+	mid "github.com/HarDizzeR/Project/internal/middleware"
 	"github.com/gin-gonic/gin"
 )
 

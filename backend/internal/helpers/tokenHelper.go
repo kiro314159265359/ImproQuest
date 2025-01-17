@@ -9,8 +9,8 @@ import (
 	jwt "github.com/golang-jwt/jwt"
 	"go.mongodb.org/mongo-driver/v2/bson"
 
-	"github.com/HarDizzeR/Project/database"
-	logger "github.com/HarDizzeR/Project/logger"
+	"github.com/HarDizzeR/Project/internal/database"
+	logger "github.com/HarDizzeR/Project/internal/logger"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )

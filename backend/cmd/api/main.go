@@ -5,9 +5,8 @@ import (
 	"os"
 	"time"
 
-	logger "github.com/HarDizzeR/Project/logger"
-	routes "github.com/HarDizzeR/Project/routes"
-
+	logger "github.com/HarDizzeR/Project/internal/logger"
+	routes "github.com/HarDizzeR/Project/internal/routes"
 
 	ginzap "github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
@@ -17,13 +16,12 @@ import (
 
 func main() {
 
-	
 	logger := logger.InitLogger()
-    defer logger.Sync()
-    
-    logger.Info("Starting application")
+	defer logger.Sync()
 
-	err := godotenv.Load()
+	logger.Info("Starting application")
+
+	err := godotenv.Load("config/.env")
 	if err != nil {
 		logger.Fatal("Error loading .env file: %v", zap.Error(err))
 	}
@@ -43,7 +41,6 @@ func main() {
 	if mongodbURL == "" {
 		logger.Fatal("MONGODB_URL environment variable not set")
 	}
-
 
 	router := gin.New()
 	router.Use(ginzap.Ginzap(logger, time.RFC3339, true))

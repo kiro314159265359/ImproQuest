@@ -2,7 +2,7 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
-	controller "github.com/HarDizzeR/Project/controllers"
+	controller "github.com/HarDizzeR/Project/internal/controllers"
 )
 
 func AuthRoutes(incomingRoutes *gin.Engine) {
