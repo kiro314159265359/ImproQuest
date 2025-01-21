@@ -1,8 +1,8 @@
 package routes
 
 import (
-	controller "github.com/HarDizzeR/Project/internal/controllers"
-	mid "github.com/HarDizzeR/Project/internal/middleware"
+	controllers "github.com/HarDizzeR/Project/backend/internal/controllers"
+	middleware "github.com/HarDizzeR/Project/backend/internal/middleware"
 	"github.com/gin-gonic/gin"
 )
 
@@ -10,10 +10,10 @@ func UserRoutes(incomingRoutes *gin.Engine) {
 
 	users := incomingRoutes.Group("/users")
 
-	users.Use(mid.Authenticate())
+	users.Use(middleware.Authenticate())
 
-	users.GET("/", controller.GetUsers())
-	users.GET("/:id", controller.GetUser())
-	users.DELETE("/:id", controller.DeleteUser())
-	users.PATCH("/:id", controller.UpdateUser())
+	users.GET("/", controllers.GetUsers())
+	users.GET("/:id", controllers.GetUser())
+	users.DELETE("/:id", controllers.DeleteUser())
+	users.PATCH("/:id", controllers.UpdateUser())
 }

@@ -1,5 +1,4 @@
 package logger
-
 import (
     "os"
     "path/filepath"

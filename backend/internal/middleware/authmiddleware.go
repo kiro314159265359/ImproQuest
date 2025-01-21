@@ -3,8 +3,8 @@ package middleware
 import (
 	"net/http"
 
-	helper "github.com/HarDizzeR/Project/internal/helpers"
-	logger "github.com/HarDizzeR/Project/internal/logger"
+	helpers "github.com/HarDizzeR/Project/backend/internal/helpers"
+	logger "github.com/HarDizzeR/Project/backend/internal/logger"
 	"github.com/gin-gonic/gin"
 )
 
@@ -27,7 +27,7 @@ func Authenticate() gin.HandlerFunc {
 			return
 		}
 
-		claims, validateErr := helper.ValidateToken(clientToken)
+		claims, validateErr := helpers.ValidateToken(clientToken)
 		if validateErr != nil {
 			logger.Errorf("Token validation error: %v", validateErr)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": validateErr.Error()})

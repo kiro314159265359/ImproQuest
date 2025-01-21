@@ -1,4 +1,4 @@
-module github.com/HarDizzeR/Project
+module github.com/HarDizzeR/Project/backend
 
 go 1.23.2
 
@@ -6,10 +6,21 @@ require github.com/golang-jwt/jwt v3.2.2+incompatible
 
 require go.mongodb.org/mongo-driver/v2 v2.0.0
 
+
 require (
+	cloud.google.com/go/compute v1.20.1 // indirect
+	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	github.com/gin-contrib/zap v1.1.4 // indirect
+	github.com/golang/protobuf v1.5.3 // indirect
+	github.com/gorilla/context v1.1.1 // indirect
+	github.com/gorilla/mux v1.6.2 // indirect
+	github.com/gorilla/securecookie v1.1.2 // indirect
+	github.com/gorilla/sessions v1.4.0 // indirect
+	github.com/markbates/goth v1.80.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
+	golang.org/x/oauth2 v0.17.0 // indirect
+	google.golang.org/appengine v1.6.8 // indirect
 )
 
 require (

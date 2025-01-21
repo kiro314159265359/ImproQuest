@@ -5,7 +5,9 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
-	logger "github.com/HarDizzeR/Project/internal/logger"
+	"golang.org/x/crypto/bcrypt"
+	
+	logger "github.com/HarDizzeR/Project/backend/internal/logger"
 )
 
 func CheckUserType(c *gin.Context, role string) (err error) {
@@ -36,3 +38,24 @@ func MatchUserToid(c *gin.Context, userID string) (err error) {
 	err = CheckUserType(c, userType)
 	return err
 }
+
+func HashPassword(password string) (string, error) {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if (err != nil) {
+		return "", err
+	}
+	return string(hashedPassword), nil
+}
+
+func VerifyPassword(password, hashedPassword string) error {
+
+	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+	if err != nil {
+		fmt.Println("Stored Hashed Password: ", hashedPassword)
+		fmt.Println("Plain Password: ", password)
+
+		return fmt.Errorf("incorrect password")
+	}
+	return nil
+}
+

@@ -5,8 +5,9 @@ import (
 	"os"
 	"time"
 
-	logger "github.com/HarDizzeR/Project/internal/logger"
-	routes "github.com/HarDizzeR/Project/internal/routes"
+	logger "github.com/HarDizzeR/Project/backend/internal/logger"
+	routes "github.com/HarDizzeR/Project/backend/internal/routes"
+	controllers "github.com/HarDizzeR/Project/backend/internal/controllers"
 
 	ginzap "github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
@@ -25,6 +26,9 @@ func main() {
 	if err != nil {
 		logger.Fatal("Error loading .env file: %v", zap.Error(err))
 	}
+
+	controllers.InitAuthProviders()
+	controllers.InitSessionStore()
 
 	fmt.Println("Loaded environment variables successfully.")
 

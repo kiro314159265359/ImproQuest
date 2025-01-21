@@ -23,7 +23,7 @@ if (flutterVersionName == null) {
 }
 
 android {
-    namespace "com.example.frontend"
+    namespace "com.improquest.improquest"
     compileSdk flutter.compileSdkVersion
     ndkVersion flutter.ndkVersion
 
