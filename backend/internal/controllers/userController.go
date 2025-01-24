@@ -163,7 +163,7 @@ func UpdateUser() gin.HandlerFunc {
 
 		updateFields := bson.M{}
 		fieldsToUpdate := map[string]interface{}{
-			"username": userUpdateData.UserName,
+			"username": userUpdateData.Username,
 			"email":    userUpdateData.Email,
 			"height":   userUpdateData.Height,
 			"weight":   userUpdateData.Weight,

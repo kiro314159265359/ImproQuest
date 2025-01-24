@@ -17,7 +17,7 @@ require (
 	github.com/gorilla/sessions v1.4.0
 	github.com/markbates/goth v1.80.0
 	go.uber.org/multierr v1.11.0 // indirect
-	go.uber.org/zap v1.27.0 
+	go.uber.org/zap v1.27.0
 	golang.org/x/oauth2 v0.17.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 )
