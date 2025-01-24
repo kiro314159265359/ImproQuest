@@ -3,10 +3,12 @@ package helpers
 import (
 	"errors"
 	"fmt"
+	"os"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
-	
+
 	logger "github.com/HarDizzeR/Project/backend/internal/logger"
 )
 
@@ -41,7 +43,7 @@ func MatchUserToid(c *gin.Context, userID string) (err error) {
 
 func HashPassword(password string) (string, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if (err != nil) {
+	if err != nil {
 		return "", err
 	}
 	return string(hashedPassword), nil
@@ -59,3 +61,22 @@ func VerifyPassword(password, hashedPassword string) error {
 	return nil
 }
 
+func ClearAuthCookies(c *gin.Context) {
+	c.SetCookie("access_token", "", -1, "/", "", false, true)
+	c.SetCookie("refresh_token", "", -1, "/", "", false, true)
+}
+
+func CalculateAge(birthDate time.Time) int {
+	now := time.Now()
+	age := now.Year() - birthDate.Year()
+	if now.Month() < birthDate.Month() || (now.Month() == birthDate.Month() && now.Day() < birthDate.Day()) {
+		age--
+	}
+	return age
+}
+
+func SetAuthCookies(c *gin.Context, access, refresh string) {
+	secure := os.Getenv("ENV") == "production"
+	c.SetCookie("access_token", access, 86400, "/", "", secure, true)
+	c.SetCookie("refresh_token", refresh, 86400*7, "/", "", secure, true)
+}

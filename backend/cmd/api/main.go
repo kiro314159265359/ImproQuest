@@ -5,9 +5,10 @@ import (
 	"os"
 	"time"
 
+	controllers "github.com/HarDizzeR/Project/backend/internal/controllers"
 	logger "github.com/HarDizzeR/Project/backend/internal/logger"
 	routes "github.com/HarDizzeR/Project/backend/internal/routes"
-	controllers "github.com/HarDizzeR/Project/backend/internal/controllers"
+	helpers "github.com/HarDizzeR/Project/backend/internal/helpers"
 
 	ginzap "github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
@@ -24,7 +25,12 @@ func main() {
 
 	err := godotenv.Load("config/.env")
 	if err != nil {
-		logger.Fatal("Error loading .env file: %v", zap.Error(err))
+		logger.Fatal("Error loading .env file", zap.Error(err))
+	}
+
+	// Initialize security configuration
+	if err := helpers.InitSecurityConfig(); err != nil {
+		logger.Fatal("Failed to initialize security configuration", zap.Error(err))
 	}
 
 	controllers.InitAuthProviders()
@@ -33,17 +39,9 @@ func main() {
 	fmt.Println("Loaded environment variables successfully.")
 
 	port := os.Getenv("PORT")
-	mongodbURL := os.Getenv("MONGODB_URL")
-
-	fmt.Println("PORT:", port)
-	fmt.Println("MONGODB_URL:", mongodbURL)
 
 	if port == "" {
 		port = "8000"
-	}
-
-	if mongodbURL == "" {
-		logger.Fatal("MONGODB_URL environment variable not set")
 	}
 
 	router := gin.New()

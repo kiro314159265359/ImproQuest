@@ -2,9 +2,10 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"net/http"
-	"time"
 	"os"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -22,124 +23,168 @@ import (
 	"github.com/markbates/goth/gothic"
 	"github.com/markbates/goth/providers/google"
 	"go.uber.org/zap"
-
-	
 )
 
-var userCollection *mongo.Collection = database.OpenCollection(database.Client, "Users")
-var validate = validator.New()
-var store *sessions.CookieStore
+var (
+	userCollection *mongo.Collection = database.Users()
+	validate       *validator.Validate
+	store          *sessions.CookieStore
+)
+
+func init() {
+	validate = validator.New()
+}
+
+// DTOs
+type SignupRequest struct {
+	Email     string    `json:"email" validate:"required,email"`
+	Username  *string   `bson:"username" validate:"required,min=2,max=200"`
+	Password  string    `json:"password" validate:"required,min=8"`
+	Height    *float64  `bson:"height" validate:"required,min=50,max=300"`
+	Weight    *float64  `bson:"weight" validate:"required,min=30,max=300"`
+	Gender    *string   `bson:"gender" validate:"required,oneof=Male Female"`
+	BirthDate time.Time `bson:"birth_date" validate:"required"`
+	UserType  *string   `bson:"user_type" validate:"required,oneof=Admin User"`
+}
+
+type LoginRequest struct {
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required"`
+}
+
+type UserResponse struct {
+	ID        bson.ObjectID `json:"id"`
+	Email     string        `json:"email"`
+	Username  string        `json:"username"`
+	UserType  string        `json:"user_type"`
+	CreatedAt time.Time     `json:"created_at"`
+}
 
 func Signup() gin.HandlerFunc {
-
 	return func(c *gin.Context) {
-		var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
+		ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 		defer cancel()
 
-		var user models.User
-
-		if err := c.BindJSON(&user); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		var req SignupRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request format", "message": err.Error()})
 			return
 		}
 
-		validationErr := validate.Struct(user) //validation can be done in diff file
-		if validationErr != nil {
-			logger.Errorf("Validation error: %v", validationErr)
-			c.JSON(http.StatusBadRequest, gin.H{"error": validationErr.Error()})
+		if err := validate.Struct(req); err != nil {
+			var validationErrors []string
+			for _, err := range err.(validator.ValidationErrors) {
+				validationErrors = append(validationErrors, fmt.Sprintf("%s: %s", err.Field(), err.Tag()))
+			}
+			c.JSON(http.StatusBadRequest, gin.H{"errors": validationErrors})
 			return
 		}
 
-		count, err := userCollection.CountDocuments(ctx, bson.M{"email": user.Email})
-		defer cancel()
-		if err != nil {
-			logger.Errorf("Error checking email existence: %v", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error while checking the Email"})
-			return
-		}
-
-		if count > 0 {
-			logger.Warnf("Signup attempt with existing email: %s", *user.Email)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "this Email already exists"})
-			return
-		}
-
-		currentYear := time.Now().Year()
-		birthYear := user.BirthDate.Year()
-		age := currentYear - birthYear
-		if age < 13 {
+		if age := helpers.CalculateAge(req.BirthDate); age < 13 {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "User must be at least 13 years old"})
 			return
 		}
 
-		hashedPassword, hashErr := helpers.HashPassword(*user.Password)
-		if hashErr != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error while hashing the password"})
+		count, err := userCollection.CountDocuments(ctx, bson.M{"email": req.Email})
+		if err != nil {
+			logger.Errorf("Email check error: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Registration temporarily unavailable"})
 			return
 		}
-		user.Password = &hashedPassword
-
-		user.Created_at = time.Now()
-		user.Updated_at = time.Now()
-
-		user.ID = bson.NewObjectID()
-
-		Token, Refresh_token, _ := helpers.GenerateAllTokens(*user.Email, *user.Username, *user.UserType, user.ID.Hex())
-		user.Token = &Token
-		user.Refresh_token = &Refresh_token
-
-		_, insertErr := userCollection.InsertOne(ctx, user)
-		if insertErr != nil {
-			logger.Errorf("Failed to create user: %v", insertErr)
-			msg := "User Wasn't Created"
-			c.JSON(http.StatusInternalServerError, gin.H{"Error": msg})
+		if count > 0 {
+			c.JSON(http.StatusConflict, gin.H{"error": "Email already registered"})
 			return
 		}
-		logger.Infof("New user created: %s", *user.Email)
-		defer cancel()
-		c.JSON(http.StatusOK, user)
+
+		hashedPassword, err := helpers.HashPassword(req.Password)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
+			return
+		}
+
+		user := models.User{
+			Email:      &req.Email,
+			Password:   &hashedPassword,
+			Username:   req.Username,
+			BirthDate:  req.BirthDate,
+			UserType:   req.UserType,
+			Created_at: time.Now(),
+			Updated_at: time.Now(),
+			ID:         bson.NewObjectID(),
+		}
+
+		access, refresh, err := helpers.GenerateAllTokens(user.ID.Hex(), *user.UserType)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate tokens"})
+			return
+		}
+
+		user.Token = &access
+		user.Refresh_token = &refresh
+
+		if _, err := userCollection.InsertOne(ctx, user); err != nil {
+			logger.Errorf("User creation failed: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
+			return
+		}
+
+		helpers.SetAuthCookies(c, access, refresh)
+		c.JSON(http.StatusCreated, UserResponse{
+			ID:        user.ID,
+			Email:     *user.Email,
+			Username:  *user.Username,
+			UserType:  *user.UserType,
+			CreatedAt: user.Created_at,
+		})
 	}
 }
 
 func Login() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+		defer cancel()
+
+		var req LoginRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request format"})
+			return
+		}
+
 		var user models.User
-		var foundUser models.User
-
-		if err := c.BindJSON(&user); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-
-		// Retrieve user from the database
-		err := userCollection.FindOne(context.Background(), bson.M{"email": user.Email}).Decode(&foundUser)
+		err := userCollection.FindOne(ctx, bson.M{"email": req.Email}).Decode(&user)
 		if err != nil {
-			logger.Warnf("Login attempt failed for email: %s", *user.Email)
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
+			logger.Warnf("Login attempt for unknown email: %s", req.Email)
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
 			return
 		}
 
-		// Compare the hashed password in the database with the provided password
-		err = helpers.VerifyPassword(*user.Password, *foundUser.Password)
+		if err := helpers.VerifyPassword(req.Password, *user.Password); err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+			return
+		}
+
+		access, refresh, err := helpers.GenerateAllTokens(user.ID.Hex(), *user.UserType)
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
-			return
-		}
-
-		// Token generation and login success
-		token, refreshToken, tokenErr := helpers.GenerateAllTokens(*foundUser.Email, *foundUser.Username, *foundUser.UserType, foundUser.ID.Hex())
-		if tokenErr != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate tokens"})
 			return
 		}
 
-		c.SetCookie("session", token, 86400, "/", "localhost", false, true)
+		if err := helpers.UpdateAllTokens(ctx, access, refresh, user.ID.Hex()); err != nil {
+			logger.Errorf("Token update failed: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Login failed"})
+			return
+		}
 
-		logger.Infof("User logged in successfully: %s", *user.Email)
+		helpers.SetAuthCookies(c, access, refresh)
 		c.JSON(http.StatusOK, gin.H{
-			"message":       "Login successful",
-			"token":         token,
-			"refresh_token": refreshToken,
+			"message": "Login successful",
+			"user": UserResponse{
+				ID:        user.ID,
+				Email:     *user.Email,
+				Username:  *user.Username,
+				UserType:  *user.UserType,
+				CreatedAt: user.Created_at,
+			},
 		})
 	}
 }
@@ -196,4 +241,23 @@ func AuthCallbackHandler(c *gin.Context) {
 		return
 	}
 	c.JSON(200, gin.H{"user": user})
+}
+
+func Logout() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userID := c.GetString("id")
+		ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+		defer cancel()
+
+		if _, err := userCollection.UpdateByID(
+			ctx,
+			userID,
+			bson.M{"$set": bson.M{"token": "", "refresh_token": ""}},
+		); err != nil {
+			logger.Warnf("Logout token clear failed: %v", err)
+		}
+
+		helpers.ClearAuthCookies(c)
+		c.JSON(http.StatusOK, gin.H{"message": "Logged out successfully"})
+	}
 }

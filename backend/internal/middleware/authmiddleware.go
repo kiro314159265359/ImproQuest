@@ -10,7 +10,7 @@ import (
 
 func Authenticate() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		clientToken, err := c.Cookie("session")
+		clientToken, err := c.Cookie("access_token")
 
 		if err != nil {
 			logger.Errorf("Session cookie not found")
@@ -27,17 +27,15 @@ func Authenticate() gin.HandlerFunc {
 			return
 		}
 
-		claims, validateErr := helpers.ValidateToken(clientToken)
-		if validateErr != nil {
-			logger.Errorf("Token validation error: %v", validateErr)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": validateErr.Error()})
+		claims, err := helpers.ValidateAccessToken(clientToken)
+		if err != nil {
+			logger.Errorf("Token validation error: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			c.Abort()
 			return
 		}
 
-		c.Set("email", claims.Email)
-		c.Set("username", claims.UserName)
-		c.Set("uid", claims.Uid)
+		c.Set("id", claims.ID)
 		c.Set("userType", claims.UserType)
 		c.Next()
 	}

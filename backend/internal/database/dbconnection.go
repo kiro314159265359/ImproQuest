@@ -5,25 +5,25 @@ import (
 	"fmt"
 	"os"
 	"time"
+	"log"
 
 	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 
-	logger "github.com/HarDizzeR/Project/backend/internal/logger"
 )
 
 func DBinstance() *mongo.Client {
 	err := godotenv.Load("config/.env")
 	if err != nil {
-		logger.Fatalf("Error loading .env file: %v", err)
+		log.Fatalf("Error loading .env file: %v", err)
 	}
 
 	fmt.Println("Loaded environment variables successfully.")
 
 	MongoDB := os.Getenv("MONGODB_URL")
 	if MongoDB == "" {
-		logger.Fatal("MONGODB_URL environment variable not set")
+		log.Fatal("MONGODB_URL environment variable not set")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -31,15 +31,15 @@ func DBinstance() *mongo.Client {
 
 	client, err := mongo.Connect(options.Client().ApplyURI(MongoDB))
 	if err != nil {
-		logger.Fatalf("failed to connect to server: %v", err)
+		log.Fatalf("failed to connect to server: %v", err)
 	}
 
 	// Ping the database to verify the connection
 	if err := client.Ping(ctx, nil); err != nil {
-		logger.Fatalf("Failed to ping MongoDB: %v", err)
+		log.Fatalf("Failed to ping MongoDB: %v", err)
 	}
 
-	logger.Infof("Connected to MongoDB!")
+	log.Print("Connected to MongoDB!")
 
 	// Return the client so other parts of the application can use it
 	return client
@@ -47,7 +47,3 @@ func DBinstance() *mongo.Client {
 
 var Client *mongo.Client = DBinstance()
 
-func OpenCollection(Client *mongo.Client, collectionName string) *mongo.Collection {
-	var collection *mongo.Collection = Client.Database("App").Collection(collectionName)
-	return collection
-}

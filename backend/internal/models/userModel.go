@@ -15,14 +15,15 @@ type Streak struct {
 type User struct {
 	ID            bson.ObjectID   `bson:"_id,omitempty"`
 	Username      *string         `bson:"username" validate:"required,min=2,max=200"`
+	MobileNumber  *string         `bson:"mobile_number" validate:"required,min=10,max=15"`
 	Email         *string         `bson:"email" validate:"required,email"`
 	Password      *string         `bson:"password" validate:"required,min=8"`
 	Height        *float64        `bson:"height" validate:"required,min=50,max=300"`
 	Token         *string         `bson:"token,omitempty"`
-	Gender        *string         `bson:"gender" validate:"required,oneof=male female"`
-	UserType      *string         `bson:"user_type" validate:"required,oneof=ADMIN USER"`
+	Gender        *string         `bson:"gender" validate:"required,oneof=Male Female"`
+	UserType      *string         `bson:"user_type" validate:"required,oneof=Admin User"`
 	Refresh_token *string         `bson:"refresh_token,omitempty"`
-	BirthDate     time.Time       `bson:"birth_date" validate:"required,ltefield=Created_at"`
+	BirthDate     time.Time       `bson:"birth_date" validate:"required"`
 	Weight        *float64        `bson:"weight" validate:"required,min=30,max=300"`
 	XP            float64         `bson:"xp" validate:"gte=0"`
 	Level         int             `bson:"level" validate:"gte=1"`

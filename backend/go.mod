@@ -2,9 +2,9 @@ module github.com/HarDizzeR/Project/backend
 
 go 1.23.2
 
-require github.com/golang-jwt/jwt v3.2.2+incompatible
-
 require go.mongodb.org/mongo-driver/v2 v2.0.0
+
+require github.com/golang-jwt/jwt/v5 v5.2.1 
 
 require (
 	cloud.google.com/go/compute v1.20.1 // indirect

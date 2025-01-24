@@ -17,7 +17,7 @@ import (
 
 func GetUsers() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		err := helpers.CheckUserType(c, "ADMIN")
+		err := helpers.CheckUserType(c, "Admin")
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return

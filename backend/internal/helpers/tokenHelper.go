@@ -2,120 +2,172 @@ package helpers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"time"
 
-	jwt "github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v5"
 	"go.mongodb.org/mongo-driver/v2/bson"
-	
-	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 
 	logger "github.com/HarDizzeR/Project/backend/internal/logger"
-	"github.com/HarDizzeR/Project/backend/internal/database"
+	database "github.com/HarDizzeR/Project/backend/internal/database"
 )
 
-type SignedDetails struct {
-	Email    string
-	UserName string
-	Uid      string
-	UserType string
-	jwt.StandardClaims
+// Token claims structures
+type AccessClaims struct {
+	UserID   string `json:"uid"`
+	UserType string `json:"userType"`
+	jwt.RegisteredClaims
 }
 
-var userCollection *mongo.Collection = database.OpenCollection(database.Client, "Users")
-
-var SECRET_KEY string = os.Getenv("SECRET_KEY")
-
-func GenerateAllTokens(email string, username string, UserType string, uid string) (signedTokens string, signedRefreshTokens string, err error) {
-	claims := &SignedDetails{
-		Email:    email,
-		UserName: username,
-		UserType: UserType,
-		Uid:      uid,
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Local().Add(time.Hour * time.Duration(24)).Unix(),
-		},
-	}
-
-	refreshClaims := &SignedDetails{
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Local().Add(time.Hour * time.Duration(168)).Unix(),
-		},
-	}
-
-	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(SECRET_KEY))
-	if err != nil {
-		logger.Errorf("Failed to generate token: %v", err)
-		return "", "", err
-	}
-
-	Refresh_token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims).SignedString([]byte(SECRET_KEY))
-	if err != nil {
-		logger.Errorf("Failed to generate refresh token: %v", err)
-		return "", "", err
-	}
-
-	return token, Refresh_token, err
-
+type RefreshClaims struct {
+	UserID string `json:"uid"`
+	jwt.RegisteredClaims
 }
 
-func UpdateAllTokens(signedToken string, signedRefreshToken string, userID string) error {
-	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
-	defer cancel()
+var (
+	accessSecretKey     []byte
+	refreshSecretKey    []byte
+	accessTokenExpiry   = 15 * time.Minute
+	refreshTokenExpiry  = 7 * 24 * time.Hour
+	userCollection	  *mongo.Collection = database.Users()
+)
 
-	UpdateObj := bson.D{
-		{Key: "token", Value: signedToken},
-		{Key: "refresh_token", Value: signedRefreshToken},
-		{Key: "updated_at", Value: time.Now()},
+func InitSecurityConfig() error {
+	
+	if database.Client == nil {
+        return errors.New("database client not initialized")
+    }
+    
+	accessSecretKey = []byte(os.Getenv("ACCESS_SECRET_KEY"))
+	refreshSecretKey = []byte(os.Getenv("REFRESH_SECRET_KEY"))
+
+	if len(accessSecretKey) < 32 {
+		return fmt.Errorf("ACCESS_SECRET_KEY must be at least 32 characters long")
 	}
-
-	upsert := true
-
-	id, err := bson.ObjectIDFromHex(userID)
-	if err != nil {
-		return err
+	if len(refreshSecretKey) < 32 && len(refreshSecretKey) > 0 {
+		return fmt.Errorf("REFRESH_SECRET_KEY must be at least 32 characters long if set")
 	}
+	if len(refreshSecretKey) == 0 {
+		refreshSecretKey = accessSecretKey
+		logger.Warn("Using access secret for refresh tokens - recommend setting separate REFRESH_SECRET_KEY")
+	}
+	return nil
+}
 
-	filter := bson.M{"_id": id}
-
-	_, err = userCollection.UpdateOne(
-		ctx,
-		filter,
-		bson.D{
-			{Key: "$set", Value: UpdateObj},
+func GenerateAllTokens(userID, userType string) (accessToken, refreshToken string, err error) {
+	// Generate access token
+	accessClaims := AccessClaims{
+		UserID:   userID,
+		UserType: userType,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(accessTokenExpiry)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
-		options.UpdateOne().SetUpsert(upsert),
-	)
+	}
 
+	accessToken, err = jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims).SignedString(accessSecretKey)
 	if err != nil {
-		logger.Errorf("Failed to update tokens in DB: %v", err)
-		return err
+		logger.Errorf("Access token generation failed: %v", err)
+		return "", "", fmt.Errorf("failed to generate access token: %w", err)
+	}
+
+	// Generate refresh token
+	refreshClaims := RefreshClaims{
+		UserID: userID,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(refreshTokenExpiry)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
+	}
+
+	refreshToken, err = jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims).SignedString(refreshSecretKey)
+	if err != nil {
+		logger.Errorf("Refresh token generation failed: %v", err)
+		return "", "", fmt.Errorf("failed to generate refresh token: %w", err)
+	}
+
+	return accessToken, refreshToken, nil
+}
+
+func UpdateAllTokens(ctx context.Context, accessToken, refreshToken, userID string) error {
+	objID, err := bson.ObjectIDFromHex(userID)
+	if err != nil {
+		return fmt.Errorf("invalid user ID format: %w", err)
+	}
+
+	update := bson.D{
+		{Key: "$set", Value: bson.D{
+			{Key: "token", Value: accessToken},
+			{Key: "refresh_token", Value: refreshToken},
+			{Key: "updated_at", Value: time.Now()},
+		}},
+	}
+
+	opts := options.UpdateOne().SetUpsert(false)
+	_, err = userCollection.UpdateByID(ctx, objID, update, opts)
+	if err != nil {
+		logger.Errorf("Token update failed for user %s: %v", userID, err)
+		return fmt.Errorf("failed to update tokens: %w", err)
 	}
 
 	return nil
 }
 
-func ValidateToken(SignedToken string) (*SignedDetails, error) {
+func ValidateAccessToken(tokenString string) (*AccessClaims, error) {
 	token, err := jwt.ParseWithClaims(
-		SignedToken,
-		&SignedDetails{},
-		func(token *jwt.Token) (interface{}, error) {
-			return []byte(SECRET_KEY), nil
+		tokenString,
+		&AccessClaims{},
+		func(t *jwt.Token) (interface{}, error) {
+			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+			}
+			return accessSecretKey, nil
 		},
+		jwt.WithLeeway(5*time.Second),
 	)
 
 	if err != nil {
-		logger.Errorf("Failed to parse token: %v", err)
-		return nil, err
+		if errors.Is(err, jwt.ErrTokenExpired) {
+			return nil, errors.New("token has expired")
+		}
+		return nil, fmt.Errorf("invalid token: %w", err)
 	}
 
-	claims, ok := token.Claims.(*SignedDetails)
+	claims, ok := token.Claims.(*AccessClaims)
+	if !ok || !token.Valid {
+		return nil, errors.New("invalid token claims")
+	}
 
-	if !ok || claims.ExpiresAt < time.Now().Local().Unix() {
-		logger.Warnf("Invalid or expired token")
-		return nil, fmt.Errorf("invalid or expired token")
+	return claims, nil
+}
+
+func ValidateRefreshToken(tokenString string) (*RefreshClaims, error) {
+	token, err := jwt.ParseWithClaims(
+		tokenString,
+		&RefreshClaims{},
+		func(t *jwt.Token) (interface{}, error) {
+			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+			}
+			return refreshSecretKey, nil
+		},
+		jwt.WithLeeway(5*time.Second),
+	)
+
+	if err != nil {
+		if errors.Is(err, jwt.ErrTokenExpired) {
+			return nil, errors.New("refresh token has expired")
+		}
+		return nil, fmt.Errorf("invalid refresh token: %w", err)
+	}
+
+	claims, ok := token.Claims.(*RefreshClaims)
+	if !ok || !token.Valid {
+		return nil, errors.New("invalid refresh token claims")
 	}
 
 	return claims, nil
