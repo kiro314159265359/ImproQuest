@@ -29,9 +29,9 @@ type User struct {
 	Level         int             `bson:"level" validate:"gte=1"`
 	Gold          float64         `bson:"gold" validate:"gte=0"`
 	Streak        Streak          `bson:"streak" validate:"required"`
-	InventoryID   bson.ObjectID   `bson:"inventory_id" validate:"required"`
-	Achievements  []bson.ObjectID `bson:"achievements" validate:"dive,required"`
-	CurrentQuests []bson.ObjectID `bson:"current_quests" validate:"dive,required"`
+	InventoryID   bson.ObjectID   `bson:"inventory_id" validate:"required"` // Reference to Inventory
+	Achievements  []bson.ObjectID `bson:"achievements" validate:"dive,required"` // Reference to Achievements
+	CurrentQuests []bson.ObjectID `bson:"current_quests" validate:"dive,required"` // Reference to Quests
 	Stats         Stats           `bson:"stats" validate:"required"`
 	AccumDistance float64         `bson:"accum_distance" validate:"gte=0"`
 	Created_at    time.Time       `bson:"Created_at" validate:"required"`
