@@ -5,12 +5,12 @@ import (
 	"os"
 	"time"
 
-	controllers "github.com/HarDizzeR/Project/backend/internal/controllers"
-	logger "github.com/HarDizzeR/Project/backend/internal/logger"
-	routes "github.com/HarDizzeR/Project/backend/internal/routes"
-	helpers "github.com/HarDizzeR/Project/backend/internal/helpers"
+	"github.com/HarDizzeR/Project/backend/internal/controllers"
+	"github.com/HarDizzeR/Project/backend/internal/helpers"
+	"github.com/HarDizzeR/Project/backend/internal/logger"
+	"github.com/HarDizzeR/Project/backend/internal/routes"
 
-	ginzap "github.com/gin-contrib/zap"
+	"github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"go.uber.org/zap"

@@ -10,8 +10,8 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 
-	helpers "github.com/HarDizzeR/Project/backend/internal/helpers"
-	logger "github.com/HarDizzeR/Project/backend/internal/logger"
+	"github.com/HarDizzeR/Project/backend/internal/helpers"
+	"github.com/HarDizzeR/Project/backend/internal/logger"
 	"github.com/HarDizzeR/Project/backend/internal/models"
 )
 

@@ -13,8 +13,8 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 
 	"github.com/HarDizzeR/Project/backend/internal/database"
-	helpers "github.com/HarDizzeR/Project/backend/internal/helpers"
-	logger "github.com/HarDizzeR/Project/backend/internal/logger"
+	"github.com/HarDizzeR/Project/backend/internal/helpers"
+	"github.com/HarDizzeR/Project/backend/internal/logger"
 	"github.com/HarDizzeR/Project/backend/internal/models"
 
 	"github.com/gorilla/sessions"
@@ -37,14 +37,15 @@ func init() {
 
 // DTOs
 type SignupRequest struct {
-	Email     string    `json:"email" validate:"required,email"`
-	Username  *string   `bson:"username" validate:"required,min=2,max=200"`
-	Password  string    `json:"password" validate:"required,min=8"`
-	Height    *float64  `bson:"height" validate:"required,min=50,max=300"`
-	Weight    *float64  `bson:"weight" validate:"required,min=30,max=300"`
-	Gender    *string   `bson:"gender" validate:"required,oneof=Male Female"`
-	BirthDate time.Time `bson:"birth_date" validate:"required"`
-	UserType  *string   `bson:"user_type" validate:"required,oneof=Admin User"`
+	Email        string    `json:"email" validate:"required,email"`
+	MobileNumber *string   `bson:"mobile_number" validate:"required,min=10,max=15"`
+	Username     *string   `bson:"username" validate:"required,min=2,max=200"`
+	Password     string    `json:"password" validate:"required,min=8"`
+	Height       *float64  `bson:"height" validate:"required,min=50,max=300"`
+	Weight       *float64  `bson:"weight" validate:"required,min=30,max=300"`
+	Gender       *string   `bson:"gender" validate:"required,oneof=Male Female"`
+	BirthDate    time.Time `bson:"birth_date" validate:"required"`
+	UserType     *string   `bson:"user_type" validate:"required,oneof=Admin User"`
 }
 
 type LoginRequest struct {

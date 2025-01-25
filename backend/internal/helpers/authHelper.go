@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 
-	logger "github.com/HarDizzeR/Project/backend/internal/logger"
+	"github.com/HarDizzeR/Project/backend/internal/logger"
 )
 
 func CheckUserType(c *gin.Context, role string) (err error) {

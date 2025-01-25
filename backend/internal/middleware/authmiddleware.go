@@ -3,8 +3,8 @@ package middleware
 import (
 	"net/http"
 
-	helpers "github.com/HarDizzeR/Project/backend/internal/helpers"
-	logger "github.com/HarDizzeR/Project/backend/internal/logger"
+	"github.com/HarDizzeR/Project/backend/internal/helpers"
+	"github.com/HarDizzeR/Project/backend/internal/logger"
 	"github.com/gin-gonic/gin"
 )
 
