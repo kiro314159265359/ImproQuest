@@ -5,15 +5,15 @@ import (
 )
 
 var (
-    usersCollection *mongo.Collection
+	usersCollection *mongo.Collection
 )
 
 func Users() *mongo.Collection {
-    if Client == nil {
-        panic("database client not initialized")
-    }
-    if usersCollection == nil {
-        usersCollection = Client.Database("App").Collection("users")
-    }
-    return usersCollection
+	if Client == nil {
+		panic("database client not initialized")
+	}
+	if usersCollection == nil {
+		usersCollection = Client.Database("App").Collection("Users")
+	}
+	return usersCollection
 }
