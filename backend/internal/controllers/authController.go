@@ -68,6 +68,7 @@ func Signup() gin.HandlerFunc {
 
 		var req SignupRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
+			logger.Errorf("Invalid Request Format: %v", err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request format", "message": err.Error()})
 			return
 		}
@@ -77,11 +78,13 @@ func Signup() gin.HandlerFunc {
 			for _, err := range err.(validator.ValidationErrors) {
 				validationErrors = append(validationErrors, fmt.Sprintf("%s: %s", err.Field(), err.Tag()))
 			}
+			logger.Errorf("Validation error: %v", err)
 			c.JSON(http.StatusBadRequest, gin.H{"errors": validationErrors})
 			return
 		}
 
 		if age := helpers.CalculateAge(req.BirthDate); age < 13 {
+			logger.Errorf("Invalid Age")
 			c.JSON(http.StatusBadRequest, gin.H{"error": "User must be at least 13 years old"})
 			return
 		}

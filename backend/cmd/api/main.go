@@ -10,7 +10,7 @@ import (
 	"github.com/HarDizzeR/Project/backend/internal/logger"
 	"github.com/HarDizzeR/Project/backend/internal/routes"
 
-	"github.com/gin-contrib/zap"
+	ginzap "github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"go.uber.org/zap"
@@ -50,6 +50,7 @@ func main() {
 
 	routes.AuthRoutes(router)
 	routes.UserRoutes(router)
+	routes.QuestRoutes(router)
 
 	router.Run(":" + port)
 }

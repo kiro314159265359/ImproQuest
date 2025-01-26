@@ -95,14 +95,13 @@ func GetUser() gin.HandlerFunc {
 		var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
 		defer cancel()
 
-		var user models.User
-
 		id, err := bson.ObjectIDFromHex(userID)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid User ID"})
 			return
 		}
 
+		var user bson.M
 		err = userCollection.FindOne(ctx, bson.M{"_id": id}).Decode(&user)
 
 		if err != nil {
@@ -111,7 +110,6 @@ func GetUser() gin.HandlerFunc {
 		}
 		c.JSON(http.StatusOK, user)
 	}
-
 }
 
 func DeleteUser() gin.HandlerFunc {
@@ -146,6 +144,8 @@ func DeleteUser() gin.HandlerFunc {
 
 }
 
+// Update User include password update
+
 func UpdateUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID := c.Param("id")
@@ -154,50 +154,10 @@ func UpdateUser() gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
 			return
 		}
-
-		var userUpdateData models.User
-		if err := c.BindJSON(&userUpdateData); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
-			return
-		}
-
-		updateFields := bson.M{}
-		fieldsToUpdate := map[string]interface{}{
-			"username": userUpdateData.Username,
-			"email":    userUpdateData.Email,
-			"height":   userUpdateData.Height,
-			"weight":   userUpdateData.Weight,
-			"gender":   userUpdateData.Gender,
-		}
-		for field, value := range fieldsToUpdate {
-			if value != nil {
-				switch v := value.(type) {
-				case *string:
-					if *v != "" {
-						updateFields[field] = *v
-					}
-				case *int:
-					updateFields[field] = *v
-				}
-			}
-		}
-
-		if userUpdateData.Password != nil && *userUpdateData.Password != "" {
-			hashedPassword, err := helpers.HashPassword(*userUpdateData.Password)
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Couldn't hash password"})
-				return
-			}
-			updateFields["password"] = hashedPassword
-		}
-
-		if len(updateFields) == 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "No data provided"})
-			return
-		}
-
-		ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
+		var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
 		defer cancel()
+
+		var user models.User
 
 		id, err := bson.ObjectIDFromHex(userID)
 		if err != nil {
@@ -205,23 +165,38 @@ func UpdateUser() gin.HandlerFunc {
 			return
 		}
 
-		result, err := userCollection.UpdateOne(
-			ctx,
-			bson.M{"_id": id},
-			bson.M{"$set": updateFields},
-		)
+		err = userCollection.FindOne(ctx, bson.M{"_id": id}).Decode(&user)
+
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		if err := c.ShouldBindJSON(&user); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		var hashedPassword string
+		if user.Password != nil {
+			hashedPassword, err = helpers.HashPassword(*user.Password)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+		}
+
+		user.Password = &hashedPassword
+		user.Updated_at = time.Now()
+
+		_, err = userCollection.ReplaceOne(ctx, bson.M{"_id": id}, user)
 		if err != nil {
 			logger.Errorf("Failed to update user %s: %v", userID, err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-
-		if result.MatchedCount == 0 {
-			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
-			return
-		}
-
 		logger.Infof("User updated successfully: %s", userID)
-		c.JSON(http.StatusOK, gin.H{"message": "User updated successfully"})
+		c.JSON(http.StatusOK, gin.H{"message": "User was updated successfully", "user": user})
 	}
+
 }
+
