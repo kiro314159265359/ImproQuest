@@ -210,6 +210,12 @@ func AssignRandomQuests() gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "userID is required"})
 			return
 		}
+		// userID, err := c.Cookie("userID")
+		// if err != nil || userID == "" {
+		// 	logger.Errorf("Missing authentication: %v", err)
+		// 	c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
+		// 	return
+		// }
 
 		// Convert userID to ObjectID
 		objectID, err := bson.ObjectIDFromHex(userID)
