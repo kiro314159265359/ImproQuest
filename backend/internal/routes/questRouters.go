@@ -7,7 +7,7 @@ import (
 )
 
 func QuestRoutes(incomingRoutes *gin.Engine) {
-	
+
 	quests := incomingRoutes.Group("/quests")
 
 	quests.Use(middleware.Authenticate())
@@ -17,4 +17,5 @@ func QuestRoutes(incomingRoutes *gin.Engine) {
 	quests.GET("/:id", controllers.GetQuest())
 	quests.DELETE("/:id", controllers.DeleteQuest())
 	quests.PATCH("/:id", controllers.UpdateQuest())
+
 }

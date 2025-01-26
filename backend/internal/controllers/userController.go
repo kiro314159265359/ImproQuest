@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"math/rand"
 	"net/http"
 	"strconv"
 	"time"
@@ -200,3 +201,70 @@ func UpdateUser() gin.HandlerFunc {
 
 }
 
+// controllers/user.go
+func AssignRandomQuests() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Get userID from URL parameter
+		userID := c.Param("id")
+		if userID == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "userID is required"})
+			return
+		}
+
+		// Convert userID to ObjectID
+		objectID, err := bson.ObjectIDFromHex(userID)
+		if err != nil {
+			logger.Errorf("Invalid user ID: %v", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
+			return
+		}
+
+		// Fetch all quests from the database
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		var allQuests []models.Quest
+		cursor, err := questCollection.Find(ctx, bson.M{})
+		if err != nil {
+			logger.Errorf("Error fetching quests: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch quests"})
+			return
+		}
+
+		if err = cursor.All(ctx, &allQuests); err != nil {
+			logger.Errorf("Error decoding quests: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to decode quests"})
+			return
+		}
+
+		if len(allQuests) < 4 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Not enough quests available"})
+			return
+		}
+
+		// Shuffle and select quests
+		rand.New(rand.NewSource(time.Now().UnixNano()))
+		rand.Shuffle(len(allQuests), func(i, j int) {
+			allQuests[i], allQuests[j] = allQuests[j], allQuests[i]
+		})
+		selectedQuests := allQuests[:4]
+
+		// Update user document
+		filter := bson.M{"_id": objectID}
+		update := bson.M{"$set": bson.M{"quests": selectedQuests}}
+		updateResult, err := userCollection.UpdateOne(ctx, filter, update)
+		if err != nil {
+			logger.Errorf("Error updating user quests: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to assign quests"})
+			return
+		}
+
+		// Check if user exists
+		if updateResult.MatchedCount == 0 {
+			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"quests": selectedQuests})
+	}
+}
