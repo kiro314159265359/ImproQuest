@@ -205,18 +205,18 @@ func UpdateUser() gin.HandlerFunc {
 func AssignRandomQuests() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Get userID from URL parameter
-		userID := c.Param("id")
-		if userID == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "userID is required"})
-			return
-		}
+		// userID := c.Param("id")
+		// if userID == "" {
+		// 	c.JSON(http.StatusBadRequest, gin.H{"error": "userID is required"})
+		// 	return
+		// }
 		// userID, err := c.Cookie("userID")
 		// if err != nil || userID == "" {
 		// 	logger.Errorf("Missing authentication: %v", err)
 		// 	c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
 		// 	return
 		// }
-
+		userID := c.GetString("id")
 		// Convert userID to ObjectID
 		objectID, err := bson.ObjectIDFromHex(userID)
 		if err != nil {
