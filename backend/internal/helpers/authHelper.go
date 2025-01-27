@@ -31,7 +31,7 @@ func MatchUserToid(c *gin.Context, userID string) (err error) {
 	uid := c.GetString("id")
 	err = nil
 
-	if userType == "USER" && uid != userID {
+	if userType == "User" && uid != userID {
 		logger.Warnf("Unauthorized user ID match: uid=%s, param=%s", uid, userID)
 		err = fmt.Errorf("unauthorized to access: userType = %s", userType)
 		return err

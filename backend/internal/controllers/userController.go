@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"math/rand"
 	"net/http"
 	"strconv"
@@ -218,9 +219,11 @@ func AssignRandomQuests() gin.HandlerFunc {
 		// }
 		userID := c.GetString("id")
 		// Convert userID to ObjectID
+		fmt.Print("User ID :", userID)
+
 		objectID, err := bson.ObjectIDFromHex(userID)
 		if err != nil {
-			logger.Errorf("Invalid user ID: %v", err)
+			logger.Errorf("Invalid user ID format: %v", err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
 			return
 		}

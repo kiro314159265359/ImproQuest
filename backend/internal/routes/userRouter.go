@@ -10,6 +10,8 @@ func UserRoutes(incomingRoutes *gin.Engine) {
 
 	users := incomingRoutes.Group("/users")
 
+	users.GET("/logout", controllers.Logout())
+
 	users.Use(middleware.Authenticate())
 
 	users.GET("/", controllers.GetUsers())
