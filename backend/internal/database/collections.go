@@ -5,11 +5,12 @@ import (
 )
 
 var (
-	usersCollection   *mongo.Collection
-	questsCollection  *mongo.Collection
-	itemsCollection   *mongo.Collection
-	stagesCollection  *mongo.Collection
-	enemiesCollection *mongo.Collection
+	usersCollection        *mongo.Collection
+	questsCollection       *mongo.Collection
+	itemsCollection        *mongo.Collection
+	stagesCollection       *mongo.Collection
+	enemiesCollection      *mongo.Collection
+	achievementsCollection *mongo.Collection
 )
 
 func Users() *mongo.Collection {
@@ -61,4 +62,14 @@ func Enemies() *mongo.Collection {
 		enemiesCollection = Client.Database("App").Collection("Enemies")
 	}
 	return enemiesCollection
+}
+
+func Achievements() *mongo.Collection {
+	if Client == nil {
+		panic("database client not initialized")
+	}
+	if achievementsCollection == nil {
+		achievementsCollection = Client.Database("App").Collection("Achievements")
+	}
+	return achievementsCollection
 }

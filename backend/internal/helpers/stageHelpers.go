@@ -8,11 +8,20 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
-func IsValidEnemy(enemyID bson.ObjectID) bool {
-	ctx := context.TODO()
-	enemiesCollection := database.Enemies()
+func IsValidEnemy(enemyID string) bool {
+	// Convert the string ID to bson.ObjectID
+	objID, err := bson.ObjectIDFromHex(enemyID)
+	if err != nil {
+		return false
+	}
 
-	var enemy struct{}
-	err := enemiesCollection.FindOne(ctx, bson.M{"_id": enemyID}).Decode(&enemy)
-	return err == nil
+	// Check if the enemy exists in the database
+	ctx := context.TODO()
+	filter := bson.M{"_id": objID}
+	count, err := database.Enemies().CountDocuments(ctx, filter)
+	if err != nil || count == 0 {
+		return false
+	}
+
+	return true
 }

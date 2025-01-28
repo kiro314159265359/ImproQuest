@@ -32,13 +32,6 @@ func CreateStage(c *gin.Context) {
 		return
 	}
 
-	// Check if enemy exists in the database
-	if !helpers.IsValidEnemy(enemyID) { // <--- Added validation check
-		logger.Errorf("Enemy does not exist: %s", enemyID.Hex())
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Enemy does not exist"})
-		return
-	}
-
 	// Bind JSON input
 	var stage models.Stage
 	if err := c.ShouldBindJSON(&stage); err != nil {
@@ -136,26 +129,41 @@ func UpdateStage(c *gin.Context) {
 		return
 	}
 
-	var updateData models.Stage
-	if err := c.ShouldBindJSON(&updateData); err != nil {
+	// Parse the request body as a map
+	var requestData map[string]interface{}
+	if err := c.ShouldBindJSON(&requestData); err != nil {
 		logger.Errorf("Invalid request body: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
 
-	// Ensure ID matches URL parameter
-	updateData.ID = stageObjID
+	// Convert enemy_id to ObjectID if present
+	if enemyID, exists := requestData["enemy_id"]; exists {
+		enemyIDStr, ok := enemyID.(string)
+		if !ok {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid enemy_id format"})
+			return
+		}
 
-	// Validate updated data
-	if err := validate.Struct(updateData); err != nil {
-		logger.Errorf("Validation failed: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+		enemyObjID, err := bson.ObjectIDFromHex(enemyIDStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid enemy_id"})
+			return
+		}
+		requestData["enemy_id"] = enemyObjID
 	}
 
-	if !helpers.IsValidEnemy(updateData.EnemyID) {
-		logger.Errorf("Invalid enemy ID: %v", updateData.EnemyID)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid enemy reference"})
+	// Remove empty updates (if a field is explicitly set to null, ignore it)
+	update := bson.M{}
+	for key, value := range requestData {
+		if value != nil {
+			update[key] = value
+		}
+	}
+
+	if len(update) == 0 {
+		logger.Error("No valid fields provided for update")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No valid update data provided"})
 		return
 	}
 
@@ -163,9 +171,9 @@ func UpdateStage(c *gin.Context) {
 	ctx := context.TODO()
 	stagesCollection := database.Stages()
 	filter := bson.M{"_id": stageObjID}
-	update := bson.M{"$set": updateData}
+	updateQuery := bson.M{"$set": update}
 
-	result, err := stagesCollection.UpdateOne(ctx, filter, update)
+	result, err := stagesCollection.UpdateOne(ctx, filter, updateQuery)
 	if err != nil {
 		logger.Errorf("Update failed: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update stage"})
@@ -177,7 +185,7 @@ func UpdateStage(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updateData)
+	c.JSON(http.StatusOK, gin.H{"updated_fields": update})
 }
 
 func DeleteStage(c *gin.Context) {
