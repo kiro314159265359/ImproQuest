@@ -53,6 +53,6 @@ func main() {
 	routes.QuestRoutes(router)
 	routes.ItemRoutes(router)
 	routes.StageRoutes(router)
-
+	routes.EnemiesRoutes(router)
 	router.Run(":" + port)
 }
