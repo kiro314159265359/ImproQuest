@@ -1,10 +1,10 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import '../../core/widget/custom_primary_button.dart';
-import '../../core/routes/routes.dart';
-import '../../core/theme/color_manger.dart';
-import '../../core/theme/text_style.dart';
-import '../../core/widget/custom_text_form_field.dart';
+import '../../../core/widget/custom_primary_button.dart';
+import '../../../core/routes/routes.dart';
+import '../../../core/theme/color_manger.dart';
+import '../../../core/theme/text_style.dart';
+import '../../../core/widget/custom_text_form_field.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -88,6 +88,7 @@ class _LoginState extends State<Login> {
                       Row(
                         children: [
                           Checkbox(
+                            activeColor: ColorManager.primaryColor,
                             value: value,
                             onChanged: (newValue) {
                               setState(() {
@@ -100,7 +101,7 @@ class _LoginState extends State<Login> {
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                              color: ColorManager.whiteColor,
                             ),
                           ),
                         ],
@@ -122,7 +123,7 @@ class _LoginState extends State<Login> {
                   ),
                   CustomPrimaryButton(
                     onPressed: () {
-                      Navigator.pushNamed(context, Routes.homepage);
+                      Navigator.pushNamed(context, Routes.appLayoutPage);
                     },
                     buttonText: "Login",
                     height: 45,
@@ -268,7 +269,9 @@ class _LoginState extends State<Login> {
                           ),
                           recognizer: TapGestureRecognizer()
                             ..onTap = () {
-                              Navigator.pushNamed(context, Routes.registerScreen);;
+                              Navigator.pushNamed(
+                                  context, Routes.registerScreen);
+                              ;
                             },
                         ),
                       ),
