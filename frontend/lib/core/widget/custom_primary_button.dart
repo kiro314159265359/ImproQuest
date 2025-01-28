@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import '../theme/color_manger.dart';
+import '../theme/text_style.dart';
 
 class CustomPrimaryButton extends StatefulWidget {
   final String buttonText;
   final Color? fillColor;
   final Color? cursorColor;
-  final VoidCallback  onPressed;
+  final VoidCallback onPressed;
   final double? width;
   final double? height;
 
@@ -36,13 +37,9 @@ class _CustomPrimaryButtonState extends State<CustomPrimaryButton> {
           ),
         ),
         onPressed: widget.onPressed,
-        child: Text(
-          widget.buttonText,
-          style: const TextStyle(
-            fontSize: 18,
-            color: Colors.white,
-          ),
-        ),
+        child: Text(widget.buttonText,
+            style: TextStyles.styleBold(context,
+                fontSize: 18, color: ColorManager.whiteColor)),
       ),
     );
   }

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../features/home/home.dart';
-import '../../features/auth/Login.dart';
-import '../../features/auth/register.dart';
+import 'package:flutter_application_2/features/app_layout/ui/app_layout.dart';
+import 'package:flutter_application_2/features/auth/ui/continue_register.dart';
+import '../../features/home/ui/home.dart';
+import '../../features/auth/ui/Login.dart';
+import '../../features/auth/ui/register.dart';
 import 'routes.dart';
 
 class AppRoutes {
@@ -12,10 +14,12 @@ class AppRoutes {
 
       case Routes.registerScreen:
         return MaterialPageRoute(builder: (_) => const Register());
-
+      case Routes.continueRegisterScreen:
+        return MaterialPageRoute(builder: (_) => const ContinueRegister());
       case Routes.loginScreen:
         return MaterialPageRoute(builder: (_) => const Login());
-
+      case Routes.appLayoutPage:
+        return MaterialPageRoute(builder: (_) => const AppLayout());
       case Routes.homepage:
         return MaterialPageRoute(builder: (_) => const Home());
       // case Routes.forgetPassword:
