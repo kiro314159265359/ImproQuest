@@ -36,4 +36,5 @@ type User struct {
 	AccumDistance float64         `json:"accum_distance" bson:"accum_distance" validate:"gte=0"`
 	Created_at    time.Time       `json:"created_at" bson:"Created_at" validate:"required"`
 	Updated_at    time.Time       `json:"updated_at" bson:"Updated_at" validate:"required,gtefield=Created_at"`
+	Items         []Item          `bson:"items"`
 }
