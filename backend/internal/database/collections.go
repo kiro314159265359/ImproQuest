@@ -5,7 +5,9 @@ import (
 )
 
 var (
-	usersCollection *mongo.Collection
+	usersCollection  *mongo.Collection
+	questsCollection *mongo.Collection
+	itemsCollection  *mongo.Collection
 )
 
 func Users() *mongo.Collection {
@@ -16,4 +18,25 @@ func Users() *mongo.Collection {
 		usersCollection = Client.Database("App").Collection("Users")
 	}
 	return usersCollection
+}
+
+func Quests() *mongo.Collection {
+	if Client == nil {
+		panic("database client not initialized")
+	}
+	if questsCollection == nil {
+		questsCollection = Client.Database("App").Collection("Quests")
+	}
+	return questsCollection
+}
+
+func Items() *mongo.Collection {
+	if Client == nil {
+		panic("database client not initialized")
+	}
+
+	if itemsCollection == nil {
+		itemsCollection = Client.Database("App").Collection("Items")
+	}
+	return itemsCollection
 }

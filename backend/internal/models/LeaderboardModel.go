@@ -6,14 +6,14 @@ import (
 )
 
 type Leaderboard struct {
-	ID        bson.ObjectID      `bson:"_id,omitempty" validate:"required"`
-	Entries   []LeaderboardEntry `bson:"entries" validate:"dive"`
-	UpdatedAt time.Time          `bson:"updated_at" validate:"required"`
+	ID        bson.ObjectID      `json:"_id,omitempty" bson:"_id,omitempty" validate:"required"`
+	Entries   []LeaderboardEntry `json:"entries" bson:"entries" validate:"dive"`
+	UpdatedAt time.Time          `json:"updated_at" bson:"updated_at" validate:"required"`
 }
 
 type LeaderboardEntry struct {
-	UserID bson.ObjectID `bson:"user_id" validate:"required"`
-	XP     float64       `bson:"xp" validate:"required,gte=0"`
-	Level  int           `bson:"level" validate:"required,gte=1"`
-	Rank   int           `bson:"rank" validate:"required,gte=1"`
+	UserID bson.ObjectID `json:"user_id" bson:"user_id" validate:"required"`
+	XP     float64       `json:"xp" bson:"xp" validate:"required,gte=0"`
+	Level  int           `json:"level" bson:"level" validate:"required,gte=1"`
+	Rank   int           `json:"rank" bson:"rank" validate:"required,gte=1"`
 }

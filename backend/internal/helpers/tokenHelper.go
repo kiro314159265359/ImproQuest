@@ -9,39 +9,39 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"go.mongodb.org/mongo-driver/v2/bson"
-	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 
-	logger "github.com/HarDizzeR/Project/backend/internal/logger"
 	database "github.com/HarDizzeR/Project/backend/internal/database"
+	logger "github.com/HarDizzeR/Project/backend/internal/logger"
 )
 
 // Token claims structures
 type AccessClaims struct {
-	UserID   string `json:"uid"`
+	UserID   string `json:"id"`
 	UserType string `json:"userType"`
 	jwt.RegisteredClaims
 }
 
 type RefreshClaims struct {
-	UserID string `json:"uid"`
+	UserID string `json:"id"`
 	jwt.RegisteredClaims
 }
 
 var (
-	accessSecretKey     []byte
-	refreshSecretKey    []byte
-	accessTokenExpiry   = 15 * time.Minute
-	refreshTokenExpiry  = 7 * 24 * time.Hour
-	userCollection	  *mongo.Collection = database.Users()
+	accessSecretKey    []byte
+	refreshSecretKey   []byte
+	accessTokenExpiry                    = 15 * time.Minute
+	refreshTokenExpiry                   = 7 * 24 * time.Hour
+	userCollection     *mongo.Collection = database.Users()
 )
 
 func InitSecurityConfig() error {
-	
+
 	if database.Client == nil {
-        return errors.New("database client not initialized")
-    }
-    
+		return errors.New("database client not initialized")
+	}
+
 	accessSecretKey = []byte(os.Getenv("ACCESS_SECRET_KEY"))
 	refreshSecretKey = []byte(os.Getenv("REFRESH_SECRET_KEY"))
 

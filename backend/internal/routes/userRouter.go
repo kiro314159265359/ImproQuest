@@ -10,10 +10,13 @@ func UserRoutes(incomingRoutes *gin.Engine) {
 
 	users := incomingRoutes.Group("/users")
 
+	users.GET("/logout", controllers.Logout())
+
 	users.Use(middleware.Authenticate())
 
 	users.GET("/", controllers.GetUsers())
 	users.GET("/:id", controllers.GetUser())
 	users.DELETE("/:id", controllers.DeleteUser())
 	users.PATCH("/:id", controllers.UpdateUser())
+	users.PUT("/quests", controllers.AssignRandomQuests())
 }
