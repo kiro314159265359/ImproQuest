@@ -127,59 +127,6 @@ func GetStageByID(c *gin.Context) {
 	c.JSON(http.StatusOK, stage)
 }
 
-func UpdateStage(c *gin.Context) {
-	stageIDParam := c.Param("stageId")
-	stageObjID, err := bson.ObjectIDFromHex(stageIDParam)
-	if err != nil {
-		logger.Errorf("Invalid stage ID format: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid stage ID"})
-		return
-	}
-
-	var updateData models.Stage
-	if err := c.ShouldBindJSON(&updateData); err != nil {
-		logger.Errorf("Invalid request body: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
-		return
-	}
-
-	// Ensure ID matches URL parameter
-	updateData.ID = stageObjID
-
-	// Validate updated data
-	if err := validate.Struct(updateData); err != nil {
-		logger.Errorf("Validation failed: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	if !helpers.IsValidEnemy(updateData.EnemyID) {
-		logger.Errorf("Invalid enemy ID: %v", updateData.EnemyID)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid enemy reference"})
-		return
-	}
-
-	// Perform update
-	ctx := context.TODO()
-	stagesCollection := database.Stages()
-	filter := bson.M{"_id": stageObjID}
-	update := bson.M{"$set": updateData}
-
-	result, err := stagesCollection.UpdateOne(ctx, filter, update)
-	if err != nil {
-		logger.Errorf("Update failed: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update stage"})
-		return
-	}
-
-	if result.MatchedCount == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Stage not found"})
-		return
-	}
-
-	c.JSON(http.StatusOK, updateData)
-}
-
 func DeleteStage(c *gin.Context) {
 	stageIDParam := c.Param("stageId")
 	stageObjID, err := bson.ObjectIDFromHex(stageIDParam)
