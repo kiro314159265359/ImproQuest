@@ -54,5 +54,6 @@ func main() {
 	routes.ItemRoutes(router)
 	routes.StageRoutes(router)
 	routes.EnemiesRoutes(router)
+	routes.AchievementRoutes(router)
 	router.Run(":" + port)
 }
