@@ -165,6 +165,7 @@ func CreateItem(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, item)
 }
+
 func UpdateItem(c *gin.Context) {
 	// Verify admin privileges
 	if err := helpers.CheckUserType(c, "Admin"); err != nil {
@@ -217,4 +218,107 @@ func UpdateItem(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, updateData)
+}
+func GetAllItems(c *gin.Context) {
+	// Verify admin privileges
+	if err := helpers.CheckUserType(c, "Admin"); err != nil {
+		logger.Warn("Unauthorized access attempt to get all items")
+		c.JSON(http.StatusForbidden, gin.H{"error": "Unauthorized access"})
+		return
+	}
+
+	ctx := context.TODO()
+	itemsCollection := database.Items()
+
+	// Find all items
+	cursor, err := itemsCollection.Find(ctx, bson.M{})
+	if err != nil {
+		logger.Errorf("Failed to fetch items: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve items"})
+		return
+	}
+	defer cursor.Close(ctx)
+
+	var items []models.Item
+	if err = cursor.All(ctx, &items); err != nil {
+		logger.Errorf("Failed to decode items: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to process items"})
+		return
+	}
+
+	if len(items) == 0 {
+		c.JSON(http.StatusOK, gin.H{"message": "No items found", "data": []interface{}{}})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": items})
+}
+
+func GetItemById(c *gin.Context) {
+	// Verify admin privileges
+	if err := helpers.CheckUserType(c, "Admin"); err != nil {
+		logger.Warn("Unauthorized access attempt to get item")
+		c.JSON(http.StatusForbidden, gin.H{"error": "Unauthorized access"})
+		return
+	}
+
+	itemIDParam := c.Param("itemId")
+	itemObjID, err := bson.ObjectIDFromHex(itemIDParam)
+	if err != nil {
+		logger.Errorf("Invalid item ID format: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid item ID"})
+		return
+	}
+
+	ctx := context.TODO()
+	itemsCollection := database.Items()
+
+	var item models.Item
+	err = itemsCollection.FindOne(ctx, bson.M{"_id": itemObjID}).Decode(&item)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Item not found"})
+			return
+		}
+		logger.Errorf("Database error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve item"})
+		return
+	}
+
+	c.JSON(http.StatusOK, item)
+}
+
+func DeleteItem(c *gin.Context) {
+	// Verify admin privileges
+	if err := helpers.CheckUserType(c, "Admin"); err != nil {
+		logger.Warn("Unauthorized delete attempt")
+		c.JSON(http.StatusForbidden, gin.H{"error": "Unauthorized access"})
+		return
+	}
+
+	itemIDParam := c.Param("itemId")
+	itemObjID, err := bson.ObjectIDFromHex(itemIDParam)
+	if err != nil {
+		logger.Errorf("Invalid item ID format: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid item ID"})
+		return
+	}
+
+	ctx := context.TODO()
+	itemsCollection := database.Items()
+
+	// Delete item
+	result, err := itemsCollection.DeleteOne(ctx, bson.M{"_id": itemObjID})
+	if err != nil {
+		logger.Errorf("Failed to delete item: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete item"})
+		return
+	}
+
+	if result.DeletedCount == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Item not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Item deleted successfully"})
 }

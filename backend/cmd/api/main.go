@@ -52,5 +52,7 @@ func main() {
 	routes.UserRoutes(router)
 	routes.QuestRoutes(router)
 	routes.ItemRoutes(router)
+	routes.StageRoutes(router)
+
 	router.Run(":" + port)
 }

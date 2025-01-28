@@ -10,10 +10,14 @@ func ItemRoutes(router *gin.Engine) {
 	items := router.Group("/items")
 	items.Use(middleware.Authenticate())
 
-	items.POST("/Create", controllers.CreateItem)
+	items.GET("/", controllers.GetAllItems)
+	items.GET("/:itemId", controllers.GetItemById)
+
 	items.PUT("/Update/:itemId", controllers.UpdateItem)
 
+	items.POST("/Create", controllers.CreateItem)
 	items.POST("/:itemId/add", controllers.AddItem)
-	items.DELETE("/:itemId/remove", controllers.RemoveItem)
 
+	items.DELETE("/:itemId/remove", controllers.RemoveItem)
+	items.DELETE("/:itemId/delete", controllers.DeleteItem)
 }
