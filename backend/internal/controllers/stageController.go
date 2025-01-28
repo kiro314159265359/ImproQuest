@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -15,6 +16,30 @@ import (
 )
 
 func CreateStage(c *gin.Context) {
+	// Verify admin privileges
+	err := helpers.CheckUserType(c, "Admin")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Get enemy_id from URL parameters
+	enemyIDParam := c.Param("enemy_id")
+	enemyID, err := bson.ObjectIDFromHex(enemyIDParam)
+	if err != nil {
+		logger.Errorf("Invalid enemy_id format: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid enemy ID format"})
+		return
+	}
+
+	// Check if enemy exists in the database
+	if !helpers.IsValidEnemy(enemyID) { // <--- Added validation check
+		logger.Errorf("Enemy does not exist: %s", enemyID.Hex())
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Enemy does not exist"})
+		return
+	}
+
+	// Bind JSON input
 	var stage models.Stage
 	if err := c.ShouldBindJSON(&stage); err != nil {
 		logger.Errorf("Invalid request body: %v", err)
@@ -22,16 +47,13 @@ func CreateStage(c *gin.Context) {
 		return
 	}
 
-	if !helpers.IsValidEnemy(stage.EnemyID) {
-		logger.Errorf("Invalid enemy ID: %v", stage.EnemyID)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid enemy reference"})
-		return
-	}
-
-	// Generate new ID and validate
+	// Force EnemyID from URL parameter and generate new Stage ID
+	stage.EnemyID = enemyID
 	stage.ID = bson.NewObjectID()
+
+	// Validate the stage struct
 	if err := validate.Struct(stage); err != nil {
-		logger.Errorf("Validation failed: %v", err)
+		logger.Errorf("Validation error: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -39,10 +61,12 @@ func CreateStage(c *gin.Context) {
 	// Insert into database
 	ctx := context.TODO()
 	stagesCollection := database.Stages()
-	_, err := stagesCollection.InsertOne(ctx, stage)
+	_, err = stagesCollection.InsertOne(ctx, stage)
 	if err != nil {
-		logger.Errorf("Failed to create stage: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create stage"})
+		logger.Errorf("Database error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": fmt.Sprintf("Database operation failed: %v", err),
+		})
 		return
 	}
 

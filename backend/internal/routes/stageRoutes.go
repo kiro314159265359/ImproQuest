@@ -8,9 +8,9 @@ import (
 )
 
 func StageRoutes(router *gin.Engine) {
-	adminRoutes := router.Group("/Stages")
+	adminRoutes := router.Group("/stages")
 	adminRoutes.Use(middleware.Authenticate())
-	adminRoutes.POST("/", controllers.CreateStage)
+	adminRoutes.POST("/create/:enemy_id", controllers.CreateStage)
 
 	adminRoutes.GET("/", controllers.GetAllStages)
 	adminRoutes.GET("/:stageId", controllers.GetStageByID)

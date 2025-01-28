@@ -7,7 +7,7 @@ import (
 )
 
 func EnemiesRoutes(router *gin.Engine) {
-	adminRoutes := router.Group("/Enemies")
+	adminRoutes := router.Group("/enemies")
 	adminRoutes.Use(middleware.Authenticate())
 
 	adminRoutes.POST("/create", controllers.CreateEnemy)
