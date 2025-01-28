@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../../core/routes/routes.dart';
-import '../../../core/theme/color_manger.dart';
-import '../../../core/theme/text_style.dart';
-import '../../../core/widget/custom_primary_button.dart';
-import '../../../core/widget/custom_text_form_field.dart';
+import '../../../../core/routes/routes.dart';
+import '../../../../core/theme/color_manger.dart';
+import '../../../../core/theme/text_style.dart';
+import '../../../../core/widget/custom_primary_button.dart';
+import '../../../../core/widget/custom_text_form_field.dart';
 
 class Register extends StatefulWidget {
   const Register({super.key});

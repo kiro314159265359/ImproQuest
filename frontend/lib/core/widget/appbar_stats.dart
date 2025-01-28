@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_2/features/home/ui/widgets/custom_rich_text.dart';
+import 'package:flutter_application_2/features/home/views/widgets/custom_rich_text.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
 
 import '../theme/color_manger.dart';

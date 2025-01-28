@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_2/core/widget/appbar_stats.dart';
-import 'package:flutter_application_2/features/home/ui/widgets/custom_quest_card.dart';
-import 'package:flutter_application_2/features/home/ui/widgets/custom_rich_text.dart';
+import 'package:flutter_application_2/features/home/views/widgets/custom_quest_card.dart';
+import 'package:flutter_application_2/features/home/views/widgets/custom_rich_text.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'dart:math' as math;
 import '../../../core/theme/color_manger.dart';

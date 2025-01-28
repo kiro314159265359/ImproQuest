@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_2/features/app_layout/ui/app_layout.dart';
-import 'package:flutter_application_2/features/auth/ui/continue_register.dart';
-import '../../features/home/ui/home.dart';
-import '../../features/auth/ui/Login.dart';
-import '../../features/auth/ui/register.dart';
+import 'package:flutter_application_2/features/app_layout/views/app_layout.dart';
+import 'package:flutter_application_2/features/auth/presentation/views/continue_register.dart';
+import '../../features/home/views/home.dart';
+import '../../features/auth/presentation/views/Login.dart';
+import '../../features/auth/presentation/views/register.dart';
 import 'routes.dart';
 
 class AppRoutes {

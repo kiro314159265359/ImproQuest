@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/color_manger.dart';
-import '../../logic/cubit/app_layout_cubit.dart';
+import '../../manager/cubit/app_layout_cubit.dart';
 
 class CustomBarIcon extends StatelessWidget {
   final AppLayoutCubit cubit;

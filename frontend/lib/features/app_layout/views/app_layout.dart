@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_2/features/app_layout/ui/widgets/custom_bar_icon.dart';
+import 'package:flutter_application_2/features/app_layout/views/widgets/custom_bar_icon.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'dart:math' as math;
 import '../../../core/theme/color_manger.dart';
 import '../../../core/utils/app_icons.dart';
-import '../logic/cubit/app_layout_cubit.dart';
-import '../logic/cubit/app_layout_state.dart';
+import '../manager/cubit/app_layout_cubit.dart';
+import '../manager/cubit/app_layout_state.dart';
 
 class AppLayout extends StatelessWidget {
   const AppLayout({super.key});
