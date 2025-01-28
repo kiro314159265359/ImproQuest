@@ -32,13 +32,6 @@ func CreateStage(c *gin.Context) {
 		return
 	}
 
-	// Check if enemy exists in the database
-	if !helpers.IsValidEnemy(enemyID) { // <--- Added validation check
-		logger.Errorf("Enemy does not exist: %s", enemyID.Hex())
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Enemy does not exist"})
-		return
-	}
-
 	// Bind JSON input
 	var stage models.Stage
 	if err := c.ShouldBindJSON(&stage); err != nil {
@@ -125,6 +118,74 @@ func GetStageByID(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, stage)
+}
+
+func UpdateStage(c *gin.Context) {
+	stageIDParam := c.Param("stageId")
+	stageObjID, err := bson.ObjectIDFromHex(stageIDParam)
+	if err != nil {
+		logger.Errorf("Invalid stage ID format: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid stage ID"})
+		return
+	}
+
+	// Parse the request body as a map
+	var requestData map[string]interface{}
+	if err := c.ShouldBindJSON(&requestData); err != nil {
+		logger.Errorf("Invalid request body: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		return
+	}
+
+	// Convert enemy_id to ObjectID if present
+	if enemyID, exists := requestData["enemy_id"]; exists {
+		enemyIDStr, ok := enemyID.(string)
+		if !ok {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid enemy_id format"})
+			return
+		}
+
+		enemyObjID, err := bson.ObjectIDFromHex(enemyIDStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid enemy_id"})
+			return
+		}
+		requestData["enemy_id"] = enemyObjID
+	}
+
+	// Remove empty updates (if a field is explicitly set to null, ignore it)
+	update := bson.M{}
+	for key, value := range requestData {
+		if value != nil {
+			update[key] = value
+		}
+	}
+
+	if len(update) == 0 {
+		logger.Error("No valid fields provided for update")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No valid update data provided"})
+		return
+	}
+
+	// Perform update
+	ctx := context.TODO()
+	stagesCollection := database.Stages()
+	filter := bson.M{"_id": stageObjID}
+	updateQuery := bson.M{"$set": update}
+
+	result, err := stagesCollection.UpdateOne(ctx, filter, updateQuery)
+	if err != nil {
+		logger.Errorf("Update failed: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update stage"})
+		return
+	}
+
+	if result.MatchedCount == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Stage not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"updated_fields": update})
 }
 
 func DeleteStage(c *gin.Context) {
