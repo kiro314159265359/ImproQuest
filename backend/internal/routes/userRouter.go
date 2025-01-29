@@ -19,4 +19,8 @@ func UserRoutes(incomingRoutes *gin.Engine) {
 	users.DELETE("/:id", controllers.DeleteUser())
 	users.PATCH("/:id", controllers.UpdateUser())
 	users.PUT("/quests", controllers.AssignRandomQuests())
+
+	// user routes
+	users.POST("/add/:achievement_id", controllers.AddAchievement)
+	users.DELETE("/remove/:achievement_id", controllers.RemoveAchievement)
 }
