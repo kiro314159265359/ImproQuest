@@ -202,7 +202,7 @@ func AddGear(c *gin.Context) {
 
 func RemoveGear(c *gin.Context) {
 	// Get authenticated user ID from context
-	userID, exists := c.Get("userID")
+	userID, exists := c.Get("id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User authentication required"})
 		return

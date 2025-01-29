@@ -22,4 +22,6 @@ func UserRoutes(incomingRoutes *gin.Engine) {
 
 	users.POST("/add/:achievement_id", controllers.AddAchievement)
 	users.DELETE("/remove/:achievement_id", controllers.RemoveAchievement)
+
+	users.DELETE("/:id", controllers.DeleteInventoryByUserID)
 }
