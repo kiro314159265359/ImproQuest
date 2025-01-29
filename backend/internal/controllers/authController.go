@@ -54,11 +54,12 @@ type LoginRequest struct {
 }
 
 type UserResponse struct {
-	ID        bson.ObjectID `json:"id"`
-	Email     string        `json:"email"`
-	Username  string        `json:"username"`
-	UserType  string        `json:"user_type"`
-	CreatedAt time.Time     `json:"created_at"`
+	ID          bson.ObjectID `json:"id"`
+	Email       string        `json:"email"`
+	Username    string        `json:"username"`
+	UserType    string        `json:"user_type"`
+	InventoryID bson.ObjectID `json:"inventory_id"`
+	CreatedAt   time.Time     `json:"created_at"`
 }
 
 func Signup() gin.HandlerFunc {
@@ -106,15 +107,18 @@ func Signup() gin.HandlerFunc {
 			return
 		}
 
+		inventoryID := bson.NewObjectID()
+
 		user := models.User{
-			Email:      &req.Email,
-			Password:   &hashedPassword,
-			Username:   req.Username,
-			BirthDate:  req.BirthDate,
-			UserType:   req.UserType,
-			Created_at: time.Now(),
-			Updated_at: time.Now(),
-			ID:         bson.NewObjectID(),
+			Email:       &req.Email,
+			Password:    &hashedPassword,
+			Username:    req.Username,
+			BirthDate:   req.BirthDate,
+			UserType:    req.UserType,
+			InventoryID: inventoryID,
+			Created_at:  time.Now(),
+			Updated_at:  time.Now(),
+			ID:          bson.NewObjectID(),
 		}
 
 		access, refresh, err := helpers.GenerateAllTokens(user.ID.Hex(), *user.UserType)
@@ -134,11 +138,12 @@ func Signup() gin.HandlerFunc {
 
 		helpers.SetAuthCookies(c, access, refresh)
 		c.JSON(http.StatusCreated, UserResponse{
-			ID:        user.ID,
-			Email:     *user.Email,
-			Username:  *user.Username,
-			UserType:  *user.UserType,
-			CreatedAt: user.Created_at,
+			ID:          user.ID,
+			Email:       *user.Email,
+			Username:    *user.Username,
+			UserType:    *user.UserType,
+			InventoryID: user.InventoryID,
+			CreatedAt:   user.Created_at,
 		})
 	}
 }

@@ -20,7 +20,6 @@ func UserRoutes(incomingRoutes *gin.Engine) {
 	users.PATCH("/:id", controllers.UpdateUser())
 	users.PUT("/quests", controllers.AssignRandomQuests())
 
-	// user routes
 	users.POST("/add/:achievement_id", controllers.AddAchievement)
 	users.DELETE("/remove/:achievement_id", controllers.RemoveAchievement)
 }
