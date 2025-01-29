@@ -11,6 +11,7 @@ var (
 	stagesCollection       *mongo.Collection
 	enemiesCollection      *mongo.Collection
 	achievementsCollection *mongo.Collection
+	inventoriesCollection  *mongo.Collection
 )
 
 func Users() *mongo.Collection {
@@ -72,4 +73,14 @@ func Achievements() *mongo.Collection {
 		achievementsCollection = Client.Database("App").Collection("Achievements")
 	}
 	return achievementsCollection
+}
+
+func Inventories() *mongo.Collection {
+	if Client == nil {
+		panic("database client not initialized")
+	}
+	if inventoriesCollection == nil {
+		inventoriesCollection = Client.Database("App").Collection("Inventories")
+	}
+	return inventoriesCollection
 }
