@@ -12,6 +12,7 @@ var (
 	enemiesCollection      *mongo.Collection
 	achievementsCollection *mongo.Collection
 	inventoriesCollection  *mongo.Collection
+	gearsCollection        *mongo.Collection
 )
 
 func Users() *mongo.Collection {
@@ -83,4 +84,14 @@ func Inventories() *mongo.Collection {
 		inventoriesCollection = Client.Database("App").Collection("Inventories")
 	}
 	return inventoriesCollection
+}
+
+func Gears() *mongo.Collection {
+	if Client == nil {
+		panic("database client not initialized")
+	}
+	if gearsCollection == nil {
+		gearsCollection = Client.Database("App").Collection("Gears")
+	}
+	return gearsCollection
 }
