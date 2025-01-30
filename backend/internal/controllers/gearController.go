@@ -1,9 +1,11 @@
 package controllers
 
 import (
+	"context"
 	"log"
 	"net/http"
 
+	"github.com/HarDizzeR/Project/backend/internal/helpers"
 	"github.com/HarDizzeR/Project/backend/internal/models"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -11,6 +13,14 @@ import (
 
 	"github.com/HarDizzeR/Project/backend/internal/database"
 )
+
+type GearUpdate struct {
+	Name          *string       `json:"name,omitempty" bson:"name,omitempty" validate:"omitempty,min=1,max=100"`
+	Type          *string       `json:"type,omitempty" bson:"type,omitempty" validate:"omitempty,oneof=helmet chestplate leggings boots"`
+	StatBonuses   *models.Stats `json:"stat_bonuses,omitempty" bson:"stat_bonuses,omitempty"`
+	Price         *float64      `json:"price,omitempty" bson:"price,omitempty" validate:"omitempty,gte=0"`
+	LevelRequired *int          `json:"level_required,omitempty" bson:"level_required,omitempty" validate:"omitempty,gte=1"`
+}
 
 func CreateGear(c *gin.Context) {
 	var gear models.Gear
@@ -114,6 +124,94 @@ func GetGearByID(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gear)
+}
+
+func UpdateGear(c *gin.Context) {
+	// 1. Authorization check
+	if err := helpers.CheckUserType(c, "Admin"); err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": "unauthorized access"})
+		return
+	}
+
+	// 2. Get and validate ID
+	gearID := c.Param("id")
+	objID, err := bson.ObjectIDFromHex(gearID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid gear ID"})
+		return
+	}
+
+	// 3. Bind to update-specific struct
+	var updateData GearUpdate
+	if err := c.ShouldBindJSON(&updateData); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+		return
+	}
+
+	// 4. Validate only provided fields
+	if err := validate.StructPartial(updateData); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// 5. Build update document
+	update := bson.M{"$set": bson.M{}}
+	setValues := update["$set"].(bson.M)
+
+	// Handle pointer fields
+	if updateData.Name != nil {
+		setValues["name"] = *updateData.Name
+	}
+	if updateData.Type != nil {
+		setValues["type"] = *updateData.Type
+	}
+	if updateData.Price != nil {
+		setValues["price"] = *updateData.Price
+	}
+	if updateData.LevelRequired != nil {
+		setValues["level_required"] = *updateData.LevelRequired
+	}
+
+	// Handle nested stats
+	if updateData.StatBonuses != nil {
+		stats := *updateData.StatBonuses
+		if stats.Vitality != nil && *stats.Vitality > 0 {
+			setValues["stat_bonuses.vitality"] = *stats.Vitality
+		}
+		if stats.Strength != nil && *stats.Strength > 0 {
+			setValues["stat_bonuses.strength"] = *stats.Strength
+		}
+		// Add similar checks for other stats
+	}
+
+	// 6. Check for empty update
+	if len(setValues) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "no fields to update"})
+		return
+	}
+
+	// 7. Database operation
+	gearCollection := database.Gears()
+	result, err := gearCollection.UpdateOne(
+		context.Background(),
+		bson.M{"_id": objID},
+		update,
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "database operation failed"})
+		return
+	}
+
+	// 8. Check if document was actually found
+	if result.MatchedCount == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "gear not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"updated": result.ModifiedCount,
+	})
 }
 
 func DeleteGear(c *gin.Context) {

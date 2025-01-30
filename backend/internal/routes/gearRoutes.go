@@ -15,7 +15,7 @@ func GearRoutes(incomingRoutes *gin.Engine) {
 	gears.GET("/", controllers.GetAllGears)
 	gears.GET("/:id", controllers.GetGearByID)
 	gears.DELETE("/:id", controllers.DeleteGear)
-
+	gears.PATCH("/:id", controllers.UpdateGear)
 	// user routes here
 	gears.POST("/add/:id", controllers.AddGear)
 	gears.DELETE("/remove/:id", controllers.RemoveGear)
