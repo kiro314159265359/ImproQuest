@@ -15,8 +15,5 @@ func AchievementRoutes(router *gin.Engine) {
 	achievements.GET("/:id", controllers.GetAchievementByID)
 	achievements.PUT("/:id", controllers.UpdateAchievement)
 	achievements.DELETE("/:id", controllers.DeleteAchievement)
-	// user routes
-	achievements.POST("/add/:achievement_id", controllers.AddAchievement)
-	achievements.DELETE("/remove/:achievement_id", controllers.RemoveAchievement)
 
 }

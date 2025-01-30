@@ -14,120 +14,113 @@ import (
 	"github.com/HarDizzeR/Project/backend/internal/models"
 )
 
-func AddItem(c *gin.Context) {
-	userID := c.GetString("id")
-	itemIDParam := c.Param("itemId")
-
-	// Convert IDs to ObjectIDs (existing code remains same)
-	userObjID, err := bson.ObjectIDFromHex(userID)
+func AddItemToInventory(c *gin.Context) {
+	// Get user ID from context
+	userIDStr := c.GetString("id")
+	userID, err := bson.ObjectIDFromHex(userIDStr)
 	if err != nil {
-		// ... error handling
-	}
-
-	itemObjID, err := bson.ObjectIDFromHex(itemIDParam)
-	if err != nil {
-		// ... error handling
-	}
-
-	// Get full item details (existing code remains same)
-	ctx := context.TODO()
-	var item models.Item
-	itemsCollection := database.Items()
-	err = itemsCollection.FindOne(ctx, bson.M{"_id": itemObjID}).Decode(&item)
-	if err != nil {
-		// ... error handling
-	}
-
-	// Atomic update to add item only if not exists
-	filter := bson.M{
-		"_id":       userObjID,
-		"items._id": bson.M{"$ne": itemObjID}, // Check if item not already exists
-	}
-
-	update := bson.M{
-		"$push": bson.M{
-			"items": item, // Push full item document
-		},
-	}
-
-	result, err := userCollection.UpdateOne(ctx, filter, update)
-	if err != nil {
-		logger.Errorf("Failed to update user: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add item"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID format"})
 		return
 	}
 
-	// Handle different cases
-	if result.MatchedCount == 0 {
-		// Check if user exists
-		var user models.User
-		err := userCollection.FindOne(ctx, bson.M{"_id": userObjID}).Decode(&user)
-		if err != nil {
-			if err == mongo.ErrNoDocuments {
-				logger.Errorf("User not found: %v", userObjID)
-				c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
-				return
-			}
-			logger.Errorf("Database error: %v", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal error"})
-			return
-		}
+	// Get item ID from request params
+	itemIDStr := c.Param("itemId")
+	itemID, err := bson.ObjectIDFromHex(itemIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid item ID format"})
+		return
+	}
 
-		// User exists but item already in inventory
-		c.JSON(http.StatusOK, gin.H{"message": "Item already exists in inventory"})
+	// Find and update inventory
+	collection := database.Inventories()
+	filter := bson.M{"user_id": userID}
+
+	update := bson.M{
+		"$push": bson.M{"items": itemID},
+		"$inc":  bson.M{"size": 1}, // Optional: if you want to track inventory size
+	}
+
+	result, err := collection.UpdateOne(
+		context.Background(),
+		filter,
+		update,
+	)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "database operation failed"})
+		return
+	}
+
+	if result.MatchedCount == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "inventory not found for user"})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Item added successfully",
-		"item":    item,
+		"status":        "success",
+		"modifiedCount": result.ModifiedCount,
 	})
 }
 
-func RemoveItem(c *gin.Context) {
+func RemoveItemFromInventory(c *gin.Context) {
 	// Get user ID from context
-	userID := c.GetString("id")
-	itemIDParam := c.Param("itemId")
-
-	// Convert userID to ObjectID
-	userObjID, err := bson.ObjectIDFromHex(userID)
+	userIDStr := c.GetString("id")
+	userID, err := bson.ObjectIDFromHex(userIDStr)
 	if err != nil {
-		logger.Errorf("Invalid user ID format: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID format"})
 		return
 	}
 
-	// Convert itemID from URL parameter to ObjectID
-	itemObjID, err := bson.ObjectIDFromHex(itemIDParam)
+	// Get item ID from request params
+	itemIDStr := c.Param("itemId")
+	itemID, err := bson.ObjectIDFromHex(itemIDStr)
 	if err != nil {
-		logger.Errorf("Invalid item ID format: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid item ID format"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid item ID format"})
 		return
 	}
 
-	// Update user's items array to remove the item
-	filter := bson.M{"_id": userObjID}
-	update := bson.M{"$pull": bson.M{"items": itemObjID}}
+	// Check if the item exists in the items collection
+	itemsCollection := database.Items()
+	itemFilter := bson.M{"_id": itemID}
+	itemResult := itemsCollection.FindOne(context.Background(), itemFilter)
+	if itemResult.Err() != nil {
+		if itemResult.Err() == mongo.ErrNoDocuments {
+			c.JSON(http.StatusNotFound, gin.H{"error": "item does not exist"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "database error"})
+		return
+	}
 
-	result, err := userCollection.UpdateOne(context.TODO(), filter, update)
+	// Find and update inventory
+	inventoryCollection := database.Inventories()
+	inventoryFilter := bson.M{"user_id": userID, "items": itemID} // Ensure the item exists in the user's inventory
+
+	update := bson.M{
+		"$pull": bson.M{"items": itemID}, // Remove the item from the array
+		"$inc":  bson.M{"size": -1},      // Decrement the size (optional)
+	}
+
+	result, err := inventoryCollection.UpdateOne(
+		context.Background(),
+		inventoryFilter,
+		update,
+	)
+
 	if err != nil {
-		logger.Errorf("Failed to update user: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to remove item from user"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "database operation failed"})
 		return
 	}
 
 	if result.MatchedCount == 0 {
-		logger.Errorf("User not found: %v", userObjID)
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "item not found in user's inventory"})
 		return
 	}
 
-	if result.ModifiedCount == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Item not found in user's collection"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "Item removed successfully"})
+	c.JSON(http.StatusOK, gin.H{
+		"status":        "success",
+		"modifiedCount": result.ModifiedCount,
+	})
 }
 
 func CreateItem(c *gin.Context) {
@@ -219,6 +212,7 @@ func UpdateItem(c *gin.Context) {
 
 	c.JSON(http.StatusOK, updateData)
 }
+
 func GetAllItems(c *gin.Context) {
 	// Verify admin privileges
 	if err := helpers.CheckUserType(c, "Admin"); err != nil {
@@ -296,6 +290,7 @@ func DeleteItem(c *gin.Context) {
 		return
 	}
 
+	// Parse item ID from the request
 	itemIDParam := c.Param("itemId")
 	itemObjID, err := bson.ObjectIDFromHex(itemIDParam)
 	if err != nil {
@@ -304,10 +299,10 @@ func DeleteItem(c *gin.Context) {
 		return
 	}
 
-	ctx := context.TODO()
+	ctx := c.Request.Context()
 	itemsCollection := database.Items()
 
-	// Delete item
+	// Delete the item
 	result, err := itemsCollection.DeleteOne(ctx, bson.M{"_id": itemObjID})
 	if err != nil {
 		logger.Errorf("Failed to delete item: %v", err)
@@ -320,5 +315,22 @@ func DeleteItem(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Item deleted successfully"})
+	// Remove the item from all related collections (e.g., user inventories or orders)
+	inventoryCollection := database.Inventories()
+	_, err = inventoryCollection.UpdateMany(
+		ctx,
+		bson.M{"items": itemObjID}, // Find documents containing this item
+		bson.M{"$pull": bson.M{"items": itemObjID}}, // Remove the item from the array
+	)
+	if err != nil {
+		logger.Errorf("Item deleted but failed to remove from inventories: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Item deleted but failed to remove from inventories",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Item deleted and removed from all inventories",
+	})
 }

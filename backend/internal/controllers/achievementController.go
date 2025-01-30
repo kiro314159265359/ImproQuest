@@ -224,25 +224,35 @@ func AddAchievement(c *gin.Context) {
 		return
 	}
 
-	// Update the user's Achievements array to include the new achievement ID
+	filter := bson.M{"_id": userObjID, "achievements": achievementID}
+	count, err := userCollection.CountDocuments(ctx, filter)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error", "msg": err.Error()})
+		return
+	}
+	if count > 0 {
+		c.JSON(http.StatusConflict, gin.H{"error": "Achievement already exists for this user"})
+		return
+	}
+
 	userCollection := database.Users()
-	update := bson.M{
-		"$set": bson.M{
-			"achievements": bson.M{
-				"$cond": bson.M{
-					"if":   bson.M{"$isArray": "$achievements"},
-					"then": bson.M{"$concatArrays": bson.A{"$achievements", bson.A{achievementID}}},
-					"else": bson.A{achievementID},
+	update := bson.A{
+		bson.M{
+			"$set": bson.M{
+				"achievements": bson.M{
+					"$concatArrays": bson.A{
+						bson.M{"$ifNull": bson.A{"$achievements", bson.A{}}},
+						bson.A{achievementID},
+					},
 				},
+				"updated_at": time.Now(),
 			},
-			"updated_at": time.Now(),
 		},
 	}
 
 	_, err = userCollection.UpdateByID(ctx, userObjID, update)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user", "msg": err})
-
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user", "msg": err.Error()})
 		return
 	}
 
@@ -276,46 +286,26 @@ func RemoveAchievement(c *gin.Context) {
 
 	// Get database collection
 	collection := database.Users()
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-	// Create filter for user
-	filter := bson.M{"_id": userID}
-
-	// First check if achievement exists in user's array
-	var user models.User
-	err = collection.FindOne(ctx, filter).Decode(&user)
+	// Check if the achievement exists in the user's achievements array
+	filter := bson.M{"_id": userID, "achievements": achievementID}
+	count, err := collection.CountDocuments(ctx, filter)
 	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error", "msg": err.Error()})
 		return
 	}
-
-	// Check if achievement exists in the array
-	exists := false
-	for _, ach := range user.Achievements {
-		if ach == achievementID {
-			exists = true
-			break
-		}
-	}
-
-	if !exists {
+	if count == 0 {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Achievement not found for this user"})
 		return
 	}
 
-	// Create update to remove achievement
-	update := bson.M{
-		"$pull": bson.M{"achievements": achievementID},
-	}
-
-	// Perform update operation
-	_, err = collection.UpdateOne(ctx, filter, update)
+	// Remove achievement from user's array
+	update := bson.M{"$pull": bson.M{"achievements": achievementID}}
+	_, err = collection.UpdateOne(ctx, bson.M{"_id": userID}, update)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to remove achievement"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to remove achievement", "msg": err.Error()})
 		return
 	}
 
