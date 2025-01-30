@@ -290,6 +290,7 @@ func DeleteItem(c *gin.Context) {
 		return
 	}
 
+	// Parse item ID from the request
 	itemIDParam := c.Param("itemId")
 	itemObjID, err := bson.ObjectIDFromHex(itemIDParam)
 	if err != nil {
@@ -298,10 +299,10 @@ func DeleteItem(c *gin.Context) {
 		return
 	}
 
-	ctx := context.TODO()
+	ctx := c.Request.Context()
 	itemsCollection := database.Items()
 
-	// Delete item
+	// Delete the item
 	result, err := itemsCollection.DeleteOne(ctx, bson.M{"_id": itemObjID})
 	if err != nil {
 		logger.Errorf("Failed to delete item: %v", err)
@@ -314,5 +315,22 @@ func DeleteItem(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Item deleted successfully"})
+	// Remove the item from all related collections (e.g., user inventories or orders)
+	inventoryCollection := database.Inventories()
+	_, err = inventoryCollection.UpdateMany(
+		ctx,
+		bson.M{"items": itemObjID}, // Find documents containing this item
+		bson.M{"$pull": bson.M{"items": itemObjID}}, // Remove the item from the array
+	)
+	if err != nil {
+		logger.Errorf("Item deleted but failed to remove from inventories: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Item deleted but failed to remove from inventories",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Item deleted and removed from all inventories",
+	})
 }
