@@ -29,6 +29,7 @@ type User struct {
 	Level         int             `json:"level" bson:"level" validate:"gte=1"`
 	Gold          float64         `json:"gold" bson:"gold" validate:"gte=0"`
 	Streak        Streak          `json:"streak" bson:"streak" validate:"required"`
+	
 	InventoryID   bson.ObjectID   `json:"inventory_id" bson:"inventory_id" validate:"required"`          // Reference to Inventory
 	Achievements  []bson.ObjectID `json:"achievements" bson:"achievements" validate:"dive,required"`     // Reference to Achievements
 	CurrentQuests []Quest         `json:"current_quests" bson:"current_quests" validate:"dive,required"` // Embedded Quests

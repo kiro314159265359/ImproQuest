@@ -38,15 +38,16 @@ func init() {
 
 // DTOs
 type SignupRequest struct {
-	Email        string   `json:"email" validate:"required,email"`
-	MobileNumber *string  `bson:"mobile_number"`
-	Username     *string  `bson:"username" validate:"required,min=2,max=200"`
-	Password     string   `json:"password" validate:"required,min=8"`
-	Height       *float64 `bson:"height" validate:"required,min=50,max=300"`
-	Weight       *float64 `bson:"weight" validate:"required,min=30,max=300"`
-	Gender       *string  `bson:"gender" validate:"required,oneof=Male Female"`
-	BirthDate    string   `bson:"birth_date" validate:"required"` // Changed to string
-	UserType     *string  `bson:"user_type" validate:"required,oneof=Admin User"`
+	Email        string        `json:"email" validate:"required,email"`
+	MobileNumber *string       `bson:"mobile_number"`
+	Username     *string       `bson:"username" validate:"required,min=2,max=200"`
+	Password     string        `json:"password" validate:"required,min=8"`
+	Height       *float64      `bson:"height" validate:"required,min=50,max=300"`
+	Weight       *float64      `bson:"weight" validate:"required,min=30,max=300"`
+	Gender       *string       `bson:"gender" validate:"required,oneof=Male Female"`
+	BirthDate    string        `bson:"birth_date" validate:"required"` // Changed to string
+	InventoryID  bson.ObjectID `json:"inventory_id"`
+	UserType     *string       `bson:"user_type" validate:"required,oneof=Admin User"`
 }
 
 type LoginRequest struct {
@@ -117,6 +118,9 @@ func Signup() gin.HandlerFunc {
 			return
 		}
 
+		inventoryID := bson.NewObjectID()
+
+
 		user := models.User{
 			Email:      &req.Email,
 			Password:   &hashedPassword,
@@ -124,6 +128,7 @@ func Signup() gin.HandlerFunc {
 			BirthDate:  birthDate, // Use the parsed date
 			UserType:   req.UserType,
 			Created_at: time.Now(),
+			InventoryID: inventoryID,
 			Updated_at: time.Now(),
 			ID:         bson.NewObjectID(),
 		}

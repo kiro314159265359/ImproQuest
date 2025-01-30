@@ -81,6 +81,7 @@ func AddInventory(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, newInventory)
 }
+
 func GetAllInventories(c *gin.Context) {
 	collection := database.Inventories()
 	cursor, err := collection.Find(c, bson.M{})
