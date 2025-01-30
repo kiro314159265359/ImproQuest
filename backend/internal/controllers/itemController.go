@@ -31,48 +31,34 @@ func AddItemToInventory(c *gin.Context) {
 		return
 	}
 
-	// Check if item exists in items collection
-	itemsCollection := database.Items() // Replace with your actual items collection
-	filter := bson.M{"_id": itemID}
-	result := itemsCollection.FindOne(context.Background(), filter)
-
-	if err := result.Err(); err != nil {
-		if err == mongo.ErrNoDocuments {
-			c.JSON(http.StatusNotFound, gin.H{"error": "item does not exist"})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "database error"})
-		return
-	}
-
-	// Proceed with inventory update
-	inventoryCollection := database.Inventories()
-	inventoryFilter := bson.M{"user_id": userID}
+	// Find and update inventory
+	collection := database.Inventories()
+	filter := bson.M{"user_id": userID}
 
 	update := bson.M{
 		"$push": bson.M{"items": itemID},
-		"$inc":  bson.M{"size": 1},
+		"$inc":  bson.M{"size": 1}, // Optional: if you want to track inventory size
 	}
 
-	updateResult, err := inventoryCollection.UpdateOne(
+	result, err := collection.UpdateOne(
 		context.Background(),
-		inventoryFilter,
+		filter,
 		update,
 	)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update inventory"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "database operation failed"})
 		return
 	}
 
-	if updateResult.MatchedCount == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": "user inventory not found"})
+	if result.MatchedCount == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "inventory not found for user"})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"status":        "success",
-		"modifiedCount": updateResult.ModifiedCount,
+		"modifiedCount": result.ModifiedCount,
 	})
 }
 
@@ -93,18 +79,31 @@ func RemoveItemFromInventory(c *gin.Context) {
 		return
 	}
 
+	// Check if the item exists in the items collection
+	itemsCollection := database.Items()
+	itemFilter := bson.M{"_id": itemID}
+	itemResult := itemsCollection.FindOne(context.Background(), itemFilter)
+	if itemResult.Err() != nil {
+		if itemResult.Err() == mongo.ErrNoDocuments {
+			c.JSON(http.StatusNotFound, gin.H{"error": "item does not exist"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "database error"})
+		return
+	}
+
 	// Find and update inventory
-	collection := database.Inventories()
-	filter := bson.M{"user_id": userID}
+	inventoryCollection := database.Inventories()
+	inventoryFilter := bson.M{"user_id": userID, "items": itemID} // Ensure the item exists in the user's inventory
 
 	update := bson.M{
 		"$pull": bson.M{"items": itemID}, // Remove the item from the array
 		"$inc":  bson.M{"size": -1},      // Decrement the size (optional)
 	}
 
-	result, err := collection.UpdateOne(
+	result, err := inventoryCollection.UpdateOne(
 		context.Background(),
-		filter,
+		inventoryFilter,
 		update,
 	)
 
@@ -114,12 +113,7 @@ func RemoveItemFromInventory(c *gin.Context) {
 	}
 
 	if result.MatchedCount == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": "inventory not found for user"})
-		return
-	}
-
-	if result.ModifiedCount == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "item not found in inventory"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "item not found in user's inventory"})
 		return
 	}
 
