@@ -10,10 +10,10 @@ func EnemiesRoutes(router *gin.Engine) {
 	adminRoutes := router.Group("/enemies")
 	adminRoutes.Use(middleware.Authenticate())
 
-	adminRoutes.POST("/create", controllers.CreateEnemy)
-
 	adminRoutes.GET("/", controllers.GetAllEnemies)
 	adminRoutes.GET("/:enemyId", controllers.GetEnemyByID)
+
+	adminRoutes.POST("/create", controllers.CreateEnemy)
 
 	adminRoutes.PUT("/:enemyId", controllers.UpdateEnemy)
 

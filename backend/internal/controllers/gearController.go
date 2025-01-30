@@ -222,6 +222,8 @@ func DeleteGear(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
 		return
 	}
+
+	// First delete the gear
 	gearCollection := database.Gears()
 	result, err := gearCollection.DeleteOne(c.Request.Context(), bson.M{"_id": objID})
 	if err != nil {
@@ -234,7 +236,23 @@ func DeleteGear(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Gear deleted successfully"})
+	// Then remove it from all user inventories
+	inventoryCollection := database.Inventories()
+	_, err = inventoryCollection.UpdateMany(
+		c.Request.Context(),
+		bson.M{"gear": objID},                  // Find inventories containing this gear
+		bson.M{"$pull": bson.M{"gear": objID}}, // Remove the gear from the array
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Gear deleted but failed to remove from inventories",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Gear deleted and removed from all inventories",
+	})
 }
 
 func AddGear(c *gin.Context) {
