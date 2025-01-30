@@ -11,9 +11,11 @@ func AchievementRoutes(router *gin.Engine) {
 	achievements.Use(middleware.Authenticate())
 	// admin routes
 	achievements.POST("/create", controllers.CreateAchievement)
+	achievements.POST("/add/:id", controllers.AddAchievement)
 	achievements.GET("/", controllers.GetAllAchievements)
 	achievements.GET("/:id", controllers.GetAchievementByID)
 	achievements.PUT("/:id", controllers.UpdateAchievement)
 	achievements.DELETE("/:id", controllers.DeleteAchievement)
+	achievements.DELETE("/remove/:achievement_id", controllers.RemoveAchievement)
 
 }

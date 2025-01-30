@@ -154,37 +154,6 @@ func UpdateAchievement(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "achievement updated successfully"})
 }
 
-func DeleteAchievement(c *gin.Context) {
-	if err := helpers.CheckUserType(c, "Admin"); err != nil {
-		c.JSON(http.StatusForbidden, gin.H{"error": "unauthorized access"})
-		return
-	}
-
-	id := c.Param("id")
-	objID, err := bson.ObjectIDFromHex(id)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid achievement ID"})
-		return
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	achievementsCollection := database.Achievements()
-	result, err := achievementsCollection.DeleteOne(ctx, bson.M{"_id": objID})
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete achievement"})
-		return
-	}
-
-	if result.DeletedCount == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": "achievement not found"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "achievement deleted successfully"})
-}
-
 func AddAchievement(c *gin.Context) {
 	// Get user ID from context
 	userID := c.GetString("id")
@@ -310,4 +279,48 @@ func RemoveAchievement(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Achievement removed successfully"})
+}
+
+func DeleteAchievement(c *gin.Context) {
+	if err := helpers.CheckUserType(c, "Admin"); err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": "unauthorized access"})
+		return
+	}
+
+	id := c.Param("id")
+	objID, err := bson.ObjectIDFromHex(id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid achievement ID"})
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// Delete the achievement from the achievements collection
+	achievementsCollection := database.Achievements()
+	result, err := achievementsCollection.DeleteOne(ctx, bson.M{"_id": objID})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete achievement"})
+		return
+	}
+
+	if result.DeletedCount == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "achievement not found"})
+		return
+	}
+
+	// Remove the achievement ID from all users' Achievements array
+	usersCollection := database.Users()
+	_, err = usersCollection.UpdateMany(
+		ctx,
+		bson.M{"achievements": objID},
+		bson.M{"$pull": bson.M{"achievements": objID}},
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to remove achievement from users"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "achievement deleted successfully"})
 }
