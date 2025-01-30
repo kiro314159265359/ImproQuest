@@ -10,9 +10,11 @@ func InventoryRoutes(incomingRoutes *gin.Engine) {
 	inventory := incomingRoutes.Group("/inventory")
 	inventory.Use(middleware.Authenticate())
 
-	inventory.POST("/add/:id", controllers.AddInventory)
 	inventory.GET("/inventories", controllers.GetAllInventories)
 	inventory.GET("/:id", controllers.GetInventoryByID)
+
+	inventory.POST("/add/:id", controllers.AddInventory)
+
 	inventory.PUT("/:id", controllers.UpdateInventorySize)
 	inventory.DELETE("/:id", controllers.DeleteInventoryByUserID)
 }
