@@ -33,19 +33,20 @@ var (
 
 func init() {
 	validate = validator.New()
+
 }
 
 // DTOs
 type SignupRequest struct {
-	Email        string    `json:"email" validate:"required,email"`
-	MobileNumber *string   `bson:"mobile_number" validate:"required,min=10,max=15"`
-	Username     *string   `bson:"username" validate:"required,min=2,max=200"`
-	Password     string    `json:"password" validate:"required,min=8"`
-	Height       *float64  `bson:"height" validate:"required,min=50,max=300"`
-	Weight       *float64  `bson:"weight" validate:"required,min=30,max=300"`
-	Gender       *string   `bson:"gender" validate:"required,oneof=Male Female"`
-	BirthDate    time.Time `bson:"birth_date" validate:"required"`
-	UserType     *string   `bson:"user_type" validate:"required,oneof=Admin User"`
+	Email        string   `json:"email" validate:"required,email"`
+	MobileNumber *string  `bson:"mobile_number"`
+	Username     *string  `bson:"username" validate:"required,min=2,max=200"`
+	Password     string   `json:"password" validate:"required,min=8"`
+	Height       *float64 `bson:"height" validate:"required,min=50,max=300"`
+	Weight       *float64 `bson:"weight" validate:"required,min=30,max=300"`
+	Gender       *string  `bson:"gender" validate:"required,oneof=Male Female"`
+	BirthDate    string   `bson:"birth_date" validate:"required"` // Changed to string
+	UserType     *string  `bson:"user_type" validate:"required,oneof=Admin User"`
 }
 
 type LoginRequest struct {
@@ -73,6 +74,16 @@ func Signup() gin.HandlerFunc {
 			return
 		}
 
+		// Parse the date string
+		fmt.Println(req.BirthDate)
+		birthDate, err := time.Parse("01/02/2006", req.BirthDate)
+		fmt.Println(birthDate)
+		if err != nil {
+			logger.Errorf("Invalid date format: %v", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid date format. Use MM/dd/yyyy"})
+			return
+		}
+
 		if err := validate.Struct(req); err != nil {
 			var validationErrors []string
 			for _, err := range err.(validator.ValidationErrors) {
@@ -83,7 +94,7 @@ func Signup() gin.HandlerFunc {
 			return
 		}
 
-		if age := helpers.CalculateAge(req.BirthDate); age < 13 {
+		if age := helpers.CalculateAge(birthDate); age < 13 {
 			logger.Errorf("Invalid Age")
 			c.JSON(http.StatusBadRequest, gin.H{"error": "User must be at least 13 years old"})
 			return
@@ -110,7 +121,7 @@ func Signup() gin.HandlerFunc {
 			Email:      &req.Email,
 			Password:   &hashedPassword,
 			Username:   req.Username,
-			BirthDate:  req.BirthDate,
+			BirthDate:  birthDate, // Use the parsed date
 			UserType:   req.UserType,
 			Created_at: time.Now(),
 			Updated_at: time.Now(),

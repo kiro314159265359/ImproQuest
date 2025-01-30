@@ -14,8 +14,12 @@ class AppRoutes {
 
       case Routes.registerScreen:
         return MaterialPageRoute(builder: (_) => const Register());
+
       case Routes.continueRegisterScreen:
-        return MaterialPageRoute(builder: (_) => const ContinueRegister());
+        final args = settings.arguments as RegisterArguments?;
+        return MaterialPageRoute(
+          builder: (_) => ContinueRegister(arguments: args),
+        );
       case Routes.loginScreen:
         return MaterialPageRoute(builder: (_) => const Login());
       case Routes.appLayoutPage:
@@ -24,6 +28,7 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => const Home());
       // case Routes.forgetPassword:
       //   return MaterialPageRoute(builder: (_) => const ForgetPassword());
+
     }
 
     return null;

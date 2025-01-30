@@ -16,9 +16,7 @@ class RegisterCubit extends Cubit<RegisterState> {
   final TextEditingController confPassController = TextEditingController();
 
   Future<void> registerUser(String email, String password, String username,
-      int height, int weight, String gender, DateTime birthday) async {
-    print(email);
-    print(emailController.text);
+      int height, int weight, String gender, String birthday) async {
     emit(RegisterLoadingState());
     try {
       await registerRepo.register(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_2/features/auth/data/api/register_api.dart';
 import 'package:flutter_application_2/features/auth/presentation/manager/register_cubit/register_cubit.dart';
 import 'package:flutter_application_2/features/auth/presentation/manager/register_cubit/register_state.dart';
+import 'package:flutter_application_2/features/auth/presentation/views/register.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/routes/routes.dart';
 import '../../../../core/theme/color_manger.dart';
@@ -12,7 +13,8 @@ import '../../../../core/widget/custom_text_form_field.dart';
 import 'package:intl/intl.dart';
 
 class ContinueRegister extends StatefulWidget {
-  const ContinueRegister({super.key});
+  final RegisterArguments? arguments;
+  const ContinueRegister({super.key, this.arguments});
 
   @override
   State<ContinueRegister> createState() => _ContinueRegisterState();
@@ -27,10 +29,11 @@ class _ContinueRegisterState extends State<ContinueRegister> {
   TextEditingController birthDayController = TextEditingController();
   @override
   Widget build(BuildContext context) {
-    // final routeArgs =
-    //     ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    // final email = routeArgs?['email'] ?? '';
-    // final password = routeArgs?['password'] ?? '';
+    final email = widget.arguments?.email ?? '';
+    final password = widget.arguments?.password ?? '';
+
+    print('Debug - Email: $email'); // Debug print
+    print('Debug - Password: $password'); // Debug print
 
     return BlocProvider(
         create: (context) => RegisterCubit(RegisterApi()),
@@ -183,37 +186,26 @@ class _ContinueRegisterState extends State<ContinueRegister> {
                           CustomPrimaryButton(
                             onPressed: () {
                               if (formKey.currentState!.validate()) {
+                                if (email.isEmpty || password.isEmpty) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content: Text(
+                                            'Email or password is missing')),
+                                  );
+                                  return;
+                                }
+                                print('Debug2 - Email: $email'); // Debug print
+                                print(
+                                    'Debug2 - Password: $password'); // Debug print
                                 cubit.registerUser(
-                                  cubit.emailController.text,
-                                  cubit.passController.text,
+                                  email,
+                                  password,
                                   userNameController.text,
                                   int.parse(heightController.text),
                                   int.parse(weightController.text),
                                   isSelected[0] ? 'Male' : 'Female',
-                                  DateFormat('MM/dd/yyyy')
-                                      .parse(birthDayController.text),
+                                  birthDayController.text,
                                 );
-                                // final gender =
-                                //     isSelected[0] ? 'Male' : 'Female';
-                                // final height = int.parse(heightController.text);
-                                // final weight = int.parse(weightController.text);
-                                // final birthday = DateFormat('MM/dd/yyyy')
-                                //     .parse(birthDayController.text);
-                                // // print(email);
-                                // // print(password);
-                                // print(height);
-                                // print(weight);
-                                // print(gender);
-                                // print(birthday);
-                                //
-                                // context.read<RegisterCubit>().registerUser(
-                                //     // email,
-                                //     // password,
-                                //     userNameController.text,
-                                //     height,
-                                //     weight,
-                                //     gender,
-                                //     birthday);
                               }
                             },
                             buttonText: "Register",

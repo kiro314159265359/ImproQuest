@@ -15,7 +15,7 @@ type Streak struct {
 type User struct {
 	ID            bson.ObjectID   `json:"_id,omitempty" bson:"_id,omitempty"`
 	Username      *string         `json:"username" bson:"username" validate:"required,min=2,max=200"`
-	MobileNumber  *string         `json:"mobile_number" bson:"mobile_number" validate:"required,min=10,max=15"`
+	MobileNumber  *string         `json:"mobile_number" bson:"mobile_number"`
 	Email         *string         `json:"email" bson:"email" validate:"required,email"`
 	Password      *string         `json:"password" bson:"password" validate:"required,min=8"`
 	Height        *float64        `json:"height" bson:"height" validate:"required,min=50,max=300"`
@@ -36,5 +36,4 @@ type User struct {
 	AccumDistance float64         `json:"accum_distance" bson:"accum_distance" validate:"gte=0"`
 	Created_at    time.Time       `json:"created_at" bson:"Created_at" validate:"required"`
 	Updated_at    time.Time       `json:"updated_at" bson:"Updated_at" validate:"required,gtefield=Created_at"`
-	Items         []Item          `bson:"items"`
 }

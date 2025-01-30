@@ -10,6 +10,13 @@ import '../../data/api/register_api.dart';
 import '../manager/register_cubit/register_cubit.dart';
 import '../manager/register_cubit/register_state.dart';
 
+class RegisterArguments {
+  final String email;
+  final String password;
+
+  RegisterArguments(this.email, this.password);
+}
+
 class Register extends StatefulWidget {
   const Register({super.key});
 
@@ -132,6 +139,9 @@ class _RegisterState extends State<Register> {
                                 Navigator.pushReplacementNamed(
                                   context,
                                   Routes.continueRegisterScreen,
+                                  arguments: RegisterArguments(
+                                      cubit.emailController.text,
+                                      cubit.passController.text),
                                 );
                               }
                             },

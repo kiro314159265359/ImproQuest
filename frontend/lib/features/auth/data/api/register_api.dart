@@ -7,7 +7,7 @@ class RegisterApi extends RegisterRepo {
 
   @override
   Future<void> register(String email, String password, String username,
-      int height, int weight, String gender, DateTime birthday) async {
+      int height, int weight, String gender, String birthday) async {
     var response = await apiService.post(EndPoints.registerToken, body: {
       'email': email,
       'password': password,
@@ -18,7 +18,5 @@ class RegisterApi extends RegisterRepo {
       'UserType': "User",
       'birthdate': birthday,
     });
-    print(email + password + username + gender);
-    print(response.data);
   }
 }
