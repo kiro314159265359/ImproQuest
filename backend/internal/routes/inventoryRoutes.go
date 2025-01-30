@@ -14,5 +14,5 @@ func InventoryRoutes(incomingRoutes *gin.Engine) {
 	inventory.GET("/inventories", controllers.GetAllInventories)
 	inventory.GET("/:id", controllers.GetInventoryByID)
 	inventory.PUT("/:id", controllers.UpdateInventorySize)
-
+	inventory.DELETE("/:id", controllers.DeleteInventoryByUserID)
 }

@@ -20,69 +20,67 @@ func AddInventory(c *gin.Context) {
 	}
 
 	// Convert to ObjectID
-	objID, err := bson.ObjectIDFromHex(userID)
+	userObjID, err := bson.ObjectIDFromHex(userID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
 		return
 	}
 
-	// Check if inventory already exists for this user
-	collection := database.Inventories()
+	// Get user document to access InventoryID
+	usersCollection := database.Users()
+	var user models.User
+	err = usersCollection.FindOne(c, bson.M{"_id": userObjID}).Decode(&user)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+		}
+		return
+	}
+
+	// Validate user has InventoryID
+	if user.InventoryID.IsZero() {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "User has no inventory ID assigned"})
+		return
+	}
+
+	// Check if inventory already exists with this ID
+	inventoryCollection := database.Inventories()
 	var existingInventory models.Inventory
-	err = collection.FindOne(c, bson.M{"user_id": objID}).Decode(&existingInventory)
+	err = inventoryCollection.FindOne(c, bson.M{"_id": user.InventoryID}).Decode(&existingInventory)
 	if err == nil {
-		// If inventory exists, return an error
-		c.JSON(http.StatusConflict, gin.H{"error": "User already has an inventory"})
+		c.JSON(http.StatusConflict, gin.H{"error": "Inventory already exists for this user"})
 		return
 	} else if err != mongo.ErrNoDocuments {
-		// If there's a database error (not just no documents), return an internal server error
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
 		return
 	}
 
-	// Bind directly to Inventory model
-	var inventory models.Inventory
-	if err := c.ShouldBindJSON(&inventory); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	// Set user ID from URL param (override any body input)
-	inventory.UserID = objID
-
-	// Initialize empty arrays if not provided
-	if inventory.Items == nil {
-		inventory.Items = []bson.ObjectID{}
-	}
-	if inventory.Gear == nil {
-		inventory.Gear = []bson.ObjectID{}
+	// Create new inventory with user's InventoryID as _id
+	newInventory := models.Inventory{
+		ID:     user.InventoryID, // Use the InventoryID from user model
+		UserID: userObjID,        // Reference to user
+		Items:  []bson.ObjectID{},
+		Gear:   []bson.ObjectID{},
+		Size:   0,
 	}
 
 	// Validate the inventory struct
-	if err := validate.Struct(inventory); err != nil {
+	if err := validate.Struct(newInventory); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	// Insert into database
-	collection = database.Inventories()
-	result, err := collection.InsertOne(c, inventory)
+	_, err = inventoryCollection.InsertOne(c, newInventory)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create inventory"})
 		return
 	}
 
-	// Type assertion safety check
-	if oid, ok := result.InsertedID.(bson.ObjectID); ok {
-		inventory.ID = oid
-	} else {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Type assertion failed for inserted ID"})
-		return
-	}
-
-	c.JSON(http.StatusCreated, inventory)
+	c.JSON(http.StatusCreated, newInventory)
 }
-
 func GetAllInventories(c *gin.Context) {
 	collection := database.Inventories()
 	cursor, err := collection.Find(c, bson.M{})
