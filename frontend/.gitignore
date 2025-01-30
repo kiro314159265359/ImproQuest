@@ -45,4 +45,5 @@ app.*.map.json
 
 # Go related
 /backend/logs/
+/backend/logs/app.log
 

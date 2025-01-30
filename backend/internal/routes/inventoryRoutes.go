@@ -10,7 +10,7 @@ func InventoryRoutes(incomingRoutes *gin.Engine) {
 	inventory := incomingRoutes.Group("/inventory")
 	inventory.Use(middleware.Authenticate())
 
-	inventory.GET("/inventories", controllers.GetAllInventories)
+	inventory.GET("/", controllers.GetAllInventories)
 	inventory.GET("/:id", controllers.GetInventoryByID)
 
 	inventory.POST("/add/:id", controllers.AddInventory)
