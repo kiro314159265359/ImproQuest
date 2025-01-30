@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/HarDizzeR/Project/backend/internal/helpers"
 	"github.com/HarDizzeR/Project/backend/internal/logger"
@@ -10,27 +11,26 @@ import (
 
 func Authenticate() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		clientToken, err := c.Cookie("access_token")
-
-		if err != nil {
-			logger.Errorf("Session cookie not found")
-			c.JSON(http.StatusInternalServerError, gin.H{"name": "Session cookie not found", "error": err.Error()})
+		authHeader := c.GetHeader("Authorization")
+		if authHeader == "" {
+			logger.Warnf("No Authorization header provided")
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "No authorization header"})
+			c.Abort()
+			return
+		}
+		bearerSchema := "Bearer "
+		tokenString := strings.TrimPrefix(authHeader, bearerSchema)
+		if tokenString == authHeader {
+			logger.Warnf("Invalid authorization format")
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid authorization format"})
 			c.Abort()
 			return
 		}
 
-		if clientToken == "" {
-			logger.Warnf("No auth header provided")
-			c.JSON(http.StatusInternalServerError,
-				gin.H{"error": "No auth header provided"})
-			c.Abort()
-			return
-		}
-
-		claims, err := helpers.ValidateAccessToken(clientToken)
+		claims, err := helpers.ValidateAccessToken(tokenString)
 		if err != nil {
 			logger.Errorf("Token validation error: %v", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 			c.Abort()
 			return
 		}

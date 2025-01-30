@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -56,11 +57,13 @@ type LoginRequest struct {
 }
 
 type UserResponse struct {
-	ID        bson.ObjectID `json:"id"`
-	Email     string        `json:"email"`
-	Username  string        `json:"username"`
-	UserType  string        `json:"user_type"`
-	CreatedAt time.Time     `json:"created_at"`
+	ID            bson.ObjectID `json:"id"`
+	Email         string        `json:"email"`
+	Username      string        `json:"username"`
+	UserType      string        `json:"user_type"`
+	Token         *string       `json:"token,omitempty" bson:"token,omitempty"`
+	Refresh_token *string       `json:"refresh_token,omitempty" bson:"refresh_token,omitempty"`
+	CreatedAt     time.Time     `json:"created_at"`
 }
 
 func Signup() gin.HandlerFunc {
@@ -76,9 +79,7 @@ func Signup() gin.HandlerFunc {
 		}
 
 		// Parse the date string
-		fmt.Println(req.BirthDate)
 		birthDate, err := time.Parse("01/02/2006", req.BirthDate)
-		fmt.Println(birthDate)
 		if err != nil {
 			logger.Errorf("Invalid date format: %v", err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid date format. Use MM/dd/yyyy"})
@@ -120,17 +121,16 @@ func Signup() gin.HandlerFunc {
 
 		inventoryID := bson.NewObjectID()
 
-
 		user := models.User{
-			Email:      &req.Email,
-			Password:   &hashedPassword,
-			Username:   req.Username,
-			BirthDate:  birthDate, // Use the parsed date
-			UserType:   req.UserType,
-			Created_at: time.Now(),
+			Email:       &req.Email,
+			Password:    &hashedPassword,
+			Username:    req.Username,
+			BirthDate:   birthDate, // Use the parsed date
+			UserType:    req.UserType,
+			Created_at:  time.Now(),
 			InventoryID: inventoryID,
-			Updated_at: time.Now(),
-			ID:         bson.NewObjectID(),
+			Updated_at:  time.Now(),
+			ID:          bson.NewObjectID(),
 		}
 
 		access, refresh, err := helpers.GenerateAllTokens(user.ID.Hex(), *user.UserType)
@@ -150,11 +150,13 @@ func Signup() gin.HandlerFunc {
 
 		helpers.SetAuthCookies(c, access, refresh)
 		c.JSON(http.StatusCreated, UserResponse{
-			ID:        user.ID,
-			Email:     *user.Email,
-			Username:  *user.Username,
-			UserType:  *user.UserType,
-			CreatedAt: user.Created_at,
+			ID:            user.ID,
+			Email:         *user.Email,
+			Username:      *user.Username,
+			UserType:      *user.UserType,
+			CreatedAt:     user.Created_at,
+			Token:         user.Token,
+			Refresh_token: user.Refresh_token,
 		})
 	}
 }
@@ -196,14 +198,18 @@ func Login() gin.HandlerFunc {
 		}
 
 		helpers.SetAuthCookies(c, access, refresh)
+		c.Header("Authorization", "Bearer "+access)
+		c.Header("Refresh-Token", "Bearer "+refresh)
 		c.JSON(http.StatusOK, gin.H{
 			"message": "Login successful",
 			"user": UserResponse{
-				ID:        user.ID,
-				Email:     *user.Email,
-				Username:  *user.Username,
-				UserType:  *user.UserType,
-				CreatedAt: user.Created_at,
+				ID:            user.ID,
+				Email:         *user.Email,
+				Username:      *user.Username,
+				UserType:      *user.UserType,
+				CreatedAt:     user.Created_at,
+				Token:         &access,
+				Refresh_token: &refresh,
 			},
 		})
 	}
@@ -279,5 +285,32 @@ func Logout() gin.HandlerFunc {
 
 		helpers.ClearAuthCookies(c)
 		c.JSON(http.StatusOK, gin.H{"message": "Logged out successfully"})
+	}
+}
+
+func Refresh() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		authHeader := c.GetHeader("Refresh-Token")
+		if authHeader == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Refresh header required"})
+			return
+		}
+
+		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+		claims, err := helpers.ValidateRefreshToken(tokenString)
+
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid refresh token"})
+			return
+		}
+
+		newAccessToken, err := helpers.GenerateAccessToken(claims.UserID, claims.UserType)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate access token"})
+			return
+		}
+
+		c.Header("Authorization", "Bearer "+newAccessToken)
+		c.JSON(http.StatusOK, gin.H{"access_token": newAccessToken})
 	}
 }

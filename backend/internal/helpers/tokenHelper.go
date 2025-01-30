@@ -24,7 +24,8 @@ type AccessClaims struct {
 }
 
 type RefreshClaims struct {
-	UserID string `json:"id"`
+	UserID   string `json:"id"`
+	UserType string `json:"userType"`
 	jwt.RegisteredClaims
 }
 
@@ -77,7 +78,8 @@ func GenerateAllTokens(userID, userType string) (accessToken, refreshToken strin
 
 	// Generate refresh token
 	refreshClaims := RefreshClaims{
-		UserID: userID,
+		UserID:   userID,
+		UserType: userType,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(refreshTokenExpiry)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -91,6 +93,25 @@ func GenerateAllTokens(userID, userType string) (accessToken, refreshToken strin
 	}
 
 	return accessToken, refreshToken, nil
+}
+
+func GenerateAccessToken(userID, userType string) (string, error) {
+	accessClaims := AccessClaims{
+		UserID:   userID,
+		UserType: userType,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(accessTokenExpiry)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
+	}
+
+	accessToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims).SignedString(accessSecretKey)
+	if err != nil {
+		logger.Errorf("Access token generation failed: %v", err)
+		return "", fmt.Errorf("failed to generate access token: %w", err)
+	}
+
+	return accessToken, nil
 }
 
 func UpdateAllTokens(ctx context.Context, accessToken, refreshToken, userID string) error {
@@ -112,6 +133,29 @@ func UpdateAllTokens(ctx context.Context, accessToken, refreshToken, userID stri
 	if err != nil {
 		logger.Errorf("Token update failed for user %s: %v", userID, err)
 		return fmt.Errorf("failed to update tokens: %w", err)
+	}
+
+	return nil
+}
+
+func UpdateAccessToken(ctx context.Context, accessToken, userID string) error {
+	objID, err := bson.ObjectIDFromHex(userID)
+	if err != nil {
+		return fmt.Errorf("invalid user ID format: %w", err)
+	}
+
+	update := bson.D{
+		{Key: "$set", Value: bson.D{
+			{Key: "token", Value: accessToken},
+			{Key: "updated_at", Value: time.Now()},
+		}},
+	}
+
+	opts := options.UpdateOne().SetUpsert(false)
+	_, err = userCollection.UpdateByID(ctx, objID, update, opts)
+	if err != nil {
+		logger.Errorf("Access token update failed for user %s: %v", userID, err)
+		return fmt.Errorf("failed to update access token: %w", err)
 	}
 
 	return nil

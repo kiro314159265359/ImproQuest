@@ -19,9 +19,9 @@ type User struct {
 	Email         *string         `json:"email" bson:"email" validate:"required,email"`
 	Password      *string         `json:"password" bson:"password" validate:"required,min=8"`
 	Height        *float64        `json:"height" bson:"height" validate:"required,min=50,max=300"`
-	Token         *string         `json:"token,omitempty" bson:"token,omitempty"`
 	Gender        *string         `json:"gender" bson:"gender" validate:"required,oneof=Male Female"`
 	UserType      *string         `json:"user_type" bson:"user_type" validate:"required,oneof=Admin User"`
+	Token         *string         `json:"token,omitempty" bson:"token,omitempty"`
 	Refresh_token *string         `json:"refresh_token,omitempty" bson:"refresh_token,omitempty"`
 	BirthDate     time.Time       `json:"birth_date" bson:"birth_date" validate:"required"`
 	Weight        *float64        `json:"weight" bson:"weight" validate:"required,min=30,max=300"`
@@ -29,7 +29,6 @@ type User struct {
 	Level         int             `json:"level" bson:"level" validate:"gte=1"`
 	Gold          float64         `json:"gold" bson:"gold" validate:"gte=0"`
 	Streak        Streak          `json:"streak" bson:"streak" validate:"required"`
-	
 	InventoryID   bson.ObjectID   `json:"inventory_id" bson:"inventory_id" validate:"required"`          // Reference to Inventory
 	Achievements  []bson.ObjectID `json:"achievements" bson:"achievements" validate:"dive,required"`     // Reference to Achievements
 	CurrentQuests []Quest         `json:"current_quests" bson:"current_quests" validate:"dive,required"` // Embedded Quests
