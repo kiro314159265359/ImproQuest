@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/routes/routes.dart';
 import '../../../../core/theme/color_manger.dart';
 import '../../../../core/theme/text_style.dart';
+import '../../../../core/utils/validate_input.dart';
 import '../../../../core/widget/custom_primary_button.dart';
 import '../../../../core/widget/custom_text_form_field.dart';
+import '../../data/api/register_api.dart';
+import '../manager/register_cubit/register_cubit.dart';
+import '../manager/register_cubit/register_state.dart';
 
 class Register extends StatefulWidget {
   const Register({super.key});
@@ -13,106 +18,134 @@ class Register extends StatefulWidget {
 }
 
 class _RegisterState extends State<Register> {
+  final formKey = GlobalKey<FormState>();
+
   @override
   Widget build(BuildContext context) {
-    TextEditingController controller1 = TextEditingController();
-    TextEditingController controller2 = TextEditingController();
-    TextEditingController controller3 = TextEditingController();
-    TextEditingController controller4 = TextEditingController();
-
-    return Scaffold(
-      body: Container(
-        height: MediaQuery.of(context).size.height,
-        width: MediaQuery.of(context).size.width,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              ColorManager.navyColor,
-              ColorManager.deepBlue,
-            ],
-          ),
-        ),
-        child: Center(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        "Register",
-                        style: TextStyles.styleExtraBold(context,
-                            fontSize: 32, color: ColorManager.whiteColor),
-                      ),
+    return BlocProvider(
+        create: (context) => RegisterCubit(RegisterApi()),
+        child: BlocConsumer<RegisterCubit, RegisterState>(
+            listener: (context, state) {
+          if (state is RegisterSuccessState) {
+            Navigator.pushReplacementNamed(
+                context, Routes.continueRegisterScreen);
+          }
+          if (state is RegisterErrorState) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.failure.message)),
+            );
+          }
+        }, builder: (context, state) {
+          var cubit = RegisterCubit.get(context);
+          return Scaffold(
+            body: Form(
+              key: formKey,
+              child: Container(
+                height: MediaQuery.of(context).size.height,
+                width: MediaQuery.of(context).size.width,
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      ColorManager.navyColor,
+                      ColorManager.deepBlue,
                     ],
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        "Already a player?",
-                        style: TextStyles.styleSemiBold(context,
-                            fontSize: 18, color: ColorManager.whiteColor),
+                ),
+                child: Center(
+                  child: SingleChildScrollView(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                "Register",
+                                style: TextStyles.styleExtraBold(context,
+                                    fontSize: 32,
+                                    color: ColorManager.whiteColor),
+                              ),
+                            ],
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                "Already a player?",
+                                style: TextStyles.styleSemiBold(context,
+                                    fontSize: 18,
+                                    color: ColorManager.whiteColor),
+                              ),
+                              const SizedBox(
+                                width: 5,
+                              ),
+                              InkWell(
+                                onTap: () {
+                                  Navigator.pushReplacementNamed(
+                                      context, Routes.loginScreen);
+                                },
+                                child: Text(
+                                  "login",
+                                  style: TextStyles.styleSemiBold(context,
+                                      fontSize: 18,
+                                      color: ColorManager.primaryColor),
+                                ),
+                              )
+                            ],
+                          ),
+                          const SizedBox(
+                            height: 25,
+                          ),
+                          CustomTextFormField(
+                            hintText: "Email",
+                            controller: cubit.emailController,
+                            validator: ValidateInput.email,
+                          ),
+                          const SizedBox(
+                            height: 35,
+                          ),
+                          CustomTextFormField(
+                              hintText: "Password",
+                              controller: cubit.passController,
+                              validator: ValidateInput.password,
+                              obscureText: true),
+                          const SizedBox(
+                            height: 35,
+                          ),
+                          CustomTextFormField(
+                            hintText: "Confirm Password",
+                            controller: cubit.confPassController,
+                            validator: (value) => ValidateInput.confirmPassword(
+                                value, cubit.passController.text),
+                            obscureText: true,
+                          ),
+                          const SizedBox(
+                            height: 35,
+                          ),
+                          CustomPrimaryButton(
+                            onPressed: () {
+                              if (formKey.currentState!.validate()) {
+                                Navigator.pushReplacementNamed(
+                                  context,
+                                  Routes.continueRegisterScreen,
+                                );
+                              }
+                            },
+                            buttonText: "Continue",
+                            height: 45,
+                          ),
+                        ],
                       ),
-                      const SizedBox(
-                        width: 5,
-                      ),
-                      InkWell(
-                        onTap: () {
-                          Navigator.pushNamed(context, Routes.loginScreen);
-                        },
-                        child: Text(
-                          "login",
-                          style: TextStyles.styleSemiBold(context,
-                              fontSize: 18, color: ColorManager.primaryColor),
-                        ),
-                      )
-                    ],
+                    ),
                   ),
-                  const SizedBox(
-                    height: 25,
-                  ),
-                  CustomTextFormField(
-                    hintText: "Email",
-                    controller: controller2,
-                  ),
-                  const SizedBox(
-                    height: 35,
-                  ),
-                  CustomTextFormField(
-                      hintText: "Password",
-                      controller: controller3,
-                      obscureText: true),
-                  const SizedBox(
-                    height: 35,
-                  ),
-                  CustomTextFormField(
-                    hintText: "Confirm Password",
-                    controller: controller4,
-                    obscureText: true,
-                  ),
-                  const SizedBox(
-                    height: 35,
-                  ),
-                  CustomPrimaryButton(
-                    onPressed: () {
-                      Navigator.pushNamed(
-                          context, Routes.continueRegisterScreen);
-                    },
-                    buttonText: "Continue",
-                    height: 45,
-                  ),
-                ],
+                ),
               ),
             ),
-          ),
-        ),
-      ),
-    );
+          );
+        }));
   }
 }

@@ -14,6 +14,8 @@ class CustomTextFormField extends StatefulWidget {
   final double? width;
   final double? height;
   final bool showCalendarIcon;
+  final String? Function(String?)? validator;
+
   const CustomTextFormField({
     super.key,
     required this.hintText,
@@ -26,6 +28,7 @@ class CustomTextFormField extends StatefulWidget {
     this.width,
     this.height,
     this.showCalendarIcon = false,
+    required this.validator,
   });
 
   @override
@@ -118,12 +121,14 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
           contentPadding:
               const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
         ),
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return 'Please enter Your ${widget.hintText}';
-          }
-          return null;
-        },
+        validator: widget.validator
+        //     (value) {
+        //   if (value == null || value.isEmpty) {
+        //     return 'Please enter Your ${widget.hintText}';
+        //   }
+        //   return null;
+        // }
+        ,
         autovalidateMode: AutovalidateMode.onUserInteraction,
       ),
     );
