@@ -15,7 +15,7 @@ func ItemRoutes(router *gin.Engine) {
 
 	items.PUT("/Update/:itemId", controllers.UpdateItem)
 
-	items.POST("/Create", controllers.CreateItem)
+	items.POST("/create", controllers.CreateItem)
 	items.POST("/:itemId/add", controllers.AddItemToInventory)
 
 	items.DELETE("/:itemId/remove", controllers.RemoveItemFromInventory)
