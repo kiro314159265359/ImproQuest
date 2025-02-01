@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:dio/dio.dart';
 
 abstract class Failure {
@@ -28,9 +26,7 @@ class ServerFailure extends Failure {
         return ServerFailure('Request to ApiServer was canceled');
       case DioExceptionType.connectionError:
         return ServerFailure('No Internet Connection');
-
       case DioExceptionType.unknown:
-        print(e);
         return ServerFailure('Oops There was an Error, Please try again $e');
     }
   }
@@ -41,7 +37,7 @@ class ServerFailure extends Failure {
     } else if (statusCode == 500) {
       return ServerFailure('There is a problem with server, please try later');
     } else if (statusCode == 400 || statusCode == 401 || statusCode == 403) {
-      return ServerFailure(response.toString());
+      return ServerFailure(response['error']);
     } else {
       return ServerFailure('There was an error , please try again');
     }

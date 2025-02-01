@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/color_manger.dart';
-import '../../../../core/theme/text_style.dart';
+import '../../../../../core/theme/color_manger.dart';
+import '../../../../../core/theme/text_style.dart';
 
 class CustomQuestCard extends StatefulWidget {
   final String questName;
@@ -85,7 +85,7 @@ class _CustomQuestCardState extends State<CustomQuestCard> {
               Padding(
                 padding: const EdgeInsets.only(left: 10),
                 child: Text(
-                  widget.progress < widget.goal
+                  (widget.goal * widget.progress).toInt() < widget.goal
                       ? "[ UNCOMPLETED ]"
                       : "[ COMPLETED ]",
                   style: TextStyles.styleSemiBold(context,
