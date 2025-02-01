@@ -1,29 +1,25 @@
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-class SharedPref {
-  static late SharedPreferences sharedPreferences;
+const storage = FlutterSecureStorage();
 
-  static init() async {
-    sharedPreferences = await SharedPreferences.getInstance();
-  }
-
-  static Future<bool> set({required String key, required dynamic value}) {
-    if (value is String) {
-      return sharedPreferences.setString(key, value);
-    } else if (value is int) {
-      return sharedPreferences.setInt(key, value);
-    } else if (value is double) {
-      return sharedPreferences.setDouble(key, value);
-    } else {
-      return sharedPreferences.setBool(key, value);
-    }
-  }
-
-  static dynamic get({required String key}) {
-    return sharedPreferences.get(key);
-  }
-
-  static Future<bool> remove({required String key}) {
-    return sharedPreferences.remove(key);
-  }
+Future<void> saveAccessToken(String accessToken) async {
+  await storage.write(key: 'accessToken', value: accessToken);
 }
+
+Future<void> saveRefreshToken(String refreshToken) async {
+  // Correct key for refresh token.
+  await storage.write(key: 'refreshToken', value: refreshToken);
+}
+
+Future<String?> getAccessToken() async {
+  return await storage.read(key: 'accessToken');
+}
+
+Future<String?> getRefreshToken() async {
+  return await storage.read(key: 'refreshToken');
+}
+
+Future<void> clearTokens() async {
+  await storage.deleteAll();
+}
+

@@ -21,7 +21,7 @@ type User struct {
 	Height        *float64        `json:"height" bson:"height" validate:"required,min=50,max=300"`
 	Gender        *string         `json:"gender" bson:"gender" validate:"required,oneof=Male Female"`
 	UserType      *string         `json:"user_type" bson:"user_type" validate:"required,oneof=Admin User"`
-	Token         *string         `json:"token,omitempty" bson:"token,omitempty"`
+	Token         *string         `json:"access_token,omitempty" bson:"access_token,omitempty"`
 	Refresh_token *string         `json:"refresh_token,omitempty" bson:"refresh_token,omitempty"`
 	BirthDate     time.Time       `json:"birth_date" bson:"birth_date" validate:"required"`
 	Weight        *float64        `json:"weight" bson:"weight" validate:"required,min=30,max=300"`

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -61,8 +60,7 @@ type UserResponse struct {
 	Email         string        `json:"email"`
 	Username      string        `json:"username"`
 	UserType      string        `json:"user_type"`
-	InventoryID bson.ObjectID `json:"inventory_id"`
-	Token         *string       `json:"token,omitempty" bson:"token,omitempty"`
+	Token         *string       `json:"access_token,omitempty" bson:"access_token,omitempty"`
 	Refresh_token *string       `json:"refresh_token,omitempty" bson:"refresh_token,omitempty"`
 	CreatedAt     time.Time     `json:"created_at"`
 }
@@ -154,7 +152,6 @@ func Signup() gin.HandlerFunc {
 			Email:         *user.Email,
 			Username:      *user.Username,
 			UserType:      *user.UserType,
-			InventoryID: user.InventoryID,
 			CreatedAt:     user.Created_at,
 			Token:         user.Token,
 			Refresh_token: user.Refresh_token,
@@ -200,7 +197,6 @@ func Login() gin.HandlerFunc {
 
 		helpers.SetAuthCookies(c, access, refresh)
 		c.Header("Authorization", "Bearer "+access)
-		c.Header("Refresh-Token", "Bearer "+refresh)
 		c.JSON(http.StatusOK, gin.H{
 			"message": "Login successful",
 			"user": UserResponse{
@@ -291,27 +287,48 @@ func Logout() gin.HandlerFunc {
 
 func Refresh() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		authHeader := c.GetHeader("Refresh-Token")
-		if authHeader == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Refresh header required"})
+		// Define a struct to bind the incoming JSON data.
+		var requestData struct {
+			RefreshToken string `json:"refresh_token"`
+		}
+
+		// Bind JSON payload to the struct.
+		if err := c.ShouldBindJSON(&requestData); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 			return
 		}
 
-		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-		claims, err := helpers.ValidateRefreshToken(tokenString)
+		// Check if the refresh token is provided.
+		if requestData.RefreshToken == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Refresh token required in request body"})
+			return
+		}
 
+		// Validate the provided refresh token.
+		claims, err := helpers.ValidateRefreshToken(requestData.RefreshToken)
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid refresh token"})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid refresh token. Please login again."})
 			return
 		}
 
+		// Generate a new access token using the claims from the refresh token.
 		newAccessToken, err := helpers.GenerateAccessToken(claims.UserID, claims.UserType)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate access token"})
 			return
 		}
 
-		c.Header("Authorization", "Bearer "+newAccessToken)
-		c.JSON(http.StatusOK, gin.H{"access_token": newAccessToken})
+		// Optionally, generate a new refresh token as well.
+		newRefreshToken, err := helpers.GenerateRefreshToken(claims.UserID, claims.UserType)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate refresh token"})
+			return
+		}
+
+		// Respond with the new tokens.
+		c.JSON(http.StatusOK, gin.H{
+			"access_token":  newAccessToken,
+			"refresh_token": newRefreshToken,
+		})
 	}
 }

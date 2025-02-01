@@ -114,6 +114,25 @@ func GenerateAccessToken(userID, userType string) (string, error) {
 	return accessToken, nil
 }
 
+func GenerateRefreshToken(userID, userType string) (string, error) {
+	refreshClaims := RefreshClaims{
+		UserID:   userID,
+		UserType: userType,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(refreshTokenExpiry)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
+	}
+
+	refreshToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims).SignedString(refreshSecretKey)
+	if err != nil {
+		logger.Errorf("Refresh token generation failed: %v", err)
+		return "", fmt.Errorf("failed to generate refresh token: %w", err)
+	}
+
+	return refreshToken, nil
+}
+
 func UpdateAllTokens(ctx context.Context, accessToken, refreshToken, userID string) error {
 	objID, err := bson.ObjectIDFromHex(userID)
 	if err != nil {

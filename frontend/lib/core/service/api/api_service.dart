@@ -39,4 +39,13 @@ class ApiService {
         options: Options(headers: headers));
     return response;
   }
+
+  Future patch(String url,
+      {Map<String, dynamic>? headers, body, queryParameters}) {
+    final response = dio.patch(url,
+        queryParameters: queryParameters,
+        data: body,
+        options: Options(headers: headers));
+    return response;
+  }
 }
