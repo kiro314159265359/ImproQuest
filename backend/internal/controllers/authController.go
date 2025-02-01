@@ -61,6 +61,7 @@ type UserResponse struct {
 	Email         string        `json:"email"`
 	Username      string        `json:"username"`
 	UserType      string        `json:"user_type"`
+	InventoryID bson.ObjectID `json:"inventory_id"`
 	Token         *string       `json:"token,omitempty" bson:"token,omitempty"`
 	Refresh_token *string       `json:"refresh_token,omitempty" bson:"refresh_token,omitempty"`
 	CreatedAt     time.Time     `json:"created_at"`
@@ -125,14 +126,13 @@ func Signup() gin.HandlerFunc {
 			Email:       &req.Email,
 			Password:    &hashedPassword,
 			Username:    req.Username,
-			BirthDate:   birthDate, // Use the parsed date
+			BirthDate:   birthDate,
 			UserType:    req.UserType,
-			Created_at:  time.Now(),
 			InventoryID: inventoryID,
+			Created_at:  time.Now(),
 			Updated_at:  time.Now(),
 			ID:          bson.NewObjectID(),
 		}
-
 		access, refresh, err := helpers.GenerateAllTokens(user.ID.Hex(), *user.UserType)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate tokens"})
@@ -154,6 +154,7 @@ func Signup() gin.HandlerFunc {
 			Email:         *user.Email,
 			Username:      *user.Username,
 			UserType:      *user.UserType,
+			InventoryID: user.InventoryID,
 			CreatedAt:     user.Created_at,
 			Token:         user.Token,
 			Refresh_token: user.Refresh_token,
