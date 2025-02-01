@@ -121,14 +121,7 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
           contentPadding:
               const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
         ),
-        validator: widget.validator
-        //     (value) {
-        //   if (value == null || value.isEmpty) {
-        //     return 'Please enter Your ${widget.hintText}';
-        //   }
-        //   return null;
-        // }
-        ,
+        validator: widget.validator,
         autovalidateMode: AutovalidateMode.onUserInteraction,
       ),
     );

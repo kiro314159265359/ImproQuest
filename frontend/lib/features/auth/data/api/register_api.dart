@@ -18,5 +18,6 @@ class RegisterApi extends RegisterRepo {
       'UserType': "User",
       'birthdate': birthday,
     });
+    print(response.data);
   }
 }

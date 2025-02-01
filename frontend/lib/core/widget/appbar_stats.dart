@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_2/features/home/views/widgets/custom_rich_text.dart';
+import 'package:flutter_application_2/core/utils/app_images.dart';
+import 'package:flutter_application_2/features/home/presentation/views/widgets/custom_rich_text.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
 
 import '../theme/color_manger.dart';
@@ -45,8 +46,7 @@ class _AppBarStatsState extends State<AppBarStats> {
               backgroundColor: ColorManager.primaryColor,
               child: CircleAvatar(
                 radius: 26,
-                backgroundImage:
-                    const AssetImage('assets/images/ProfilePhoto.png'),
+                backgroundImage: const AssetImage(AppImages.profilePhoto),
                 child: Transform.translate(
                   offset: const Offset(0, 28),
                   child: Container(

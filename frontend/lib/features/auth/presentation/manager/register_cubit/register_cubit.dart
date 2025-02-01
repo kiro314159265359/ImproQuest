@@ -1,4 +1,3 @@
-import 'package:bloc/bloc.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_2/features/auth/domain/repo/register_repo.dart';

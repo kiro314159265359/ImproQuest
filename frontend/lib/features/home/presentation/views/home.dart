@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_2/core/theme/background_theme.dart';
 import 'package:flutter_application_2/core/widget/appbar_stats.dart';
-import 'package:flutter_application_2/features/home/views/widgets/custom_quest_card.dart';
-import 'package:flutter_application_2/features/home/views/widgets/custom_rich_text.dart';
+import 'package:flutter_application_2/features/home/presentation/views/widgets/custom_quest_card.dart';
+import 'package:flutter_application_2/features/home/presentation/views/widgets/custom_rich_text.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
-import 'dart:math' as math;
-import '../../../core/theme/color_manger.dart';
-import '../../../core/theme/text_style.dart';
+import '../../../../core/theme/color_manger.dart';
+import '../../../../core/theme/text_style.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -18,19 +18,7 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        height: MediaQuery.of(context).size.height,
-        width: MediaQuery.of(context).size.width,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              ColorManager.navyColor,
-              ColorManager.deepBlue,
-            ],
-          ),
-        ),
+      body: BackgroundTheme(
         child: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
