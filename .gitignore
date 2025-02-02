@@ -1,3 +1,3 @@
 # Ignore the log folder in the backend
-backend/log/
+backend/logs/
 backend/logs/app.log
