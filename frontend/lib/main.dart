@@ -12,7 +12,7 @@ Future<void> main() async {
   // DevicePreview(
   //   builder: (context) => const MyApp(), // Wrap your app
   // ),
-  
+
   // Instantiate your login repository (API implementation)
   final LoginRepo loginRepo = LoginApi();
   // Determine the initial route based on token validation and refresh logic.
@@ -25,7 +25,6 @@ class MyApp extends StatelessWidget {
   final String initialRoute;
   const MyApp({super.key, required this.initialRoute});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     AppRoutes appRoutes = AppRoutes();
@@ -42,4 +41,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-

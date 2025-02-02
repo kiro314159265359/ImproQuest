@@ -5,6 +5,7 @@ import 'package:flutter_application_2/features/settings/presentation/views/widge
 import 'package:flutter_application_2/features/settings/presentation/views/widgets/label_box.dart';
 
 import '../../../../core/routes/routes.dart';
+import '../../../../core/service/cache_helper.dart';
 import '../../../../core/theme/color_manger.dart';
 import '../../../../core/theme/text_style.dart';
 
@@ -192,6 +193,7 @@ class _SettingsState extends State<Settings> {
                                       fontSize: 18,
                                       color: ColorManager.errorColor)),
                               onTap: () {
+                                clearTokens();
                                 Navigator.pushReplacementNamed(
                                     context, Routes.loginScreen);
                               },
@@ -202,11 +204,12 @@ class _SettingsState extends State<Settings> {
                                 size: 30,
                                 color: ColorManager.errorColor,
                               ),
-                              title: Text("Sign Out",
+                              title: Text("Logout",
                                   style: TextStyles.styleSemiBold(context,
                                       fontSize: 18,
                                       color: ColorManager.errorColor)),
                               onTap: () {
+                                clearTokens();
                                 Navigator.pushReplacementNamed(
                                     context, Routes.loginScreen);
                               },

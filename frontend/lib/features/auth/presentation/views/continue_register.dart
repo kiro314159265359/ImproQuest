@@ -37,7 +37,7 @@ class _ContinueRegisterState extends State<ContinueRegister> {
         child: BlocConsumer<RegisterCubit, RegisterState>(
             listener: (context, state) {
           if (state is RegisterSuccessState) {
-            Navigator.pushReplacementNamed(context, Routes.appLayoutPage);
+            Navigator.pushReplacementNamed(context, Routes.loginScreen);
           }
           if (state is RegisterErrorState) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -184,6 +184,7 @@ class _ContinueRegisterState extends State<ContinueRegister> {
                               },
                               buttonText: "Register",
                               height: 45,
+                              isLoading: state is RegisterLoadingState,
                             ),
                           ],
                         ),

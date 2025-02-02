@@ -10,15 +10,19 @@ class LoginCubit extends Cubit<LoginState> {
 
   LoginCubit(this.loginRepo) : super(LoginInitial());
 
-  Future<void> loginUser(String email, String password) async {
+  Future<void> loginUser(String email, String password, bool rememberMe) async {
     emit(LoginLoadingState());
+
     try {
       var response = await loginRepo.login(email, password);
       // !TODO : Clean this shit
       var accessToken = response['user']['access_token'];
       var refreshToken = response['user']['refresh_token'];
-      saveAccessToken(accessToken);
-      saveAccessToken(refreshToken);
+
+      if (rememberMe) {
+        saveAccessToken(accessToken);
+        saveRefreshToken(refreshToken);
+      }
       emit(LoginSuccessState());
     } catch (error) {
       if (error is DioException) {

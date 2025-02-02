@@ -74,8 +74,7 @@ class AppLayout extends StatelessWidget {
                       },
                       tooltip: 'Fight',
                       elevation: 15.0,
-                      backgroundColor:
-                          ColorManager.primaryColor.withOpacity(0.1),
+                      backgroundColor: ColorManager.primaryColor,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(7.0),
                       ),

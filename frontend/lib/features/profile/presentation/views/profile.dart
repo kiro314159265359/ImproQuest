@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-
 import '../../../../core/theme/background_theme.dart';
-import '../../../../core/theme/color_manger.dart';
-import '../../../../core/theme/text_style.dart';
 import '../../../../core/widget/appbar_stats.dart';
 
 class Profile extends StatefulWidget {

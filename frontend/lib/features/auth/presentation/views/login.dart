@@ -20,7 +20,7 @@ class Login extends StatefulWidget {
 }
 
 class _LoginState extends State<Login> {
-  bool? value = false;
+  bool rememberMe = false;
   final formKey = GlobalKey<FormState>();
   TextEditingController emailController = TextEditingController();
   TextEditingController passController = TextEditingController();
@@ -86,10 +86,10 @@ class _LoginState extends State<Login> {
                                     children: [
                                       Checkbox(
                                         activeColor: ColorManager.primaryColor,
-                                        value: value,
+                                        value: rememberMe,
                                         onChanged: (newValue) {
                                           setState(() {
-                                            value = newValue;
+                                            rememberMe = newValue!;
                                           });
                                         },
                                       ),
@@ -120,16 +120,17 @@ class _LoginState extends State<Login> {
                                 height: 20,
                               ),
                               CustomPrimaryButton(
-                                onPressed: () {
-                                  if (formKey.currentState!.validate()) {
-                                    context.read<LoginCubit>().loginUser(
-                                        emailController.text,
-                                        passController.text);
-                                  }
-                                },
-                                buttonText: "Login",
-                                height: 45,
-                              ),
+                                  onPressed: () {
+                                    if (formKey.currentState!.validate()) {
+                                      context.read<LoginCubit>().loginUser(
+                                          emailController.text,
+                                          passController.text,
+                                          rememberMe);
+                                    }
+                                  },
+                                  buttonText: "Login",
+                                  height: 45,
+                                  isLoading: state is LoginLoadingState),
                               const SizedBox(
                                 height: 20,
                               ),
