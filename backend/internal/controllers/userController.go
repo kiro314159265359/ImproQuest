@@ -12,6 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 
+	"github.com/HarDizzeR/Project/backend/internal/database"
 	"github.com/HarDizzeR/Project/backend/internal/helpers"
 	"github.com/HarDizzeR/Project/backend/internal/logger"
 	"github.com/HarDizzeR/Project/backend/internal/models"
@@ -110,6 +111,37 @@ func GetUser() gin.HandlerFunc {
 	}
 }
 
+func GetMyData() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Get user ID from context
+		userId := c.GetString("id")
+
+		// Convert string ID to ObjectID
+		objId, err := bson.ObjectIDFromHex(userId)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID"})
+			return
+		}
+
+		// Get MongoDB collection
+		collection := database.Users()
+
+		// Find user in database
+		var user models.User
+		err = collection.FindOne(c.Request.Context(), bson.M{"_id": objId}).Decode(&user)
+		if err != nil {
+			if err == mongo.ErrNoDocuments {
+				c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+				return
+			}
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch user data"})
+			return
+		}
+		// Directly return the user struct with sensitive fields omitted
+		c.JSON(http.StatusOK, user)
+	}
+}
+
 func DeleteUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID := c.Param("id")
@@ -143,7 +175,6 @@ func DeleteUser() gin.HandlerFunc {
 }
 
 // Update User include password update
-
 func UpdateUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID := c.Param("id")

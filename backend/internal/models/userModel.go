@@ -17,12 +17,12 @@ type User struct {
 	Username      *string         `json:"username" bson:"username" validate:"required,min=2,max=200"`
 	MobileNumber  *string         `json:"mobile_number" bson:"mobile_number"`
 	Email         *string         `json:"email" bson:"email" validate:"required,email"`
-	Password      *string         `json:"password" bson:"password" validate:"required,min=8"`
+	Password      *string         `json:"-" bson:"password" validate:"required,min=8"`
 	Height        *float64        `json:"height" bson:"height" validate:"required,min=50,max=300"`
 	Gender        *string         `json:"gender" bson:"gender" validate:"required,oneof=Male Female"`
 	UserType      *string         `json:"user_type" bson:"user_type" validate:"required,oneof=Admin User"`
-	Token         *string         `json:"access_token,omitempty" bson:"access_token,omitempty"`
-	Refresh_token *string         `json:"refresh_token,omitempty" bson:"refresh_token,omitempty"`
+	Token         *string         `json:"-" bson:"token,omitempty"`
+	Refresh_token *string         `json:"-" bson:"refresh_token,omitempty"`
 	BirthDate     time.Time       `json:"birth_date" bson:"birth_date" validate:"required"`
 	Weight        *float64        `json:"weight" bson:"weight" validate:"required,min=30,max=300"`
 	XP            float64         `json:"xp" bson:"xp" validate:"gte=0"`
