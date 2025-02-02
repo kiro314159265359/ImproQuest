@@ -9,7 +9,6 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 
 	"github.com/HarDizzeR/Project/backend/internal/database"
-	"github.com/HarDizzeR/Project/backend/internal/helpers"
 	"github.com/HarDizzeR/Project/backend/internal/logger"
 	"github.com/HarDizzeR/Project/backend/internal/models"
 )
@@ -124,12 +123,6 @@ func RemoveItemFromInventory(c *gin.Context) {
 }
 
 func CreateItem(c *gin.Context) {
-	// Verify admin privileges
-	err := helpers.CheckUserType(c, "Admin")
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
 
 	// Parse request body
 	var item models.Item
@@ -149,7 +142,7 @@ func CreateItem(c *gin.Context) {
 	// Insert into database
 	ctx := context.TODO()
 	itemsCollection := database.Items()
-	_, err = itemsCollection.InsertOne(ctx, item)
+	_, err := itemsCollection.InsertOne(ctx, item)
 	if err != nil {
 		logger.Errorf("Failed to create item: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create item"})
@@ -160,12 +153,6 @@ func CreateItem(c *gin.Context) {
 }
 
 func UpdateItem(c *gin.Context) {
-	// Verify admin privileges
-	if err := helpers.CheckUserType(c, "Admin"); err != nil {
-		logger.Warn("Unauthorized update attempt")
-		c.JSON(http.StatusForbidden, gin.H{"error": "Unauthorized access"})
-		return
-	}
 
 	// Get item ID from URL
 	itemIDParam := c.Param("itemId")
@@ -214,12 +201,6 @@ func UpdateItem(c *gin.Context) {
 }
 
 func GetAllItems(c *gin.Context) {
-	// Verify admin privileges
-	if err := helpers.CheckUserType(c, "Admin"); err != nil {
-		logger.Warn("Unauthorized access attempt to get all items")
-		c.JSON(http.StatusForbidden, gin.H{"error": "Unauthorized access"})
-		return
-	}
 
 	ctx := context.TODO()
 	itemsCollection := database.Items()
@@ -249,12 +230,6 @@ func GetAllItems(c *gin.Context) {
 }
 
 func GetItemById(c *gin.Context) {
-	// Verify admin privileges
-	if err := helpers.CheckUserType(c, "Admin"); err != nil {
-		logger.Warn("Unauthorized access attempt to get item")
-		c.JSON(http.StatusForbidden, gin.H{"error": "Unauthorized access"})
-		return
-	}
 
 	itemIDParam := c.Param("itemId")
 	itemObjID, err := bson.ObjectIDFromHex(itemIDParam)
@@ -283,12 +258,6 @@ func GetItemById(c *gin.Context) {
 }
 
 func DeleteItem(c *gin.Context) {
-	// Verify admin privileges
-	if err := helpers.CheckUserType(c, "Admin"); err != nil {
-		logger.Warn("Unauthorized delete attempt")
-		c.JSON(http.StatusForbidden, gin.H{"error": "Unauthorized access"})
-		return
-	}
 
 	// Parse item ID from the request
 	itemIDParam := c.Param("itemId")

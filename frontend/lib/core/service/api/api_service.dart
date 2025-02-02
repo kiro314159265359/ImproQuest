@@ -1,14 +1,19 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_application_2/core/service/api/end_points.dart';
+import '../../../core/network/dio_interceptor.dart';
 
 class ApiService {
-  Dio dio = Dio(
+  final Dio dio;
+
+  ApiService() : dio = Dio(
     BaseOptions(
         baseUrl: EndPoints.baseUrl,
         connectTimeout: const Duration(seconds: 30),
         receiveTimeout: const Duration(seconds: 30),
         sendTimeout: const Duration(seconds: 30)),
-  );
+  ) {
+    dio.interceptors.add(TokenInterceptor(dio: dio));
+  }
 
   Future get(String url, {Map<String, dynamic>? headers, queryParameters}) {
     final response = dio.get(url,

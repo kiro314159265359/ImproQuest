@@ -13,11 +13,12 @@ func ItemRoutes(router *gin.Engine) {
 	items.GET("/", controllers.GetAllItems)
 	items.GET("/:itemId", controllers.GetItemById)
 
-	items.PUT("/Update/:itemId", controllers.UpdateItem)
+	items.PUT("/Update/:itemId", middleware.CheckUserType("Admin"), controllers.UpdateItem)
 
-	items.POST("/create", controllers.CreateItem)
+	items.POST("/create", middleware.CheckUserType("Admin"), controllers.CreateItem)
 	items.POST("/:itemId/add", controllers.AddItemToInventory)
 
 	items.DELETE("/:itemId/remove", controllers.RemoveItemFromInventory)
-	items.DELETE("/:itemId/delete", controllers.DeleteItem)
+	items.DELETE("/:itemId/delete", middleware.CheckUserType("Admin"), controllers.DeleteItem)
+
 }

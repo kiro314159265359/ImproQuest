@@ -10,18 +10,11 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 
 	"github.com/HarDizzeR/Project/backend/internal/database"
-	"github.com/HarDizzeR/Project/backend/internal/helpers"
 	"github.com/HarDizzeR/Project/backend/internal/logger"
 	"github.com/HarDizzeR/Project/backend/internal/models"
 )
 
 func CreateStage(c *gin.Context) {
-	// Verify admin privileges
-	err := helpers.CheckUserType(c, "Admin")
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
 
 	// Get enemy_id from URL parameters
 	enemyIDParam := c.Param("enemy_id")

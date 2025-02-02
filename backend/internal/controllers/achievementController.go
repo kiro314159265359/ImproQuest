@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/HarDizzeR/Project/backend/internal/database"
-	"github.com/HarDizzeR/Project/backend/internal/helpers"
 	"github.com/HarDizzeR/Project/backend/internal/models"
 	"github.com/gin-gonic/gin"
 
@@ -15,10 +14,6 @@ import (
 )
 
 func CreateAchievement(c *gin.Context) {
-	if err := helpers.CheckUserType(c, "Admin"); err != nil {
-		c.JSON(http.StatusForbidden, gin.H{"error": "unauthorized access"})
-		return
-	}
 
 	var achievement models.Achievement
 	if err := c.BindJSON(&achievement); err != nil {
@@ -47,10 +42,6 @@ func CreateAchievement(c *gin.Context) {
 }
 
 func GetAllAchievements(c *gin.Context) {
-	if err := helpers.CheckUserType(c, "Admin"); err != nil {
-		c.JSON(http.StatusForbidden, gin.H{"error": "unauthorized access"})
-		return
-	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -73,10 +64,6 @@ func GetAllAchievements(c *gin.Context) {
 }
 
 func GetAchievementByID(c *gin.Context) {
-	if err := helpers.CheckUserType(c, "Admin"); err != nil {
-		c.JSON(http.StatusForbidden, gin.H{"error": "unauthorized access"})
-		return
-	}
 
 	id := c.Param("id")
 	objID, err := bson.ObjectIDFromHex(id)
@@ -104,10 +91,6 @@ func GetAchievementByID(c *gin.Context) {
 }
 
 func UpdateAchievement(c *gin.Context) {
-	if err := helpers.CheckUserType(c, "Admin"); err != nil {
-		c.JSON(http.StatusForbidden, gin.H{"error": "unauthorized access"})
-		return
-	}
 
 	id := c.Param("id")
 	objID, err := bson.ObjectIDFromHex(id)
@@ -282,10 +265,6 @@ func RemoveAchievement(c *gin.Context) {
 }
 
 func DeleteAchievement(c *gin.Context) {
-	if err := helpers.CheckUserType(c, "Admin"); err != nil {
-		c.JSON(http.StatusForbidden, gin.H{"error": "unauthorized access"})
-		return
-	}
 
 	id := c.Param("id")
 	objID, err := bson.ObjectIDFromHex(id)

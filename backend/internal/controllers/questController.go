@@ -12,7 +12,6 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 
 	"github.com/HarDizzeR/Project/backend/internal/database"
-	"github.com/HarDizzeR/Project/backend/internal/helpers"
 	"github.com/HarDizzeR/Project/backend/internal/logger"
 	"github.com/HarDizzeR/Project/backend/internal/models"
 )
@@ -30,12 +29,6 @@ type QuestRequest struct {
 
 func CreateQuest() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		err := helpers.CheckUserType(c, "Admin")
-		if err != nil {
-			logger.Errorf("Access Denied")
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
 
 		var questReq QuestRequest
 
@@ -68,7 +61,7 @@ func CreateQuest() gin.HandlerFunc {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		_, err = questCollection.InsertOne(ctx, quest)
+		_, err := questCollection.InsertOne(ctx, quest)
 		if err != nil {
 			logger.Errorf("Error while creating Quest: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -135,12 +128,6 @@ func GetQuest() gin.HandlerFunc {
 
 func UpdateQuest() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		err := helpers.CheckUserType(c, "Admin")
-		if err != nil {
-			logger.Errorf("Access Denied")
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
 
 		questID := c.Param("id")
 		objectID, err := bson.ObjectIDFromHex(questID)
@@ -181,12 +168,6 @@ func UpdateQuest() gin.HandlerFunc {
 
 func DeleteQuest() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		err := helpers.CheckUserType(c, "Admin")
-		if err != nil {
-			logger.Errorf("Access Denied")
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
 
 		questID := c.Param("id")
 		objectID, err := bson.ObjectIDFromHex(questID)

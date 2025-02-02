@@ -11,6 +11,6 @@ class ColorManager {
   static const Color errorColor = Color(0xFFFF7043);
   static const Color containerBackGround = Color(0xFF485577);
   static Color fadedNavy =
-      const Color(0xFF202A44).withOpacity(0.6); // A muted dark blue.
+      const Color(0xFF202A44).withValues(alpha: .6); // A muted dark blue.
   static const Color lightGrey = Color(0xFFC5C6D0); // A soft gray tone.
 }

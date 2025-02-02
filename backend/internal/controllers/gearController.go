@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/HarDizzeR/Project/backend/internal/helpers"
 	"github.com/HarDizzeR/Project/backend/internal/models"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -127,11 +126,6 @@ func GetGearByID(c *gin.Context) {
 }
 
 func UpdateGear(c *gin.Context) {
-	// 1. Authorization check
-	if err := helpers.CheckUserType(c, "Admin"); err != nil {
-		c.JSON(http.StatusForbidden, gin.H{"error": "unauthorized access"})
-		return
-	}
 
 	// 2. Get and validate ID
 	gearID := c.Param("id")

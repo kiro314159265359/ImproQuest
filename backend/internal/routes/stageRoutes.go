@@ -10,12 +10,12 @@ import (
 func StageRoutes(router *gin.Engine) {
 	adminRoutes := router.Group("/stages")
 	adminRoutes.Use(middleware.Authenticate())
-	adminRoutes.POST("/create/:enemy_id", controllers.CreateStage)
+	adminRoutes.POST("/create/:enemy_id", middleware.CheckUserType("Admin"), controllers.CreateStage)
 
 	adminRoutes.GET("/", controllers.GetAllStages)
 	adminRoutes.GET("/:stageId", controllers.GetStageByID)
 
-	adminRoutes.PUT("/:stageId", controllers.UpdateStage)
+	adminRoutes.PUT("/:stageId", middleware.CheckUserType("Admin"), controllers.UpdateStage)
 
-	adminRoutes.DELETE("/:stageId", controllers.DeleteStage)
+	adminRoutes.DELETE("/:stageId", middleware.CheckUserType("Admin"), controllers.DeleteStage)
 }

@@ -74,7 +74,7 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
               ? IconButton(
                   icon: Icon(
                     Icons.calendar_today,
-                    color: ColorManager.lightGrey.withOpacity(0.5),
+                    color: ColorManager.lightGrey.withValues(alpha: .5),
                     size: 30,
                   ),
                   onPressed: () {
@@ -85,7 +85,7 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
                   ? IconButton(
                       icon: isSecure
                           ? Icon(Icons.visibility_off_outlined,
-                              color: ColorManager.lightGrey.withOpacity(0.5),
+                              color: ColorManager.lightGrey.withValues(alpha: .5),
                               size: 30)
                           : const Icon(Icons.visibility_outlined,
                               color: ColorManager.primaryColor, size: 30),
@@ -97,7 +97,7 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
                     )
                   : null,
           filled: true,
-          fillColor: widget.fillColor ?? ColorManager.gunmetal.withOpacity(0.6),
+          fillColor: widget.fillColor ?? ColorManager.gunmetal.withValues(alpha: .6),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
             borderSide: BorderSide.none,
@@ -117,7 +117,7 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
           hintText: widget.hintText,
           hintStyle: widget.hintStyle ??
               TextStyles.styleSemiBold(context,
-                  fontSize: 18, color: ColorManager.lightGrey.withOpacity(0.5)),
+                  fontSize: 18, color: ColorManager.lightGrey.withValues(alpha: .5)),
           contentPadding:
               const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
         ),

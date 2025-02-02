@@ -13,9 +13,9 @@ func EnemiesRoutes(router *gin.Engine) {
 	adminRoutes.GET("/", controllers.GetAllEnemies)
 	adminRoutes.GET("/:enemyId", controllers.GetEnemyByID)
 
-	adminRoutes.POST("/create", controllers.CreateEnemy)
+	adminRoutes.POST("/create", middleware.CheckUserType("Admin"), controllers.CreateEnemy)
 
-	adminRoutes.PUT("/:enemyId", controllers.UpdateEnemy)
+	adminRoutes.PUT("/:enemyId", middleware.CheckUserType("Admin"), controllers.UpdateEnemy)
 
-	adminRoutes.DELETE("/:enemyId", controllers.DeleteEnemy)
+	adminRoutes.DELETE("/:enemyId", middleware.CheckUserType("Admin"), controllers.DeleteEnemy)
 }

@@ -22,7 +22,7 @@ class _LeaderboardsListTileState extends State<LeaderboardsListTile> {
   @override
   Widget build(BuildContext context) {
     return Card(
-        color: ColorManager.gunmetal.withOpacity(0.5),
+        color: ColorManager.gunmetal.withValues(alpha: .5),
         child: ListTile(
           leading: Text('${(widget.playerPlace + 1)}',
               style: TextStyles.styleBold(context,

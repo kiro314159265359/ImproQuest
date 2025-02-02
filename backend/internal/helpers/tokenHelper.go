@@ -141,7 +141,7 @@ func UpdateAllTokens(ctx context.Context, accessToken, refreshToken, userID stri
 
 	update := bson.D{
 		{Key: "$set", Value: bson.D{
-			{Key: "token", Value: accessToken},
+			{Key: "access_token", Value: accessToken},
 			{Key: "refresh_token", Value: refreshToken},
 			{Key: "updated_at", Value: time.Now()},
 		}},
@@ -195,7 +195,7 @@ func ValidateAccessToken(tokenString string) (*AccessClaims, error) {
 
 	if err != nil {
 		if errors.Is(err, jwt.ErrTokenExpired) {
-			return nil, errors.New("token has expired")
+			return nil, errors.New("Token has expired")
 		}
 		return nil, fmt.Errorf("invalid token: %w", err)
 	}

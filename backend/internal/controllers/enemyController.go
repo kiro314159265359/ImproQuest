@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/HarDizzeR/Project/backend/internal/database"
-	"github.com/HarDizzeR/Project/backend/internal/helpers"
 	"github.com/HarDizzeR/Project/backend/internal/logger"
 	"github.com/HarDizzeR/Project/backend/internal/models"
 	"github.com/gin-gonic/gin"
@@ -15,12 +14,6 @@ import (
 )
 
 func CreateEnemy(c *gin.Context) {
-	// Verify admin privileges
-	err := helpers.CheckUserType(c, "Admin")
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
 
 	var enemy models.Enemy
 	if err := c.ShouldBindJSON(&enemy); err != nil {
@@ -45,7 +38,7 @@ func CreateEnemy(c *gin.Context) {
 	// Insert into database
 	ctx := context.TODO()
 	enemiesCollection := database.Enemies()
-	_, err = enemiesCollection.InsertOne(ctx, enemy)
+	_, err := enemiesCollection.InsertOne(ctx, enemy)
 	if err != nil {
 		logger.Errorf("Database error: %v", err) // Now shows actual error
 		c.JSON(http.StatusInternalServerError, gin.H{

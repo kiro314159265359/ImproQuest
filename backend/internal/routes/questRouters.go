@@ -13,9 +13,9 @@ func QuestRoutes(incomingRoutes *gin.Engine) {
 	quests.Use(middleware.Authenticate())
 
 	quests.GET("/", controllers.GetQuests())
-	quests.POST("/", controllers.CreateQuest())
+	quests.POST("/", middleware.CheckUserType("Admin"), controllers.CreateQuest())
 	quests.GET("/:id", controllers.GetQuest())
-	quests.DELETE("/:id", controllers.DeleteQuest())
-	quests.PATCH("/:id", controllers.UpdateQuest())
+	quests.DELETE("/:id", middleware.CheckUserType("Admin"), controllers.DeleteQuest())
+	quests.PATCH("/:id", middleware.CheckUserType("Admin"), controllers.UpdateQuest())
 
 }

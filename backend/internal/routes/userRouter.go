@@ -12,7 +12,7 @@ func UserRoutes(incomingRoutes *gin.Engine) {
 
 	users.Use(middleware.Authenticate())
 
-	users.GET("/", controllers.GetUsers())
+	users.GET("/", middleware.CheckUserType("Admin"), controllers.GetUsers())
 	users.GET("/:id", controllers.GetUser())
 	users.DELETE("/:id", controllers.DeleteUser())
 	users.PATCH("/:id", controllers.UpdateUser())
