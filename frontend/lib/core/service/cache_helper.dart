@@ -7,7 +7,6 @@ Future<void> saveAccessToken(String accessToken) async {
 }
 
 Future<void> saveRefreshToken(String refreshToken) async {
-  // Correct key for refresh token.
   await storage.write(key: 'refreshToken', value: refreshToken);
 }
 
@@ -22,4 +21,3 @@ Future<String?> getRefreshToken() async {
 Future<void> clearTokens() async {
   await storage.deleteAll();
 }
-

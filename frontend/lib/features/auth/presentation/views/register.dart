@@ -137,6 +137,7 @@ class _RegisterState extends State<Register> {
                               },
                               buttonText: "Continue",
                               height: 45,
+                              isLoading: state is RegisterLoadingState,
                             ),
                           ],
                         ),

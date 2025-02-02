@@ -1,5 +1,3 @@
-import '../cache_helper.dart';
-
 class EndPoints {
   static const String baseUrl = "http://10.0.2.2:5000";
 
