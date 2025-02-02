@@ -14,6 +14,7 @@ func UserRoutes(incomingRoutes *gin.Engine) {
 
 	users.Use(middleware.Authenticate())
 
+	users.GET("/mydata", controllers.GetMyData())
 	users.GET("/", controllers.GetUsers())
 	users.GET("/:id", controllers.GetUser())
 	users.DELETE("/:id", controllers.DeleteUser())
