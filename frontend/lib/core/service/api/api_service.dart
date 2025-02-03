@@ -12,7 +12,7 @@ class ApiService {
         receiveTimeout: const Duration(seconds: 30),
         sendTimeout: const Duration(seconds: 30)),
   ) {
-    dio.interceptors.add(TokenInterceptor(dio: dio));
+    // dio.interceptors.add(TokenInterceptor(dio: dio));
   }
 
   Future get(String url, {Map<String, dynamic>? headers, queryParameters}) {
