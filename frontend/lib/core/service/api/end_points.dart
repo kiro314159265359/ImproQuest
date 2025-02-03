@@ -7,7 +7,9 @@ class EndPoints {
 
   static const String refreshToken = "/users/refresh";
 
-  static const String resetPassword = "/reset_password/";
+  static const String userData = "/users/mydata";
 
-  static const String profileData = "/profile/";
+  // static const String resetPassword = "/reset_password/";
+  //
+  // static const String profileData = "/profile/";
 }
