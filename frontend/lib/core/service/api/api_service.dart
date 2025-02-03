@@ -15,13 +15,10 @@ class ApiService {
             sendTimeout: const Duration(seconds: 30),
           ),
         ) {
-    // Add the interceptor if provided.
-    if (tokenInterceptor != null) {
-      dio.interceptors.add(tokenInterceptor);
-    }
   }
 
   Future get(String url, {Map<String, dynamic>? headers, queryParameters}) {
+    print("[ApiService] GET request to $url");
     final response = dio.get(url,
         queryParameters: queryParameters, options: Options(headers: headers));
     return response;

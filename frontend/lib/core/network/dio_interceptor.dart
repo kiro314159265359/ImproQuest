@@ -11,10 +11,18 @@ class TokenInterceptor extends Interceptor {
   @override
   Future<void> onRequest(
       RequestOptions options, RequestInterceptorHandler handler) async {
-    // Add the access token to the Authorization header
+    // Debug: log that onRequest is triggered.
+    print("[TokenInterceptor] onRequest called");
+
+    // Retrieve access token from your storage.
     String? accessToken = await getAccessToken();
-    if (accessToken != null) {
+    print("[TokenInterceptor] Retrieved token: '$accessToken'");
+
+    if (accessToken != null && accessToken.isNotEmpty) {
       options.headers['Authorization'] = 'Bearer $accessToken';
+      print("[TokenInterceptor] Authorization header set");
+    } else {
+      print("[TokenInterceptor] No token found, header not set");
     }
     handler.next(options);
   }
