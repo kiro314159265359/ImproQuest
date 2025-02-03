@@ -1,12 +1,12 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_application_2/core/service/cache_helper.dart';
-import 'package:flutter_application_2/features/auth/data/api/login_api.dart';
+import 'package:flutter_application_2/features/auth/domain/repo/login_repo.dart'; // changed import
 
 class TokenInterceptor extends Interceptor {
   final Dio dio;
-  final LoginApi loginApi = LoginApi();
+  final LoginRepo loginRepo;
 
-  TokenInterceptor({required this.dio});
+  TokenInterceptor({required this.dio, required this.loginRepo});
 
   @override
   Future<void> onRequest(
@@ -34,7 +34,7 @@ class TokenInterceptor extends Interceptor {
         final refreshToken = await getRefreshToken();
         if (refreshToken != null) {
           try {
-            final tokenResponse = await loginApi.refreshToken(refreshToken);
+            final tokenResponse = await loginRepo.refreshToken(refreshToken);
             final newAccessToken = tokenResponse['access_token'];
             final newRefreshToken = tokenResponse['refresh_token'];
             if (newAccessToken != null && newRefreshToken != null) {

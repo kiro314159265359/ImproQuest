@@ -5,16 +5,17 @@ import 'package:flutter_application_2/core/service/api/end_points.dart';
 import 'package:flutter_application_2/features/auth/domain/repo/login_repo.dart';
 
 class LoginApi extends LoginRepo {
-  final ApiService apiService = ApiService();
+  final ApiService apiService;
+  
+  // Inject the ApiService via constructor
+  LoginApi(this.apiService);
 
   @override
   Future<Map<String, dynamic>> login(String email, String password) async {
-
     var response = await apiService.post(EndPoints.login, body: {
       'email': email,
       'password': password,
-    },
-    );
+    });
     // Convert response to map string dynamic
     response = jsonDecode(response.toString());
     return response;

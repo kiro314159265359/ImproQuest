@@ -2,15 +2,18 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_2/core/theme/background_theme.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_it/get_it.dart';
+import 'package:flutter_application_2/features/auth/domain/repo/login_repo.dart';
 import '../../../../core/utils/validate_input.dart';
 import '../../../../core/widget/custom_primary_button.dart';
 import '../../../../core/routes/routes.dart';
 import '../../../../core/theme/color_manger.dart';
 import '../../../../core/theme/text_style.dart';
 import '../../../../core/widget/custom_text_form_field.dart';
-import '../../data/api/login_api.dart';
 import '../manager/login_cubit/login_cubit.dart';
 import '../manager/login_cubit/login_state.dart';
+
+final getIt = GetIt.instance;
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -28,7 +31,7 @@ class _LoginState extends State<Login> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-        create: (context) => LoginCubit(LoginApi()),
+        create: (context) => LoginCubit(getIt<LoginRepo>()),
         child: BlocConsumer<LoginCubit, LoginState>(listener: (context, state) {
           if (state is LoginSuccessState) {
             Navigator.pushReplacementNamed(context, Routes.appLayoutPage);
