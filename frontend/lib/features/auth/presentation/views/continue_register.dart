@@ -29,6 +29,9 @@ class _ContinueRegisterState extends State<ContinueRegister> {
   TextEditingController birthDayController = TextEditingController();
   @override
   Widget build(BuildContext context) {
+    var w = MediaQuery.of(context).size.width;
+    var h = MediaQuery.of(context).size.height;
+
     final email = widget.arguments?.email ?? '';
     final password = widget.arguments?.password ?? '';
 
@@ -52,47 +55,42 @@ class _ContinueRegisterState extends State<ContinueRegister> {
                   child: Center(
                     child: SingleChildScrollView(
                       child: Padding(
-                        padding: const EdgeInsets.all(16.0),
+                        padding: EdgeInsets.symmetric(
+                            horizontal: w * 0.04, vertical: h * 0.02),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  "Getting Started",
-                                  style: TextStyles.styleExtraBold(context,
-                                      fontSize: 32,
-                                      color: ColorManager.whiteColor),
-                                ),
-                              ],
+                            Text(
+                              "Getting Started",
+                              style: TextStyles.styleExtraBold(context,
+                                  fontSize: 32, color: ColorManager.whiteColor),
                             ),
-                            const SizedBox(
-                              height: 25,
+                            SizedBox(
+                              height: h * 0.03,
                             ),
                             CustomTextFormField(
                               hintText: "Username",
                               controller: userNameController,
                               validator: ValidateInput.username,
                             ),
-                            const SizedBox(
-                              height: 35,
+                            SizedBox(
+                              height: h * 0.02,
                             ),
                             CustomTextFormField(
                               hintText: "Weight",
                               controller: weightController,
                               validator: ValidateInput.weight,
                             ),
-                            const SizedBox(
-                              height: 35,
+                            SizedBox(
+                              height: h * 0.02,
                             ),
                             CustomTextFormField(
                               hintText: "Height",
                               controller: heightController,
                               validator: ValidateInput.height,
                             ),
-                            const SizedBox(
-                              height: 35,
+                            SizedBox(
+                              height: h * 0.02,
                             ),
                             CustomTextFormField(
                               hintText: "Birthday",
@@ -100,8 +98,8 @@ class _ContinueRegisterState extends State<ContinueRegister> {
                               showCalendarIcon: true,
                               validator: ValidateInput.birthday,
                             ),
-                            const SizedBox(
-                              height: 20,
+                            SizedBox(
+                              height: h * 0.02,
                             ),
                             Padding(
                               padding: const EdgeInsets.all(8.0),
@@ -144,7 +142,7 @@ class _ContinueRegisterState extends State<ContinueRegister> {
                                               color: isSelected[0]
                                                   ? Colors.white
                                                   : Colors.white54),
-                                          const SizedBox(width: 5),
+                                          SizedBox(width: w * 0.02),
                                           const Text('Male'),
                                         ],
                                       ),
@@ -156,7 +154,7 @@ class _ContinueRegisterState extends State<ContinueRegister> {
                                               color: isSelected[1]
                                                   ? Colors.white
                                                   : Colors.white54),
-                                          const SizedBox(width: 5),
+                                          SizedBox(width: w * 0.02),
                                           const Text('Female'),
                                         ],
                                       ),
@@ -165,8 +163,8 @@ class _ContinueRegisterState extends State<ContinueRegister> {
                                 ],
                               ),
                             ),
-                            const SizedBox(
-                              height: 15,
+                            SizedBox(
+                              height: h * 0.02,
                             ),
                             CustomPrimaryButton(
                               onPressed: () {

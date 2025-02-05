@@ -18,3 +18,15 @@ class UserError extends UserState {
 
   UserError(this.failure);
 }
+
+class UserUpdating extends UserState {}
+
+class UserUpdated extends UserState {
+  final UserModel user;
+  UserUpdated(this.user);
+}
+
+class UpdateError extends UserState {
+  Failure failure;
+  UpdateError(this.failure);
+}

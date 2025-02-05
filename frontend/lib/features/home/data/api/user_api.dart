@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:get_it/get_it.dart';
 import 'package:flutter_application_2/features/home/data/model/user_model.dart';
 import 'package:flutter_application_2/features/home/domain/repo/user_repo.dart';
@@ -13,7 +14,13 @@ class UserApi extends UserRepo {
   @override
   Future<UserModel> getUserData() async {
     var response = await apiService.get(EndPoints.userData);
-    print(response);
-    return UserModel.fromJson(response);
+
+    return UserModel.fromJson(jsonDecode(response.toString()));
+  }
+
+  @override
+  Future<UserModel> updateUserData(UserModel user) async {
+    await apiService.patch('/users/${user.sId}', body: user.toJson());
+    return user;
   }
 }

@@ -12,18 +12,13 @@ class TokenInterceptor extends Interceptor {
   Future<void> onRequest(
       RequestOptions options, RequestInterceptorHandler handler) async {
     // Debug: log that onRequest is triggered.
-    print("[TokenInterceptor] onRequest called");
 
     // Retrieve access token from your storage.
     String? accessToken = await getAccessToken();
-    print("[TokenInterceptor] Retrieved token: '$accessToken'");
 
     if (accessToken != null && accessToken.isNotEmpty) {
       options.headers['Authorization'] = 'Bearer $accessToken';
-      print("[TokenInterceptor] Authorization header set");
-    } else {
-      print("[TokenInterceptor] No token found, header not set");
-    }
+    } else {}
     handler.next(options);
   }
 
@@ -34,7 +29,7 @@ class TokenInterceptor extends Interceptor {
       // Inspect error response to confirm token expiry
       final responseData = err.response?.data;
       final isTokenExpired = responseData != null &&
-          responseData['error'] != null &&
+          responseData['message'] != null &&
           responseData['message'] == 'TOKEN_EXPIRED';
 
       if (isTokenExpired) {

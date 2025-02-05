@@ -24,24 +24,24 @@ class _SettingsState extends State<Settings> {
 
   @override
   Widget build(BuildContext context) {
+    var w = MediaQuery.of(context).size.width;
+    var h = MediaQuery.of(context).size.height;
     return Scaffold(
       body: BackgroundTheme(
           child: SingleChildScrollView(
               child: Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: EdgeInsets.symmetric(
+                      horizontal: w * 0.04, vertical: h * 0.02),
                   child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const SizedBox(height: 25),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 18.0),
-                          child: Text(
-                            'Settings',
-                            style: TextStyles.styleExtraBold(context,
-                                fontSize: 38, color: ColorManager.whiteColor),
-                          ),
+                        SizedBox(height: h * 0.025),
+                        Text(
+                          'Settings',
+                          style: TextStyles.styleExtraBold(context,
+                              fontSize: 38, color: ColorManager.whiteColor),
                         ),
-                        const SizedBox(height: 35),
+                        SizedBox(height: h * 0.035),
                         CustomSingleListTile(
                             titleText: 'Edit your information',
                             leadingIcon: Icons.person_outline,
@@ -49,7 +49,7 @@ class _SettingsState extends State<Settings> {
                               Navigator.pushNamed(
                                   context, Routes.personalInfoPage);
                             }),
-                        const SizedBox(height: 5),
+                        SizedBox(height: h * 0.005),
                         LabelBox(
                           labelText: "Notifications",
                           child: DividerBox(
@@ -84,7 +84,7 @@ class _SettingsState extends State<Settings> {
                                 },
                               )),
                         ),
-                        const SizedBox(height: 5),
+                        SizedBox(height: h * 0.005),
                         LabelBox(
                             labelText: "Sound & Audio",
                             child: DividerBox(
@@ -175,12 +175,12 @@ class _SettingsState extends State<Settings> {
                                 ),
                               ),
                             )),
-                        const SizedBox(height: 20),
+                        SizedBox(height: h * 0.02),
                         CustomSingleListTile(
                             titleText: 'About',
                             leadingIcon: Icons.info_outline,
                             onTap: () {}),
-                        const SizedBox(height: 20),
+                        SizedBox(height: h * 0.02),
                         DividerBox(
                             child1: ListTile(
                               leading: const Icon(

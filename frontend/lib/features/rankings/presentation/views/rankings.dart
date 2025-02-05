@@ -16,25 +16,25 @@ class Rankings extends StatefulWidget {
 class _RankingsState extends State<Rankings> {
   @override
   Widget build(BuildContext context) {
+    var w = MediaQuery.of(context).size.width;
+    var h = MediaQuery.of(context).size.height;
     return Scaffold(
       body: BackgroundTheme(
           child: SingleChildScrollView(
               physics: const ScrollPhysics(),
               child: Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: EdgeInsets.symmetric(
+                      horizontal: w * 0.04, vertical: h * 0.02),
                   child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const SizedBox(height: 25),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 18.0),
-                          child: Text(
-                            'Leaderboards',
-                            style: TextStyles.styleExtraBold(context,
-                                fontSize: 38, color: ColorManager.whiteColor),
-                          ),
+                        SizedBox(height: h * 0.025),
+                        Text(
+                          'Leaderboards',
+                          style: TextStyles.styleExtraBold(context,
+                              fontSize: 38, color: ColorManager.whiteColor),
                         ),
-                        const SizedBox(height: 35),
+                        SizedBox(height: h * 0.035),
                         ListView.builder(
                             physics: const NeverScrollableScrollPhysics(),
                             shrinkWrap: true,

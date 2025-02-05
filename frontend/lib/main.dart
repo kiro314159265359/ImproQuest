@@ -1,6 +1,7 @@
+import 'package:device_preview/device_preview.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_2/core/routes/app_routes.dart';
-import 'package:flutter_application_2/core/theme/color_manger.dart';
+import 'package:flutter_application_2/core/theme/app_theme.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:flutter_application_2/core/service/api/api_service.dart';
@@ -21,7 +22,8 @@ Future<void> main() async {
   // Inject the ApiService into LoginApi.
   final LoginRepo loginRepo = LoginApi(apiService);
   // Create and add the token interceptor.
-  final tokenInterceptor = TokenInterceptor(dio: apiService.dio, loginRepo: loginRepo);
+  final tokenInterceptor =
+      TokenInterceptor(dio: apiService.dio, loginRepo: loginRepo);
   apiService.dio.interceptors.add(tokenInterceptor);
 
   // Register your single instances.
@@ -32,6 +34,9 @@ Future<void> main() async {
   final initialRoute = await determineInitialRoute(loginRepo);
 
   runApp(MyApp(initialRoute: initialRoute));
+  // runApp(DevicePreview(
+  //   builder: (context) => MyApp(initialRoute: initialRoute),
+  // ));
 }
 
 class MyApp extends StatelessWidget {
@@ -44,16 +49,13 @@ class MyApp extends StatelessWidget {
     return BlocProvider(
       create: (context) => UserCubit(UserApi()),
       child: MaterialApp(
-        // locale: DevicePreview.locale(context),
-        // builder: DevicePreview.appBuilder,
-        debugShowCheckedModeBanner: false,
-        initialRoute: initialRoute,
-        onGenerateRoute: appRoutes.onGenerateRoute, themeMode: ThemeMode.dark,
-        darkTheme: ThemeData(
-          brightness: Brightness.dark,
-          scaffoldBackgroundColor: ColorManager.deepBlue,
-        ),
-      ),
+          // locale: DevicePreview.locale(context),
+          // builder: DevicePreview.appBuilder,
+          debugShowCheckedModeBanner: false,
+          initialRoute: initialRoute,
+          onGenerateRoute: appRoutes.onGenerateRoute,
+          themeMode: ThemeMode.dark,
+          darkTheme: AppTheme.appTheme),
     );
   }
 }

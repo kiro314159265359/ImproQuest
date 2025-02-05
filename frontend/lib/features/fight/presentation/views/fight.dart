@@ -17,18 +17,21 @@ class Fight extends StatefulWidget {
 class _FightState extends State<Fight> {
   @override
   Widget build(BuildContext context) {
+    var w = MediaQuery.of(context).size.width;
+    var h = MediaQuery.of(context).size.height;
     return Scaffold(
       body: BackgroundTheme(
           child: SingleChildScrollView(
               child: Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: EdgeInsets.symmetric(
+                      horizontal: w * 0.04, vertical: h * 0.02),
                   child: Column(
                       mainAxisAlignment: MainAxisAlignment.start,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const SizedBox(height: 25),
+                        SizedBox(height: h * 0.025),
                         const AppBarStats(),
-                        const SizedBox(height: 25),
+                        SizedBox(height: h * 0.025),
                         Center(
                           child: Card(
                             color: ColorManager.gunmetal,
@@ -84,7 +87,7 @@ class _FightState extends State<Fight> {
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 25),
+                                SizedBox(height: h * 0.025),
                                 Row(
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceEvenly,

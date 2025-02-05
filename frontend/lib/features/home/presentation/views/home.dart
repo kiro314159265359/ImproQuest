@@ -49,25 +49,27 @@ class _HomeState extends State<Home> {
   }
 
   Widget _buildHomeContent(UserModel user) {
+    var w = MediaQuery.of(context).size.width;
+    var h = MediaQuery.of(context).size.height;
     return SingleChildScrollView(
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: EdgeInsets.symmetric(horizontal: w * 0.04, vertical: h * 0.02),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 25),
+            SizedBox(height: h * 0.025),
             const AppBarStats(),
-            const SizedBox(height: 25),
+            SizedBox(height: h * 0.025),
             CustomRichText(
               text1: 'Welcome, ',
               textStyle1: TextStyles.styleExtraBold(context,
                   fontSize: 30, color: ColorManager.whiteColor),
-              text2: user.username ?? 'Player',
+              text2: user.username?.trim().split(' ').first ?? 'Player',
               textStyle2: TextStyles.styleExtraBold(context,
                   fontSize: 30, color: ColorManager.primaryColor),
             ),
-            const SizedBox(height: 25),
+            SizedBox(height: h * 0.025),
             SizedBox(
               height: 150,
               child: Card(
@@ -143,23 +145,56 @@ class _HomeState extends State<Home> {
                 ),
               ),
             ),
-            const SizedBox(height: 10),
-            const CustomQuestCard(
-                questName: "LOGIN",
-                questDesc: "Check-in to your system today.",
-                goal: 1,
-                questImageIcon: AssetImage('assets/icons/LoginChIcon.png'),
-                progress: 1),
-            const SizedBox(height: 5),
-            const CustomQuestCard(
-                questName: "RUNNING",
-                questDesc: "Run 1km [ 100XP ]",
-                goal: 1000,
-                questImageIcon: AssetImage('assets/icons/RunningChIcon.png'),
-                progress: 0.5)
+            _buildQuestsList(user.quests),
+            // const CustomQuestCard(
+            //     questName: "LOGIN",
+            //     questDesc: "Check-in to your system today.",
+            //     goal: 1,
+            //     questImageIcon: AssetImage('assets/icons/LoginChIcon.png'),
+            //     progress: 1),
+            // SizedBox(height: h * 0.01),
+            // const CustomQuestCard(
+            //     questName: "RUNNING",
+            //     questDesc: "Run 1km [ 100XP ]",
+            //     goal: 1000,
+            //     questImageIcon: AssetImage('assets/icons/RunningChIcon.png'),
+            //     progress: 0.5)
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildQuestsList(List<Quests>? quests) {
+    if (quests == null || quests.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 150),
+        child: Center(
+          child: Text("No quests available",
+              style: TextStyles.styleSemiBold(context,
+                  fontSize: 20, color: ColorManager.whiteColor)),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: quests.length,
+      itemBuilder: (context, index) {
+        final quest = quests[index];
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 5),
+          child: CustomQuestCard(
+            questName: quest.name ?? "Unnamed Quest",
+            questDesc:
+                "${quest.xpReward ?? 0} XP • ${quest.goldReward ?? 0} Gold",
+            goal: quest.difficulty == 'hard' ? 1000 : 100,
+            questImageIcon: const AssetImage('assets/icons/RunningChIcon.png'),
+            progress: quest.isCompleted == true ? 1.0 : 0.5,
+          ),
+        );
+      },
     );
   }
 }

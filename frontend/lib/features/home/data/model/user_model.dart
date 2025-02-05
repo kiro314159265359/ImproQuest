@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart';
+
 class UserModel {
   String? sId;
   String? username;
@@ -13,7 +15,7 @@ class UserModel {
   int? gold;
   Streak? streak;
   String? inventoryId;
-  String? achievements;
+  // List<Null>? achievements;
   List<Quests>? quests;
   Stats? stats;
   int? accumDistance;
@@ -35,7 +37,7 @@ class UserModel {
       this.gold,
       this.streak,
       this.inventoryId,
-      this.achievements,
+      // this.achievements,
       this.quests,
       this.stats,
       this.accumDistance,
@@ -50,18 +52,30 @@ class UserModel {
     height = json['height'];
     gender = json['gender'];
     userType = json['user_type'];
-    birthDate = json['birth_date'];
+    if (json['birth_date'] != null) {
+      try {
+        final dateTime = DateTime.parse(json['birth_date']);
+        birthDate = DateFormat('MM/dd/yyyy').format(dateTime);
+      } catch (e) {
+        birthDate = json['birth_date'];
+      }
+    }
     weight = json['weight'];
     xp = json['xp'];
     level = json['level'];
     gold = json['gold'];
     streak = json['streak'] != null ? Streak.fromJson(json['streak']) : null;
     inventoryId = json['inventory_id'];
-    achievements = json['achievements'];
+    // if (json['achievements'] != null) {
+    //   achievements = <Null>[];
+    //   json['achievements'].forEach((v) {
+    //     achievements!.add( Null.fromJson(v));
+    //   });
+    // }
     if (json['quests'] != null) {
       quests = <Quests>[];
       json['quests'].forEach((v) {
-        quests!.add( Quests.fromJson(v));
+        quests!.add(Quests.fromJson(v));
       });
     }
     stats = json['stats'] != null ? Stats.fromJson(json['stats']) : null;
@@ -88,7 +102,9 @@ class UserModel {
       data['streak'] = streak!.toJson();
     }
     data['inventory_id'] = inventoryId;
-    data['achievements'] = achievements;
+    // if (this.achievements != null) {
+    //   data['achievements'] = this.achievements!.map((v) => v.toJson()).toList();
+    // }
     if (quests != null) {
       data['quests'] = quests!.map((v) => v.toJson()).toList();
     }

@@ -14,11 +14,9 @@ class ApiService {
             receiveTimeout: const Duration(seconds: 30),
             sendTimeout: const Duration(seconds: 30),
           ),
-        ) {
-  }
+        );
 
   Future get(String url, {Map<String, dynamic>? headers, queryParameters}) {
-    print("[ApiService] GET request to $url");
     final response = dio.get(url,
         queryParameters: queryParameters, options: Options(headers: headers));
     return response;
