@@ -14,7 +14,7 @@ class AppLayoutCubit extends Cubit<AppLayoutState> {
   List<Widget> screens = [
     const Home(),
     const Profile(),
-    const Fight(),
+    // const Fight(),
     const Rankings(),
     const Settings(),
   ];

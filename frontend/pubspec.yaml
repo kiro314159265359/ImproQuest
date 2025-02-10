@@ -48,6 +48,7 @@ dependencies:
   get_it: ^8.0.3
   flutter_activity_recognition: ^4.0.0
   geolocator: ^13.0.2
+  flame: ^1.24.0
   # image_picker:
 dev_dependencies:
   flutter_test:
@@ -75,6 +76,9 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
+    - assets/images/sprites/backgrounds/nature_3/
+    - assets/images/sprites/character/Shinobi/
+    - assets/images/sprites/character/Fighter/
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see
