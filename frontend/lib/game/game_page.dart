@@ -7,28 +7,42 @@ import 'logic/game_bloc.dart';
 import 'logic/game_state.dart';
 import 'viewmodel/game_view_model.dart';
 
-class GamePage extends StatelessWidget {
-  final TurnBasedGame flameGame = TurnBasedGame();
+class GamePage extends StatefulWidget {
+  const GamePage({super.key});
+  @override
+  GamePageState createState() => GamePageState();
+}
 
-  GamePage({super.key});
+class GamePageState extends State<GamePage> {
+  final TurnBasedGame flameGame = TurnBasedGame();
+  late GameViewModel viewModel;
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider<GameBloc>(
-      create: (_) => GameBloc(), // Ensure GameBloc is properly instantiated
+      create: (_) => GameBloc(),
       child: Scaffold(
         appBar: AppBar(title: const Text('Turn-Based Fight')),
         body: Column(
           children: [
-            // The Flame game canvas occupies the top portion of the screen.
-            Expanded(
-              child: GameWidget(game: flameGame),
+            // Flame game canvas.
+            Expanded(child: GameWidget(game: flameGame)),
+            // Listen to state changes to update the progress bars.
+            BlocListener<GameBloc, GameState>(
+              listener: (context, state) {
+                flameGame.updateBars(state);
+              },
+              child: Container(),
             ),
-            // The lower area has the game messages, action buttons, and HP displays.
+            // Your usual controls and messages.
             BlocBuilder<GameBloc, GameState>(
               builder: (context, state) {
-                final viewModel =
-                    GameViewModel(BlocProvider.of<GameBloc>(context));
+                viewModel = GameViewModel(BlocProvider.of<GameBloc>(context));
                 return Column(
                   children: [
                     Padding(
@@ -72,10 +86,27 @@ class GamePage extends StatelessWidget {
                         ),
                       ],
                     ),
+                    if (state.gameOver && state.player.currentHp > 0)
+                      ElevatedButton(
+                        onPressed: () {
+                          viewModel.nextFight();
+                        },
+                        child: const Text('Next Fight'),
+                      ),
+                    if (state.gameOver && state.player.currentHp == 0)
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(builder: (_) => const GamePage()),
+                          );
+                        },
+                        child: const Text('Restart'),
+                      ),
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Text(
-                        'Player HP: ${state.player.currentHp}/${state.player.maxHp}  |  Enemy HP: ${state.enemy.currentHp}/${state.enemy.maxHp}',
+                        'Player HP: ${state.player.currentHp}/${state.player.vitality}  |  Enemy HP: ${state.enemy.currentHp}/${state.enemy.vitality}  |  Wins: ${state.winCounter}',
                         style: const TextStyle(fontSize: 16),
                       ),
                     ),

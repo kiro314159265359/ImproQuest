@@ -1,36 +1,44 @@
 // lib/game/models/character.dart
 class Character {
   final String name;
-  final int maxHp;
+  final int strength; // Used as attack
+  final int endurance; // Used as defense
+  final int agility; // Speed—affects turn frequency
+  final int vitality; // Maximum health
   int currentHp;
-  final int attack;
-  final int defense;
   bool isDefending;
+  final bool isBoss;
 
   Character({
     required this.name,
-    required this.maxHp,
+    required this.strength,
+    required this.endurance,
+    required this.agility,
+    required this.vitality,
     required this.currentHp,
-    required this.attack,
-    required this.defense,
     this.isDefending = false,
+    this.isBoss = false,
   });
 
   Character copyWith({
     String? name,
-    int? maxHp,
+    int? strength,
+    int? endurance,
+    int? agility,
+    int? vitality,
     int? currentHp,
-    int? attack,
-    int? defense,
     bool? isDefending,
+    bool? isBoss,
   }) {
     return Character(
       name: name ?? this.name,
-      maxHp: maxHp ?? this.maxHp,
+      strength: strength ?? this.strength,
+      endurance: endurance ?? this.endurance,
+      agility: agility ?? this.agility,
+      vitality: vitality ?? this.vitality,
       currentHp: currentHp ?? this.currentHp,
-      attack: attack ?? this.attack,
-      defense: defense ?? this.defense,
       isDefending: isDefending ?? this.isDefending,
+      isBoss: isBoss ?? this.isBoss,
     );
   }
 }
