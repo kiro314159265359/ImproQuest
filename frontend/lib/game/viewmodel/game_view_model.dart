@@ -14,10 +14,6 @@ class GameViewModel {
     gameBloc.add(DefendEvent());
   }
 
-  void run() {
-    gameBloc.add(RunEvent());
-  }
-
   void openInventory() {
     gameBloc.add(OpenInventoryEvent());
   }

@@ -1,4 +1,3 @@
-// lib/game/logic/game_state.dart
 import '../models/character.dart';
 
 enum Turn { none, player, enemy }
@@ -9,7 +8,10 @@ class GameState {
   final Turn currentTurn;
   final bool gameOver;
   final String message;
-  final int winCounter;
+  final int currentAnte;
+  final int currentBlind;
+  final bool endlessMode;
+  final bool inFightMenu;
   final double playerInitiative;
   final double enemyInitiative;
 
@@ -19,7 +21,10 @@ class GameState {
     required this.currentTurn,
     this.gameOver = false,
     this.message = '',
-    this.winCounter = 0,
+    required this.currentAnte,
+    required this.currentBlind,
+    this.endlessMode = false,
+    this.inFightMenu = true,
     this.playerInitiative = 0,
     this.enemyInitiative = 0,
   });
@@ -30,7 +35,10 @@ class GameState {
     Turn? currentTurn,
     bool? gameOver,
     String? message,
-    int? winCounter,
+    int? currentAnte,
+    int? currentBlind,
+    bool? endlessMode,
+    bool? inFightMenu,
     double? playerInitiative,
     double? enemyInitiative,
   }) {
@@ -40,7 +48,10 @@ class GameState {
       currentTurn: currentTurn ?? this.currentTurn,
       gameOver: gameOver ?? this.gameOver,
       message: message ?? this.message,
-      winCounter: winCounter ?? this.winCounter,
+      currentAnte: currentAnte ?? this.currentAnte,
+      currentBlind: currentBlind ?? this.currentBlind,
+      endlessMode: endlessMode ?? this.endlessMode,
+      inFightMenu: inFightMenu ?? this.inFightMenu,
       playerInitiative: playerInitiative ?? this.playerInitiative,
       enemyInitiative: enemyInitiative ?? this.enemyInitiative,
     );
@@ -50,24 +61,27 @@ class GameState {
     return GameState(
       player: Character(
         name: 'Hero',
-        strength: 20,
-        endurance: 10,
-        agility: 15, // Higher agility means faster filling
-        vitality: 100,
-        currentHp: 100,
+        strength: 99999,
+        endurance: 9999,
+        agility: 9999,
+        vitality: 9999,
+        currentHp: 9999,
       ),
       enemy: Character(
         name: 'Goblin',
         strength: 15,
         endurance: 5,
         agility: 10,
-        vitality: 80,
-        currentHp: 80,
+        vitality: 60,
+        currentHp: 60,
       ),
       currentTurn: Turn.none,
       gameOver: false,
-      message: 'Waiting for turn...',
-      winCounter: 0,
+      message: 'Select a blind to begin the fight.',
+      currentAnte: 1,
+      currentBlind: 1,
+      endlessMode: false,
+      inFightMenu: true,
       playerInitiative: 0,
       enemyInitiative: 0,
     );

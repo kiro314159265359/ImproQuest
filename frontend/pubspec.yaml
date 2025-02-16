@@ -79,6 +79,7 @@ flutter:
     - assets/images/sprites/backgrounds/nature_3/
     - assets/images/sprites/character/Shinobi/
     - assets/images/sprites/character/Fighter/
+    - assets/images/sprites/backgrounds/vertical/
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

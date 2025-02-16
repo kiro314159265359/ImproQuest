@@ -28,14 +28,13 @@ class TurnBasedGame extends FlameGame {
   @override
   Future<void> onLoad() async {
     await super.onLoad();
-
-    // 1. Load the background (fixed stage).
-    // final bgImage = await images.load('stage.png');
-    // backgroundComponent = SpriteComponent()
-    //   ..sprite = Sprite(bgImage)
-    //   ..size = size
-    //   ..position = Vector2.zero();
-    // add(backgroundComponent);
+    // 1. Load the background image.
+    final bgImage = await images.load('sprites/backgrounds/vertical/31.png');
+    backgroundComponent = SpriteComponent()
+      ..sprite = Sprite(bgImage)
+      ..size = size
+      ..position = Vector2.zero();
+    add(backgroundComponent as Component);
 
     // 2. Load hero sprite sheet.
     final heroImage = await images.load('sprites/character/Shinobi/Idle.png');
@@ -45,13 +44,13 @@ class TurnBasedGame extends FlameGame {
     );
     final heroAnimation = heroSheet.createAnimation(
       row: 0,
-      stepTime: 0.1,
+      stepTime: 0.2,
       to: 6,
     );
     heroAnimationComponent = SpriteAnimationComponent(
       animation: heroAnimation,
-      size: Vector2(100, 100),
-      position: Vector2(50, size.y - 150),
+      size: Vector2(256, 256),
+      position: Vector2(0, size.y - 300),
     );
     add(heroAnimationComponent!);
 
@@ -63,7 +62,7 @@ class TurnBasedGame extends FlameGame {
     playerHealthBar = SimpleProgressBar(
       progress: 1.0,
       size: barSizeHealth,
-      position: heroAnimationComponent!.position - Vector2(0, 20),
+      position: heroAnimationComponent!.position + Vector2(75, 50),
       foregroundColor: Colors.green,
       backgroundColor: Colors.red,
     );
@@ -73,7 +72,7 @@ class TurnBasedGame extends FlameGame {
     playerInitiativeBar = SimpleProgressBar(
       progress: 0.0,
       size: barSizeInitiative,
-      position: heroAnimationComponent!.position - Vector2(0, 35),
+      position: heroAnimationComponent!.position + Vector2(75, 65),
       foregroundColor: Colors.blue,
       backgroundColor: Colors.grey,
     );
@@ -84,7 +83,7 @@ class TurnBasedGame extends FlameGame {
     enemyHealthBar = SimpleProgressBar(
       progress: 1.0,
       size: barSizeHealth,
-      position: enemyAnimationComponent!.position - Vector2(0, 20),
+      position: enemyAnimationComponent!.position + Vector2(75, 50),
       foregroundColor: Colors.green,
       backgroundColor: Colors.red,
     );
@@ -94,7 +93,7 @@ class TurnBasedGame extends FlameGame {
     enemyInitiativeBar = SimpleProgressBar(
       progress: 0.0,
       size: barSizeInitiative,
-      position: enemyAnimationComponent!.position - Vector2(0, 35),
+      position: enemyAnimationComponent!.position + Vector2(75, 65),
       foregroundColor: Colors.blue,
       backgroundColor: Colors.grey,
     );
@@ -124,13 +123,13 @@ class TurnBasedGame extends FlameGame {
     int row = _random.nextInt(1);
     final enemyAnimation = enemySheet.createAnimation(
       row: row,
-      stepTime: 0.1,
+      stepTime: 0.2,
       to: 6,
     );
     enemyAnimationComponent = SpriteAnimationComponent(
       animation: enemyAnimation,
-      size: Vector2(100, 100),
-      position: Vector2(size.x - 150, 50),
+      size: Vector2(256, 256),
+      position: Vector2(size.x - 250, 0),
     );
     add(enemyAnimationComponent!);
 
