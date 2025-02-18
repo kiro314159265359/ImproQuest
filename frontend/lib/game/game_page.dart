@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_2/game/shop_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flame/game.dart';
+import 'logic/shop_bloc.dart';
 import 'turn_based_game.dart';
 import 'logic/game_bloc.dart';
 import 'logic/game_state.dart';
 import 'logic/game_event.dart';
 import 'viewmodel/game_view_model.dart';
+import '../../game/components/temp_shop_widget.dart'; // Ensure you have this widget implemented
 
 class GamePage extends StatefulWidget {
   const GamePage({super.key});
@@ -16,6 +19,7 @@ class GamePage extends StatefulWidget {
 class GamePageState extends State<GamePage> {
   final TurnBasedGame flameGame = TurnBasedGame();
   late GameViewModel viewModel;
+  bool _temporaryShopOpened = false; // Flag to ensure modal opens only once per win
 
   @override
   void initState() {
@@ -69,10 +73,13 @@ class GamePageState extends State<GamePage> {
                   fontWeight: FontWeight.bold,
                   color: isCompleted ? Colors.grey : Colors.black,
                 )),
-            Text('Vitality: $vitality, Strength: $strength, Endurance: $endurance, Agility: $agility',style: const TextStyle(
-              color: Colors.red,
-              fontWeight: FontWeight.bold,
-            ),),
+            Text(
+              'Vitality: $vitality, Strength: $strength, Endurance: $endurance, Agility: $agility',
+              style: const TextStyle(
+                color: Colors.red,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             const SizedBox(height: 8),
             ElevatedButton(
               onPressed: isAvailable
@@ -112,6 +119,16 @@ class GamePageState extends State<GamePage> {
         ),
         const SizedBox(height: 24),
         Text(state.message, style: const TextStyle(fontSize: 16), textAlign: TextAlign.center),
+        // Permanent Shop button available in the fight menu.
+        ElevatedButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ShopPage()),
+            );
+          },
+          child: const Text('Permanent Shop'),
+        ),
       ],
     );
   }
@@ -121,10 +138,34 @@ class GamePageState extends State<GamePage> {
       children: [
         // Flame game canvas.
         Expanded(child: GameWidget(game: flameGame)),
-        // Update progress bars based on state.
+        // Listen for state changes to update bars and trigger temporary shop opening.
         BlocListener<GameBloc, GameState>(
+          listenWhen: (previous, current) =>
+          previous.gameOver != current.gameOver ||
+              previous.player.currentHp != current.player.currentHp,
           listener: (context, state) {
             flameGame.updateBars(state);
+            // Automatically open temporary shop after winning a fight.
+            if (state.gameOver && state.player.currentHp > 0 && !_temporaryShopOpened) {
+              _temporaryShopOpened = true;
+              Future.delayed(const Duration(milliseconds: 300), () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => BlocProvider<ShopBloc>(
+                      create: (_) => ShopBloc()..add(FetchShopItemsEvent()),
+                      child: const TemporaryShopPage(),
+                    ),
+                  ),
+                ).then((_) {
+                  // After closing the shop, proceed to the next level.
+                  viewModel.nextFight();
+                });
+              });
+            } else if (!state.gameOver) {
+              // Reset the flag for a new fight.
+              _temporaryShopOpened = false;
+            }
           },
           child: Container(),
         ),
@@ -154,15 +195,9 @@ class GamePageState extends State<GamePage> {
                   onPressed: state.currentTurn == Turn.player && !state.gameOver ? viewModel.openInventory : null,
                   child: const Text('Inventory'),
                 ),
+
               ],
             ),
-            if (state.gameOver && state.player.currentHp > 0)
-              ElevatedButton(
-                onPressed: () {
-                  viewModel.nextFight();
-                },
-                child: const Text('Next Fight'),
-              ),
             if (state.gameOver && state.player.currentHp == 0)
               ElevatedButton(
                 onPressed: () {
@@ -185,6 +220,7 @@ class GamePageState extends State<GamePage> {
       ],
     );
   }
+
 
   @override
   Widget build(BuildContext context) {

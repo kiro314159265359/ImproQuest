@@ -18,7 +18,7 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => const Register());
 
       case Routes.gameScreen:
-        return MaterialPageRoute(builder: (_) => GamePage());
+        return MaterialPageRoute(builder: (_) => const GamePage());
 
       case Routes.continueRegisterScreen:
         final args = settings.arguments as RegisterArguments?;
