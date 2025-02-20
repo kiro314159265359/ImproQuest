@@ -1,125 +1,146 @@
-// lib/game/logic/shop_bloc.dart
-import 'dart:async';
-import 'package:flutter_application_2/features/auth/presentation/views/login.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../features/home/data/model/user_model.dart';
 import '../models/shop_item.dart';
+import 'shop_event.dart';
+import 'shop_state.dart';
+import 'package:get_it/get_it.dart';
 
-/// Shop Events
-abstract class ShopEvent {}
+final getIt = GetIt.instance;
 
-class FetchShopItemsEvent extends ShopEvent {}
-
-class BuyShopItemEvent extends ShopEvent {
-  final ShopItem item;
-  BuyShopItemEvent(this.item);
-}
-
-/// Shop States
-abstract class ShopState {}
-
-class ShopInitial extends ShopState {}
-
-class ShopLoading extends ShopState {}
-
-class ShopLoaded extends ShopState {
-  final List<ShopItem> items;
-  ShopLoaded(this.items);
-}
-
-class ShopPurchaseSuccess extends ShopState {
-  final ShopItem item;
-  ShopPurchaseSuccess(this.item);
-}
-
-class ShopError extends ShopState {
-  final String message;
-  ShopError(this.message);
+List<ShopItem> getNewTemporaryItems() {
+  // For example, generate a new list of temporary items.
+  return [
+    ShopItem(
+      id: '1',
+      name: 'Small Healing Potion',
+      description: 'Heals 10 HP. Resets after each run.',
+      price: 50,
+      tier: ShopTier.basic,
+      permanent: false,
+    ),
+    // You can add more items or randomize as needed.
+  ];
 }
 
 class ShopBloc extends Bloc<ShopEvent, ShopState> {
-  // Two currencies:
-  int temporaryCurrency = 100; // run-specific currency (does not persist)
-  int permanentCurrency = getIt<UserModel>().gold!; // fetched from API in real scenario
+  int temporaryCurrency = 100;
+  int permanentCurrency = getIt<UserModel>().gold!;
+  // Store permanent items separately.
+  List<ShopItem> permanentItemsCache = [
+    ShopItem(
+      id: '2',
+      name: 'Steel Sword',
+      description: 'Permanent upgrade. Increases strength.',
+      price: 500,
+      tier: ShopTier.meta,
+      permanent: true,
+    ),
+    ShopItem(
+      id: '3',
+      name: 'Golden Armor',
+      description: 'Cosmetic upgrade. Show off your prestige!',
+      price: 1000,
+      tier: ShopTier.prestige,
+      permanent: true,
+    ),
+  ];
+  // Temporary items will be regenerated each fight.
+  List<ShopItem> temporaryItemsCache = getNewTemporaryItems();
 
-  // Inventories:
+  // Combined list (for display) is permanent items + temporary items.
+  List<ShopItem> get allItems => [...permanentItemsCache, ...temporaryItemsCache];
+
+  // Optionally, maintain inventories.
   final List<ShopItem> temporaryInventory = [];
   final List<ShopItem> permanentInventory = [];
 
   ShopBloc() : super(ShopInitial()) {
     on<FetchShopItemsEvent>(_onFetchShopItems);
     on<BuyShopItemEvent>(_onBuyShopItem);
+    on<RewardTemporaryGoldEvent>(_onRewardTemporaryGold);
+    on<ResetTemporaryGoldEvent>(_onResetTemporaryGold);
+    on<ResetTemporaryShopItemsEvent>(_onResetTemporaryShopItems);
   }
 
-  Future<void> _onFetchShopItems(
-      FetchShopItemsEvent event, Emitter<ShopState> emit) async {
+  Future<void> _onFetchShopItems(FetchShopItemsEvent event, Emitter<ShopState> emit) async {
     emit(ShopLoading());
     await Future.delayed(const Duration(seconds: 1)); // simulate API delay
-    // Dummy data based on your tiers:
-    final items = [
-      // Tier 1 (Basic): Consumables – temporary items (reset each run)
-      ShopItem(
-        id: '1',
-        name: 'Small Healing Potion',
-        description: 'Heals 10 HP. Resets after each run.',
-        price: 50,
-        tier: ShopTier.basic,
-        permanent: false,
-      ),
-      // Tier 2 (Meta): Permanent equipment (requires 7-day streak)
-      ShopItem(
-        id: '2',
-        name: 'Steel Sword',
-        description: 'Permanent upgrade. Increases strength.',
-        price: 500,
-        tier: ShopTier.meta,
-        permanent: true,
-      ),
-      // Tier 3 (Prestige): Cosmetic upgrades (monthly challenges)
-      ShopItem(
-        id: '3',
-        name: 'Golden Armor',
-        description: 'Cosmetic upgrade. Show off your prestige!',
-        price: 1000,
-        tier: ShopTier.prestige,
-        permanent: true,
-      ),
-    ];
-    emit(ShopLoaded(items));
+    // Combine permanent and temporary items.
+    emit(ShopLoaded(
+      items: allItems,
+      temporaryCurrency: temporaryCurrency,
+      permanentCurrency: permanentCurrency,
+    ));
   }
 
-  Future<void> _onBuyShopItem(
-      BuyShopItemEvent event, Emitter<ShopState> emit) async {
+  Future<void> _onBuyShopItem(BuyShopItemEvent event, Emitter<ShopState> emit) async {
     final ShopItem item = event.item;
+
     if (item.permanent) {
-      // Permanent purchase: use permanent currency.
       if (permanentCurrency < item.price) {
         emit(ShopError("Not enough permanent currency to purchase ${item.name}."));
+        // Immediately re-emit the current shop state to reset the UI.
+
         return;
       }
       permanentCurrency -= item.price;
-      // Simulate an API call to update user inventory.
       await Future.delayed(const Duration(seconds: 1));
       permanentInventory.add(item);
-      emit(ShopPurchaseSuccess(item));
-      // Optionally re-emit loaded state to refresh the UI.
-      if (state is ShopLoaded) {
-        final loadedState = state as ShopLoaded;
-        emit(ShopLoaded(loadedState.items));
-      }
     } else {
-      // Temporary purchase: use temporary currency.
       if (temporaryCurrency < item.price) {
         emit(ShopError("Not enough temporary currency to purchase ${item.name}."));
+        emit(ShopLoaded(
+          items: allItems,
+          temporaryCurrency: temporaryCurrency,
+          permanentCurrency: permanentCurrency,
+        ));
         return;
       }
       temporaryCurrency -= item.price;
       temporaryInventory.add(item);
-      emit(ShopPurchaseSuccess(item));
-      if (state is ShopLoaded) {
-        final loadedState = state as ShopLoaded;
-        emit(ShopLoaded(loadedState.items));
-      }
+    }
+
+    emit(ShopLoaded(
+      items: allItems,
+      temporaryCurrency: temporaryCurrency,
+      permanentCurrency: permanentCurrency,
+    ));
+  }
+
+
+
+  Future<void> _onRewardTemporaryGold(RewardTemporaryGoldEvent event, Emitter<ShopState> emit) async {
+    temporaryCurrency += event.reward;
+    if (state is ShopLoaded) {
+      emit(ShopLoaded(
+        items: allItems,
+        temporaryCurrency: temporaryCurrency,
+        permanentCurrency: permanentCurrency,
+      ));
+    }
+  }
+
+  Future<void> _onResetTemporaryGold(ResetTemporaryGoldEvent event, Emitter<ShopState> emit) async {
+    temporaryCurrency = 100;
+    if (state is ShopLoaded) {
+      emit(ShopLoaded(
+        items: allItems,
+        temporaryCurrency: temporaryCurrency,
+        permanentCurrency: permanentCurrency,
+      ));
+    }
+  }
+
+  Future<void> _onResetTemporaryShopItems(ResetTemporaryShopItemsEvent event, Emitter<ShopState> emit) async {
+    // Regenerate temporary items for the new fight.
+    temporaryItemsCache = getNewTemporaryItems();
+    // Emit updated state.
+    if (state is ShopLoaded) {
+      emit(ShopLoaded(
+        items: allItems,
+        temporaryCurrency: temporaryCurrency,
+        permanentCurrency: permanentCurrency,
+      ));
     }
   }
 }

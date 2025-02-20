@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:math';
+import 'package:flutter_application_2/game/logic/shop_bloc.dart';
+import 'package:flutter_application_2/game/logic/shop_event.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'game_event.dart';
 import 'game_state.dart';
@@ -34,13 +36,17 @@ class GameBloc extends Bloc<GameEvent, GameState> {
 
   void _onTickEvent(TickEvent event, Emitter<GameState> emit) {
     // Do not update if the game is over, a turn is active, or we are in the menu.
-    if (state.gameOver || state.currentTurn != Turn.none || state.inFightMenu) return;
+    if (state.gameOver || state.currentTurn != Turn.none || state.inFightMenu)
+      return;
 
-    double newPlayerInit = state.playerInitiative + state.player.agility * tickDelta;
-    double newEnemyInit = state.enemyInitiative + state.enemy.agility * tickDelta;
+    double newPlayerInit =
+        state.playerInitiative + state.player.agility * tickDelta;
+    double newEnemyInit =
+        state.enemyInitiative + state.enemy.agility * tickDelta;
     Turn newTurn = Turn.none;
 
-    if (newPlayerInit >= initiativeThreshold || newEnemyInit >= initiativeThreshold) {
+    if (newPlayerInit >= initiativeThreshold ||
+        newEnemyInit >= initiativeThreshold) {
       if (newPlayerInit >= newEnemyInit) {
         newTurn = Turn.player;
         newPlayerInit -= initiativeThreshold;
@@ -66,11 +72,14 @@ class GameBloc extends Bloc<GameEvent, GameState> {
   void _onAttack(AttackEvent event, Emitter<GameState> emit) {
     if (state.gameOver || state.currentTurn != Turn.player) return;
 
-    int damage = (state.player.strength - state.enemy.endurance + _random.nextInt(5)).clamp(0, 999);
+    int damage =
+        (state.player.strength - state.enemy.endurance + _random.nextInt(5))
+            .clamp(0, 999);
     int newEnemyHp = state.enemy.currentHp - damage;
     String msg = 'You attacked ${state.enemy.name} for $damage damage!';
     bool enemyDefeated = newEnemyHp <= 0;
-    Character updatedEnemy = state.enemy.copyWith(currentHp: enemyDefeated ? 0 : newEnemyHp);
+    Character updatedEnemy =
+        state.enemy.copyWith(currentHp: enemyDefeated ? 0 : newEnemyHp);
     GameState newState = state.copyWith(
       enemy: updatedEnemy,
       message: msg,
@@ -104,7 +113,6 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     emit(newState);
   }
 
-
   void _onOpenInventory(OpenInventoryEvent event, Emitter<GameState> emit) {
     String msg = 'Inventory opened. (Inventory logic not implemented)';
     emit(state.copyWith(message: msg));
@@ -114,7 +122,8 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     if (state.gameOver || state.currentTurn != Turn.enemy) return;
     await Future.delayed(const Duration(milliseconds: 300));
 
-    int baseDamage = state.enemy.strength - state.player.endurance + _random.nextInt(5);
+    int baseDamage =
+        state.enemy.strength - state.player.endurance + _random.nextInt(5);
     int damage = baseDamage.clamp(0, 999);
     if (state.player.isDefending) {
       damage = (damage / 2).round();
@@ -147,11 +156,14 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     }
   }
 
-  void _onUseInventoryItem(UseInventoryItemEvent event, Emitter<GameState> emit) {
+  void _onUseInventoryItem(
+      UseInventoryItemEvent event, Emitter<GameState> emit) {
     if (event.itemName == 'Healing Potion') {
       int healAmount = 20;
-      int newHp = (state.player.currentHp + healAmount).clamp(0, state.player.vitality);
-      String msg = 'Used Healing Potion. Recovered ${newHp - state.player.currentHp} HP.';
+      int newHp =
+          (state.player.currentHp + healAmount).clamp(0, state.player.vitality);
+      String msg =
+          'Used Healing Potion. Recovered ${newHp - state.player.currentHp} HP.';
       Character updatedPlayer = state.player.copyWith(currentHp: newHp);
       emit(state.copyWith(player: updatedPlayer, message: msg));
     }
@@ -172,11 +184,12 @@ class GameBloc extends Bloc<GameEvent, GameState> {
   }
 
   // Advances the fight progression after winning a fight.
-  // Returns to the pre-fight menu, marking the completed blind.
   void _onNextFight(NextFightEvent event, Emitter<GameState> emit) {
+
     int newAnte = state.currentAnte;
     int newBlind = state.currentBlind;
     bool endlessMode = state.endlessMode;
+
 
     if (state.enemy.currentHp <= 0) {
       if (state.currentBlind < 3) {

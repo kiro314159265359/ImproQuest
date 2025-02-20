@@ -142,28 +142,27 @@ class TurnBasedGame extends FlameGame {
 
   /// Call this method from the UI with the latest BLoC state to update the bars.
   void updateBars(GameState state) {
-    // Ensure all components are available.
     if (playerHealthBar == null ||
         playerInitiativeBar == null ||
         enemyHealthBar == null ||
         enemyInitiativeBar == null) {
       return;
     }
-    // Health progress is currentHp divided by vitality.
-    double playerHealthProgress =
-        state.player.currentHp / state.player.vitality;
+    double playerHealthProgress = state.player.currentHp / state.player.vitality;
     double enemyHealthProgress = state.enemy.currentHp / state.enemy.vitality;
-    // Initiative progress is the current initiative divided by the threshold.
-    // (Assuming the same initiative threshold as used in your BLoC.)
     const double initiativeThreshold = 100.0;
-    double playerInitiativeProgress =
-        state.playerInitiative / initiativeThreshold;
-    double enemyInitiativeProgress =
-        state.enemyInitiative / initiativeThreshold;
+    double playerInitiativeProgress = state.playerInitiative / initiativeThreshold;
+    double enemyInitiativeProgress = state.enemyInitiative / initiativeThreshold;
 
     playerHealthBar!.progress = playerHealthProgress;
     playerInitiativeBar!.progress = playerInitiativeProgress;
     enemyHealthBar!.progress = enemyHealthProgress;
     enemyInitiativeBar!.progress = enemyInitiativeProgress;
+
+    // Force refresh of progress bars
+    playerHealthBar?.update(0);
+    playerInitiativeBar?.update(0);
+    enemyHealthBar?.update(0);
+    enemyInitiativeBar?.update(0);
   }
 }

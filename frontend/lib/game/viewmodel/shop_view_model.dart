@@ -1,4 +1,6 @@
 // lib/game/viewmodel/shop_view_model.dart
+import 'package:flutter_application_2/game/logic/shop_event.dart';
+
 import '../logic/shop_bloc.dart';
 import '../models/shop_item.dart';
 

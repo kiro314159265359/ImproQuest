@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_2/game/logic/shop_event.dart';
 import 'package:flutter_application_2/game/shop_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flame/game.dart';
@@ -8,7 +9,10 @@ import 'logic/game_bloc.dart';
 import 'logic/game_state.dart';
 import 'logic/game_event.dart';
 import 'viewmodel/game_view_model.dart';
-import '../../game/components/temp_shop_widget.dart'; // Ensure you have this widget implemented
+import '../../game/components/temp_shop_widget.dart';
+import 'package:get_it/get_it.dart';
+
+final getIt = GetIt.instance;
 
 class GamePage extends StatefulWidget {
   const GamePage({super.key});
@@ -19,7 +23,8 @@ class GamePage extends StatefulWidget {
 class GamePageState extends State<GamePage> {
   final TurnBasedGame flameGame = TurnBasedGame();
   late GameViewModel viewModel;
-  bool _temporaryShopOpened = false; // Flag to ensure modal opens only once per win
+  bool _temporaryShopOpened =
+      false; // Ensure reward is dispatched only once per battle
 
   @override
   void initState() {
@@ -27,8 +32,8 @@ class GamePageState extends State<GamePage> {
   }
 
   // Helper method to build enemy preview card for a blind.
-  Widget buildBlindCard(GameBloc bloc, int blind, int currentAnte, int currentBlind) {
-    // Determine enemy type and base stats based on blind.
+  Widget buildBlindCard(
+      GameBloc bloc, int blind, int currentAnte, int currentBlind) {
     bool isBoss = blind == 3;
     bool isBig = blind == 2;
     String enemyType;
@@ -57,7 +62,6 @@ class GamePageState extends State<GamePage> {
     int endurance = baseEndurance * currentAnte;
     int agility = baseAgility * currentAnte;
 
-    // Determine if this blind is available to select.
     bool isCompleted = blind < currentBlind;
     bool isAvailable = blind == currentBlind;
 
@@ -84,8 +88,8 @@ class GamePageState extends State<GamePage> {
             ElevatedButton(
               onPressed: isAvailable
                   ? () {
-                bloc.add(SelectBlindEvent(blind));
-              }
+                      bloc.add(SelectBlindEvent(blind));
+                    }
                   : null,
               child: const Text('Fight'),
             ),
@@ -99,7 +103,8 @@ class GamePageState extends State<GamePage> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text('Current Ante: ${state.currentAnte}', style: const TextStyle(fontSize: 24)),
+        Text('Current Ante: ${state.currentAnte}',
+            style: const TextStyle(fontSize: 24)),
         const SizedBox(height: 16),
         Text(
           'Player Stats:\nHP: ${state.player.currentHp}/${state.player.vitality}\nStrength: ${state.player.strength}  Endurance: ${state.player.endurance}  Agility: ${state.player.agility}',
@@ -112,14 +117,20 @@ class GamePageState extends State<GamePage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            Expanded(child: buildBlindCard(bloc, 1, state.currentAnte, state.currentBlind)),
-            Expanded(child: buildBlindCard(bloc, 2, state.currentAnte, state.currentBlind)),
-            Expanded(child: buildBlindCard(bloc, 3, state.currentAnte, state.currentBlind)),
+            Expanded(
+                child: buildBlindCard(
+                    bloc, 1, state.currentAnte, state.currentBlind)),
+            Expanded(
+                child: buildBlindCard(
+                    bloc, 2, state.currentAnte, state.currentBlind)),
+            Expanded(
+                child: buildBlindCard(
+                    bloc, 3, state.currentAnte, state.currentBlind)),
           ],
         ),
         const SizedBox(height: 24),
-        Text(state.message, style: const TextStyle(fontSize: 16), textAlign: TextAlign.center),
-        // Permanent Shop button available in the fight menu.
+        Text(state.message,
+            style: const TextStyle(fontSize: 16), textAlign: TextAlign.center),
         ElevatedButton(
           onPressed: () {
             Navigator.push(
@@ -136,40 +147,43 @@ class GamePageState extends State<GamePage> {
   Widget buildFightUI(GameState state) {
     return Column(
       children: [
-        // Flame game canvas.
         Expanded(child: GameWidget(game: flameGame)),
-        // Listen for state changes to update bars and trigger temporary shop opening.
         BlocListener<GameBloc, GameState>(
           listenWhen: (previous, current) =>
-          previous.gameOver != current.gameOver ||
-              previous.player.currentHp != current.player.currentHp,
+              previous.gameOver != current.gameOver ||
+              previous.player.currentHp != current.player.currentHp ||
+              previous.enemy.currentHp != current.enemy.currentHp ||
+              previous.playerInitiative != current.playerInitiative ||
+              previous.enemyInitiative != current.enemyInitiative,
           listener: (context, state) {
+
             flameGame.updateBars(state);
-            // Automatically open temporary shop after winning a fight.
+            // When battle ends and player is alive, dispatch reward and open shop.
             if (state.gameOver && state.player.currentHp > 0 && !_temporaryShopOpened) {
               _temporaryShopOpened = true;
+              final shopBloc = getIt<ShopBloc>();
+              // Reward the battle.
+              shopBloc.add(RewardTemporaryGoldEvent(50));
               Future.delayed(const Duration(milliseconds: 300), () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => BlocProvider<ShopBloc>(
-                      create: (_) => ShopBloc()..add(FetchShopItemsEvent()),
+                    builder: (_) => BlocProvider<ShopBloc>.value(
+                      value: shopBloc,
                       child: const TemporaryShopPage(),
                     ),
                   ),
                 ).then((_) {
-                  // After closing the shop, proceed to the next level.
+                  // Continue to the next fight without resetting the gold.
                   viewModel.nextFight();
                 });
               });
             } else if (!state.gameOver) {
-              // Reset the flag for a new fight.
               _temporaryShopOpened = false;
             }
           },
           child: Container(),
         ),
-        // Fight controls and status display.
         Column(
           children: [
             Padding(
@@ -184,18 +198,23 @@ class GamePageState extends State<GamePage> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 ElevatedButton(
-                  onPressed: state.currentTurn == Turn.player && !state.gameOver ? viewModel.attack : null,
+                  onPressed: state.currentTurn == Turn.player && !state.gameOver
+                      ? viewModel.attack
+                      : null,
                   child: const Text('Attack'),
                 ),
                 ElevatedButton(
-                  onPressed: state.currentTurn == Turn.player && !state.gameOver ? viewModel.defend : null,
+                  onPressed: state.currentTurn == Turn.player && !state.gameOver
+                      ? viewModel.defend
+                      : null,
                   child: const Text('Defend'),
                 ),
                 ElevatedButton(
-                  onPressed: state.currentTurn == Turn.player && !state.gameOver ? viewModel.openInventory : null,
+                  onPressed: state.currentTurn == Turn.player && !state.gameOver
+                      ? viewModel.openInventory
+                      : null,
                   child: const Text('Inventory'),
                 ),
-
               ],
             ),
             if (state.gameOver && state.player.currentHp == 0)
@@ -221,21 +240,27 @@ class GamePageState extends State<GamePage> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<GameBloc>(
-      create: (_) => GameBloc(),
-      child: Scaffold(
-        appBar: AppBar(title: const Text('Turn-Based Fight')),
-        body: BlocBuilder<GameBloc, GameState>(
-          builder: (context, state) {
-            viewModel = GameViewModel(BlocProvider.of<GameBloc>(context));
-            final bloc = BlocProvider.of<GameBloc>(context);
-            return state.inFightMenu
-                ? Center(child: buildMenu(state, bloc))
-                : buildFightUI(state);
-          },
+    return WillPopScope(
+      onWillPop: () async {
+        final shopBloc = getIt<ShopBloc>();
+        shopBloc.add(ResetTemporaryGoldEvent());
+        return true; // allow pop after resetting
+      },
+      child: BlocProvider<GameBloc>(
+        create: (_) => GameBloc(),
+        child: Scaffold(
+          appBar: AppBar(title: const Text('Turn-Based Fight')),
+          body: BlocBuilder<GameBloc, GameState>(
+            builder: (context, state) {
+              viewModel = GameViewModel(context.read<GameBloc>());
+              final bloc = context.read<GameBloc>();
+              return state.inFightMenu
+                  ? Center(child: buildMenu(state, bloc))
+                  : buildFightUI(state);
+            },
+          ),
         ),
       ),
     );
