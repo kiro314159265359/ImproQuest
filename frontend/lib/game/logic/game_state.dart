@@ -60,22 +60,22 @@ class GameState {
 
   factory GameState.initial(UserModel user) {
     return GameState(
-      // player: Character(
-      //   name: user.username ?? 'Hero',
-      //   strength: user.stats?.strength ?? 20,
-      //   endurance: user.stats?.endurance ?? 10,
-      //   agility: user.stats?.agility ?? 15,
-      //   vitality: user.stats?.vitality ?? 100,
-      //   currentHp: 100,
-      // ),
       player: Character(
-        name: 'Hero',
-        strength: 99999,
-        endurance: 9999,
-        agility: 9999,
-        vitality: 9999,
-        currentHp: 9999,
+        name: user.username ?? 'Hero',
+        strength: user.stats?.strength ?? 20,
+        endurance: user.stats?.endurance ?? 10,
+        agility: user.stats?.agility ?? 15,
+        vitality: user.stats?.vitality ?? 100,
+        currentHp: 100,
       ),
+      // player: Character(
+      //   name: 'Hero',
+      //   strength: 99999,
+      //   endurance: 9999,
+      //   agility: 9999,
+      //   vitality: 9999,
+      //   currentHp: 9999,
+      // ),
       enemy: Character(
         name: 'Goblin',
         strength: 15,
