@@ -1,7 +1,5 @@
 import 'dart:async';
 import 'dart:math';
-import 'package:flutter_application_2/game/logic/shop_bloc.dart';
-import 'package:flutter_application_2/game/logic/shop_event.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'game_event.dart';
 import 'game_state.dart';

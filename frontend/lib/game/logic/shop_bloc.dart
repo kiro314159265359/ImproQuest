@@ -80,7 +80,11 @@ class ShopBloc extends Bloc<ShopEvent, ShopState> {
       if (permanentCurrency < item.price) {
         emit(ShopError("Not enough permanent currency to purchase ${item.name}."));
         // Immediately re-emit the current shop state to reset the UI.
-
+        emit(ShopLoaded(
+          items: allItems,
+          temporaryCurrency: temporaryCurrency,
+          permanentCurrency: permanentCurrency,
+        ));
         return;
       }
       permanentCurrency -= item.price;
