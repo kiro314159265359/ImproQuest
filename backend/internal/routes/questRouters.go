@@ -17,5 +17,5 @@ func QuestRoutes(incomingRoutes *gin.Engine) {
 	quests.GET("/:id", controllers.GetQuest())
 	quests.DELETE("/:id", middleware.CheckUserType("Admin"), controllers.DeleteQuest())
 	quests.PATCH("/:id", middleware.CheckUserType("Admin"), controllers.UpdateQuest())
-
+	quests.PATCH("/IsCompleted/:questId", controllers.CompleteQuest)
 }

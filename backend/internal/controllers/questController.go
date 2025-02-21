@@ -2,16 +2,19 @@ package controllers
 
 import (
 	"context"
+
 	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 
 	"github.com/HarDizzeR/Project/backend/internal/database"
+	"github.com/HarDizzeR/Project/backend/internal/helpers"
 	"github.com/HarDizzeR/Project/backend/internal/logger"
 	"github.com/HarDizzeR/Project/backend/internal/models"
 )
@@ -21,6 +24,7 @@ var questCollection *mongo.Collection = database.Quests()
 type QuestRequest struct {
 	Name       *string  `json:"Name" validate:"required,min=3,max=100"`
 	XPReward   *float64 `json:"XPReward" validate:"required,gte=0"`
+	Goal       *float64 `json:"goal" bson:"goal"`
 	GoldReward *float64 `json:"GoldReward" validate:"required,gte=0"`
 	Difficulty *string  `json:"Difficulty" validate:"required,oneof=Easy Medium Hard"`
 }
@@ -32,6 +36,7 @@ func CreateQuest() gin.HandlerFunc {
 
 		var questReq QuestRequest
 
+		// Bind the incoming JSON to questReq
 		if err := c.ShouldBindJSON(&questReq); err != nil {
 			logger.Errorf("Invalid Request Format: %v", err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -51,6 +56,7 @@ func CreateQuest() gin.HandlerFunc {
 		quest := models.Quest{
 			Name:       questReq.Name,
 			XPReward:   questReq.XPReward,
+			Goal:       questReq.Goal,
 			GoldReward: questReq.GoldReward,
 			Difficulty: questReq.Difficulty,
 		}
@@ -194,4 +200,134 @@ func DeleteQuest() gin.HandlerFunc {
 
 		c.JSON(http.StatusOK, gin.H{"message": "Quest deleted successfully"})
 	}
+}
+
+func CompleteQuest(c *gin.Context) {
+	userID := c.GetString("id")
+	if userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "user ID not found in context"})
+		return
+	}
+
+	questID := c.Param("questId")
+	if questID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "quest ID is required"})
+		return
+	}
+
+	// Convert IDs
+	userOID, err := bson.ObjectIDFromHex(userID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID"})
+		return
+	}
+
+	questOID, err := bson.ObjectIDFromHex(questID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid quest ID"})
+		return
+	}
+
+	// Get database collection
+	collection := database.Users()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// 1. Fetch user document
+	var user models.User
+	err = collection.FindOne(ctx, bson.M{"_id": userOID}).Decode(&user)
+	if helpers.HandleError(c, err) {
+		return
+	}
+
+	// 2. Find the quest in user's "quests" array
+	//    (Ensure your User model uses `bson:"quests"` for this array!)
+	var quest *models.Quest
+	for i := range user.CurrentQuests {
+		if user.CurrentQuests[i].ID.Hex() == questOID.Hex() {
+			quest = &user.CurrentQuests[i]
+			break
+		}
+	}
+	if quest == nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "quest not found"})
+		return
+	}
+	if quest.IsCompleted {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "quest already completed"})
+		return
+	}
+	if quest.XPReward == nil || quest.GoldReward == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid quest rewards"})
+		return
+	}
+
+	// 3. Update user to award XP/gold & mark quest as completed
+	filter := bson.M{
+		"_id":                 userOID,
+		"quests._id":          questOID,
+		"quests.is_completed": false,
+	}
+	update := bson.M{
+		"$inc": bson.M{
+			"xp":   *quest.XPReward,
+			"gold": *quest.GoldReward,
+		},
+		"$set": bson.M{
+			"quests.$.is_completed": true,
+		},
+	}
+	result, err := collection.UpdateOne(ctx, filter, update)
+	if helpers.HandleError(c, err) {
+		return
+	}
+	if result.ModifiedCount == 0 {
+		c.JSON(http.StatusConflict, gin.H{"error": "quest completion failed"})
+		return
+	}
+
+	// 4. Fetch updated user to get the new XP total
+	err = collection.FindOne(ctx, bson.M{"_id": userOID}).Decode(&user)
+	if helpers.HandleError(c, err) {
+		return
+	}
+
+	// 5. Level-up check
+	levelUps := 0
+	for {
+		threshold := helpers.XpThresholdForLevel(user.Level)
+		// Ensure threshold > 0 to avoid infinite loops if level == 0
+		if user.XP >= threshold && threshold > 0 {
+			user.XP -= threshold
+			user.Level++
+			levelUps++
+		} else {
+			break
+		}
+	}
+
+	// 6. If user leveled up, update user doc with new XP and level
+	if levelUps > 0 {
+		_, err := collection.UpdateOne(
+			ctx,
+			bson.M{"_id": userOID},
+			bson.M{"$set": bson.M{
+				"xp":    user.XP,
+				"level": user.Level,
+			}},
+		)
+		if helpers.HandleError(c, err) {
+			return
+		}
+	}
+
+	// 7. Send response
+	c.JSON(http.StatusOK, gin.H{
+		"message":       "Quest completed!",
+		"xp_gained":     *quest.XPReward,
+		"gold_gained":   *quest.GoldReward,
+		"new_level":     user.Level,
+		"current_xp":    user.XP,
+		"levels_gained": levelUps,
+	})
 }
