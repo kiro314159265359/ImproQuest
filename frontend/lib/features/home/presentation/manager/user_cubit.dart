@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_application_2/features/home/presentation/manager/user_state.dart';
 
 import '../../../../core/error/failure.dart';
+import '../../../../main.dart';
 import '../../data/model/user_model.dart';
 import '../../domain/repo/user_repo.dart';
 
@@ -17,6 +18,12 @@ class UserCubit extends Cubit<UserState> {
     try {
       final currentUser = await userRepo.getUserData();
       emit(UserLoaded(currentUser));
+
+      if (getIt.isRegistered<UserModel>()) {
+        getIt.unregister<UserModel>();
+      }
+
+      getIt.registerSingleton<UserModel>(currentUser);
     } catch (error) {
       if (error is DioException) {
         emit(UserError(ServerFailure.fromDioError(error)));
@@ -30,6 +37,12 @@ class UserCubit extends Cubit<UserState> {
     emit(UserUpdating());
     try {
       final currentUser = await userRepo.updateUserData(updatedUser);
+
+      if (getIt.isRegistered<UserModel>()) {
+        getIt.unregister<UserModel>();
+      }
+      getIt.registerSingleton<UserModel>(currentUser);
+
       emit(UserUpdated(currentUser));
     } catch (error) {
       if (error is DioException) {

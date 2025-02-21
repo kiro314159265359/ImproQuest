@@ -1,7 +1,6 @@
 import 'package:bloc/bloc.dart';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_application_2/features/fight/presentation/views/fight.dart';
 import 'package:flutter_application_2/features/home/presentation/views/home.dart';
 import 'package:flutter_application_2/features/profile/presentation/views/profile.dart';
 import 'package:flutter_application_2/features/rankings/presentation/views/rankings.dart';
@@ -14,7 +13,7 @@ class AppLayoutCubit extends Cubit<AppLayoutState> {
   List<Widget> screens = [
     const Home(),
     const Profile(),
-    const Fight(),
+    // const Fight(),
     const Rankings(),
     const Settings(),
   ];

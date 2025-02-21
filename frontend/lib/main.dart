@@ -1,7 +1,7 @@
-import 'package:device_preview/device_preview.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_2/core/routes/app_routes.dart';
 import 'package:flutter_application_2/core/theme/app_theme.dart';
+import 'package:flutter_application_2/game/logic/shop_bloc.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:flutter_application_2/core/service/api/api_service.dart';
@@ -29,6 +29,7 @@ Future<void> main() async {
   // Register your single instances.
   getIt.registerSingleton<ApiService>(apiService);
   getIt.registerSingleton<LoginRepo>(loginRepo);
+  getIt.registerLazySingleton<ShopBloc>(() => ShopBloc());
 
   // Determine the initial route.
   final initialRoute = await determineInitialRoute(loginRepo);

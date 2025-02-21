@@ -1,7 +1,9 @@
+import 'package:flame/flame.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_2/features/app_layout/presentation/views/widgets/custom_bar_icon.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'dart:math' as math;
+import '../../../../core/routes/routes.dart';
 import '../../../../core/theme/color_manger.dart';
 import '../../../../core/utils/app_icons.dart';
 import '../manager/cubit/app_layout_cubit.dart';
@@ -42,24 +44,24 @@ class AppLayout extends StatelessWidget {
                               index: 1),
                           label: 'Profile',
                         ),
-                        BottomNavigationBarItem(
-                            icon: CustomBarIcon(
-                                cubit: cubit,
-                                iconName: AppIcons.profileIcon,
-                                index: 2),
-                            label: ''),
+                        // BottomNavigationBarItem(
+                        //     icon: CustomBarIcon(
+                        //         cubit: cubit,
+                        //         iconName: AppIcons.profileIcon,
+                        //         index: 2),
+                        //     label: ''),
                         BottomNavigationBarItem(
                           icon: CustomBarIcon(
                               cubit: cubit,
                               iconName: AppIcons.rankingsIcon,
-                              index: 3),
+                              index: 2),
                           label: 'Rankings',
                         ),
                         BottomNavigationBarItem(
                           icon: CustomBarIcon(
                               cubit: cubit,
                               iconName: AppIcons.settingsIcon,
-                              index: 4),
+                              index: 3),
                           label: 'Settings',
                         ),
                       ]),
@@ -70,7 +72,9 @@ class AppLayout extends StatelessWidget {
                     ),
                     child: FloatingActionButton(
                       onPressed: () {
-                        context.read<AppLayoutCubit>().navigateToFightScreen();
+                        Flame.device.fullScreen();
+                        Flame.device.setPortrait();
+                        Navigator.pushNamed(context, Routes.gameScreen);
                       },
                       tooltip: 'Fight',
                       elevation: 15.0,
