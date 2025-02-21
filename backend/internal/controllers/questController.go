@@ -24,6 +24,7 @@ var questCollection *mongo.Collection = database.Quests()
 type QuestRequest struct {
 	Name       *string  `json:"Name" validate:"required,min=3,max=100"`
 	XPReward   *float64 `json:"XPReward" validate:"required,gte=0"`
+	Goal       *float64 `json:"goal" bson:"goal"`
 	GoldReward *float64 `json:"GoldReward" validate:"required,gte=0"`
 	Difficulty *string  `json:"Difficulty" validate:"required,oneof=Easy Medium Hard"`
 }
@@ -35,6 +36,7 @@ func CreateQuest() gin.HandlerFunc {
 
 		var questReq QuestRequest
 
+		// Bind the incoming JSON to questReq
 		if err := c.ShouldBindJSON(&questReq); err != nil {
 			logger.Errorf("Invalid Request Format: %v", err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -54,6 +56,7 @@ func CreateQuest() gin.HandlerFunc {
 		quest := models.Quest{
 			Name:       questReq.Name,
 			XPReward:   questReq.XPReward,
+			Goal:       questReq.Goal,
 			GoldReward: questReq.GoldReward,
 			Difficulty: questReq.Difficulty,
 		}
