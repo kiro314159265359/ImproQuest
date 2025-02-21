@@ -294,57 +294,60 @@ func AssignRandomQuests() gin.HandlerFunc {
 	}
 }
 
-func UpdateUserStats(c *gin.Context) {
-	// Get user ID from URL
-	userID := c.Param("id")
+func UpdateUserStats() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Get user ID from URL
+		userID := c.Param("id")
 
-	// Convert string ID to MongoDB ObjectID
-	objID, err := bson.ObjectIDFromHex(userID)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
-		return
+		// Convert string ID to MongoDB ObjectID
+		objID, err := bson.ObjectIDFromHex(userID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+			return
+		}
+
+		// Bind and validate request
+		var updateData models.Stats
+		if err := c.ShouldBindJSON(&updateData); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+			return
+		}
+
+		// Build the MongoDB update document
+		update := bson.M{"$set": bson.M{}}
+		setValues := update["$set"].(bson.M)
+
+		if updateData.Vitality != nil {
+			setValues["stats.vitality"] = *updateData.Vitality
+		}
+		if updateData.Strength != nil {
+			setValues["stats.strength"] = *updateData.Strength
+		}
+		if updateData.Endurance != nil {
+			setValues["stats.endurance"] = *updateData.Endurance
+		}
+		if updateData.Agility != nil {
+			setValues["stats.agility"] = *updateData.Agility
+		}
+
+		// Check if any fields were provided
+		if len(setValues) == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "No fields to update"})
+			return
+		}
+
+		// Update in MongoDB
+		filter := bson.M{"_id": objID}
+		result, err := userCollection.UpdateOne(context.Background(), filter, update)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Database update failed"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"status":  "success",
+			"updated": result.ModifiedCount,
+		})
 	}
 
-	// Bind and validate request
-	var updateData models.Stats
-	if err := c.ShouldBindJSON(&updateData); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
-		return
-	}
-
-	// Build the MongoDB update document
-	update := bson.M{"$set": bson.M{}}
-	setValues := update["$set"].(bson.M)
-
-	if updateData.Vitality != nil {
-		setValues["stats.vitality"] = *updateData.Vitality
-	}
-	if updateData.Strength != nil {
-		setValues["stats.strength"] = *updateData.Strength
-	}
-	if updateData.Endurance != nil {
-		setValues["stats.endurance"] = *updateData.Endurance
-	}
-	if updateData.Agility != nil {
-		setValues["stats.agility"] = *updateData.Agility
-	}
-
-	// Check if any fields were provided
-	if len(setValues) == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "No fields to update"})
-		return
-	}
-
-	// Update in MongoDB
-	filter := bson.M{"_id": objID}
-	result, err := userCollection.UpdateOne(context.Background(), filter, update)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database update failed"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"status":  "success",
-		"updated": result.ModifiedCount,
-	})
 }

@@ -17,7 +17,7 @@ func UserRoutes(incomingRoutes *gin.Engine) {
 	users.GET("/:id", controllers.GetUser())
 	users.DELETE("/:id", controllers.DeleteUser())
 	users.PATCH("/:id", controllers.UpdateUser())
-	users.PATCH("/:id/stats", controllers.UpdateUserStats)
+	users.PATCH("/:id/stats", controllers.UpdateUserStats())
 
 	users.PUT("/quests", controllers.AssignRandomQuests())
 
