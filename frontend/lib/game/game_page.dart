@@ -1,8 +1,11 @@
+import 'package:flame/flame.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_2/game/logic/shop_event.dart';
 import 'package:flutter_application_2/game/shop_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flame/game.dart';
+import '../core/theme/color_manger.dart';
+import '../core/utils/get_it_constants.dart';
 import 'logic/shop_bloc.dart';
 import 'turn_based_game.dart';
 import 'logic/game_bloc.dart';
@@ -10,9 +13,6 @@ import 'logic/game_state.dart';
 import 'logic/game_event.dart';
 import 'viewmodel/game_view_model.dart';
 import '../../game/components/temp_shop_widget.dart';
-import 'package:get_it/get_it.dart';
-
-final getIt = GetIt.instance;
 
 class GamePage extends StatefulWidget {
   const GamePage({super.key});
@@ -156,10 +156,11 @@ class GamePageState extends State<GamePage> {
               previous.playerInitiative != current.playerInitiative ||
               previous.enemyInitiative != current.enemyInitiative,
           listener: (context, state) {
-
             flameGame.updateBars(state);
             // When battle ends and player is alive, dispatch reward and open shop.
-            if (state.gameOver && state.player.currentHp > 0 && !_temporaryShopOpened) {
+            if (state.gameOver &&
+                state.player.currentHp > 0 &&
+                !_temporaryShopOpened) {
               _temporaryShopOpened = true;
               final shopBloc = getIt<ShopBloc>();
               // Reward the battle.
@@ -251,7 +252,22 @@ class GamePageState extends State<GamePage> {
       child: BlocProvider<GameBloc>(
         create: (_) => GameBloc(),
         child: Scaffold(
-          appBar: AppBar(title: const Text('Turn-Based Fight')),
+          appBar: AppBar(
+            leading: IconButton(
+              icon: const ImageIcon(
+                AssetImage('assets/icons/ExitIcon.png'),
+                color: ColorManager.whiteColor,
+                size: 35,
+              ),
+              onPressed: () {
+                Flame.device.restoreFullscreen();
+                Flame.device.setPortrait();
+                Navigator.of(context).pop();
+              },
+            ),
+            title: const Text('Turn-Based Fight'),
+            centerTitle: true,
+          ),
           body: BlocBuilder<GameBloc, GameState>(
             builder: (context, state) {
               viewModel = GameViewModel(context.read<GameBloc>());

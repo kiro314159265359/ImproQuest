@@ -4,10 +4,7 @@ import 'package:flutter_application_2/game/logic/shop_event.dart';
 import 'package:flutter_application_2/game/logic/shop_state.dart';
 import 'package:flutter_application_2/game/viewmodel/shop_view_model.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:get_it/get_it.dart';
-
-
-final getIt = GetIt.instance;
+import '../core/utils/get_it_constants.dart';
 
 class ShopPage extends StatelessWidget {
   const ShopPage({super.key});
@@ -52,7 +49,8 @@ class ShopPage extends StatelessWidget {
     );
   }
 
-  Widget _buildItemTile(BuildContext context, dynamic item, ShopViewModel viewModel) {
+  Widget _buildItemTile(
+      BuildContext context, dynamic item, ShopViewModel viewModel) {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
       child: ListTile(

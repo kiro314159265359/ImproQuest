@@ -1,11 +1,9 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../core/utils/get_it_constants.dart';
 import '../../features/home/data/model/user_model.dart';
 import '../models/shop_item.dart';
 import 'shop_event.dart';
 import 'shop_state.dart';
-import 'package:get_it/get_it.dart';
-
-final getIt = GetIt.instance;
 
 List<ShopItem> getNewTemporaryItems() {
   // For example, generate a new list of temporary items.
@@ -24,7 +22,7 @@ List<ShopItem> getNewTemporaryItems() {
 
 class ShopBloc extends Bloc<ShopEvent, ShopState> {
   int temporaryCurrency = 100;
-  int permanentCurrency = getIt<UserModel>().gold!;
+  int permanentCurrency = getIt<UserModel>().gold ?? 0;
   // Store permanent items separately.
   List<ShopItem> permanentItemsCache = [
     ShopItem(
@@ -48,7 +46,8 @@ class ShopBloc extends Bloc<ShopEvent, ShopState> {
   List<ShopItem> temporaryItemsCache = getNewTemporaryItems();
 
   // Combined list (for display) is permanent items + temporary items.
-  List<ShopItem> get allItems => [...permanentItemsCache, ...temporaryItemsCache];
+  List<ShopItem> get allItems =>
+      [...permanentItemsCache, ...temporaryItemsCache];
 
   // Optionally, maintain inventories.
   final List<ShopItem> temporaryInventory = [];
@@ -62,7 +61,8 @@ class ShopBloc extends Bloc<ShopEvent, ShopState> {
     on<ResetTemporaryShopItemsEvent>(_onResetTemporaryShopItems);
   }
 
-  Future<void> _onFetchShopItems(FetchShopItemsEvent event, Emitter<ShopState> emit) async {
+  Future<void> _onFetchShopItems(
+      FetchShopItemsEvent event, Emitter<ShopState> emit) async {
     emit(ShopLoading());
     await Future.delayed(const Duration(seconds: 1)); // simulate API delay
     // Combine permanent and temporary items.
@@ -73,14 +73,20 @@ class ShopBloc extends Bloc<ShopEvent, ShopState> {
     ));
   }
 
-  Future<void> _onBuyShopItem(BuyShopItemEvent event, Emitter<ShopState> emit) async {
+  Future<void> _onBuyShopItem(
+      BuyShopItemEvent event, Emitter<ShopState> emit) async {
     final ShopItem item = event.item;
 
     if (item.permanent) {
       if (permanentCurrency < item.price) {
-        emit(ShopError("Not enough permanent currency to purchase ${item.name}."));
+        emit(ShopError(
+            "Not enough permanent currency to purchase ${item.name}."));
         // Immediately re-emit the current shop state to reset the UI.
-
+        emit(ShopLoaded(
+          items: allItems,
+          temporaryCurrency: temporaryCurrency,
+          permanentCurrency: permanentCurrency,
+        ));
         return;
       }
       permanentCurrency -= item.price;
@@ -88,7 +94,8 @@ class ShopBloc extends Bloc<ShopEvent, ShopState> {
       permanentInventory.add(item);
     } else {
       if (temporaryCurrency < item.price) {
-        emit(ShopError("Not enough temporary currency to purchase ${item.name}."));
+        emit(ShopError(
+            "Not enough temporary currency to purchase ${item.name}."));
         emit(ShopLoaded(
           items: allItems,
           temporaryCurrency: temporaryCurrency,
@@ -107,9 +114,8 @@ class ShopBloc extends Bloc<ShopEvent, ShopState> {
     ));
   }
 
-
-
-  Future<void> _onRewardTemporaryGold(RewardTemporaryGoldEvent event, Emitter<ShopState> emit) async {
+  Future<void> _onRewardTemporaryGold(
+      RewardTemporaryGoldEvent event, Emitter<ShopState> emit) async {
     temporaryCurrency += event.reward;
     if (state is ShopLoaded) {
       emit(ShopLoaded(
@@ -120,7 +126,8 @@ class ShopBloc extends Bloc<ShopEvent, ShopState> {
     }
   }
 
-  Future<void> _onResetTemporaryGold(ResetTemporaryGoldEvent event, Emitter<ShopState> emit) async {
+  Future<void> _onResetTemporaryGold(
+      ResetTemporaryGoldEvent event, Emitter<ShopState> emit) async {
     temporaryCurrency = 100;
     if (state is ShopLoaded) {
       emit(ShopLoaded(
@@ -131,7 +138,8 @@ class ShopBloc extends Bloc<ShopEvent, ShopState> {
     }
   }
 
-  Future<void> _onResetTemporaryShopItems(ResetTemporaryShopItemsEvent event, Emitter<ShopState> emit) async {
+  Future<void> _onResetTemporaryShopItems(
+      ResetTemporaryShopItemsEvent event, Emitter<ShopState> emit) async {
     // Regenerate temporary items for the new fight.
     temporaryItemsCache = getNewTemporaryItems();
     // Emit updated state.

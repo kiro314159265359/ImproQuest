@@ -1,9 +1,8 @@
 import 'package:bloc/bloc.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_application_2/features/home/presentation/manager/user_state.dart';
-
 import '../../../../core/error/failure.dart';
-import '../../../../main.dart';
+import '../../../../core/utils/get_it_constants.dart';
 import '../../data/model/user_model.dart';
 import '../../domain/repo/user_repo.dart';
 

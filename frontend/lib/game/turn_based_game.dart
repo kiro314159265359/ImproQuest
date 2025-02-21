@@ -83,7 +83,7 @@ class TurnBasedGame extends FlameGame {
     enemyHealthBar = SimpleProgressBar(
       progress: 1.0,
       size: barSizeHealth,
-      position: enemyAnimationComponent!.position + Vector2(75, 50),
+      position: enemyAnimationComponent!.position + Vector2(-175, 50),
       foregroundColor: Colors.green,
       backgroundColor: Colors.red,
     );
@@ -93,7 +93,7 @@ class TurnBasedGame extends FlameGame {
     enemyInitiativeBar = SimpleProgressBar(
       progress: 0.0,
       size: barSizeInitiative,
-      position: enemyAnimationComponent!.position + Vector2(75, 65),
+      position: enemyAnimationComponent!.position + Vector2(-175, 65),
       foregroundColor: Colors.blue,
       backgroundColor: Colors.grey,
     );
@@ -130,7 +130,7 @@ class TurnBasedGame extends FlameGame {
       animation: enemyAnimation,
       size: Vector2(256, 256),
       position: Vector2(size.x - 250, 0),
-    );
+    )..flipHorizontallyAroundCenter();
     add(enemyAnimationComponent!);
 
     // Also update the enemy progress bars' positions relative to the new enemy sprite.
@@ -148,11 +148,14 @@ class TurnBasedGame extends FlameGame {
         enemyInitiativeBar == null) {
       return;
     }
-    double playerHealthProgress = state.player.currentHp / state.player.vitality;
+    double playerHealthProgress =
+        state.player.currentHp / state.player.vitality;
     double enemyHealthProgress = state.enemy.currentHp / state.enemy.vitality;
     const double initiativeThreshold = 100.0;
-    double playerInitiativeProgress = state.playerInitiative / initiativeThreshold;
-    double enemyInitiativeProgress = state.enemyInitiative / initiativeThreshold;
+    double playerInitiativeProgress =
+        state.playerInitiative / initiativeThreshold;
+    double enemyInitiativeProgress =
+        state.enemyInitiative / initiativeThreshold;
 
     playerHealthBar!.progress = playerHealthProgress;
     playerInitiativeBar!.progress = playerInitiativeProgress;

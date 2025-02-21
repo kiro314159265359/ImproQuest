@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:math';
-import 'package:flutter_application_2/game/logic/shop_bloc.dart';
-import 'package:flutter_application_2/game/logic/shop_event.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../core/utils/get_it_constants.dart';
+import '../../features/home/data/model/user_model.dart';
 import 'game_event.dart';
 import 'game_state.dart';
 import '../models/character.dart';
@@ -13,7 +13,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
   static const double initiativeThreshold = 100.0;
   static const double tickDelta = 0.1;
 
-  GameBloc() : super(GameState.initial()) {
+  GameBloc() : super(GameState.initial(getIt<UserModel>())) {
     on<TickEvent>(_onTickEvent);
     on<AttackEvent>(_onAttack);
     on<DefendEvent>(_onDefend);
@@ -185,11 +185,9 @@ class GameBloc extends Bloc<GameEvent, GameState> {
 
   // Advances the fight progression after winning a fight.
   void _onNextFight(NextFightEvent event, Emitter<GameState> emit) {
-
     int newAnte = state.currentAnte;
     int newBlind = state.currentBlind;
     bool endlessMode = state.endlessMode;
-
 
     if (state.enemy.currentHp <= 0) {
       if (state.currentBlind < 3) {

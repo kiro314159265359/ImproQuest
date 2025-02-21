@@ -2,8 +2,8 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_2/core/theme/background_theme.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:get_it/get_it.dart';
 import 'package:flutter_application_2/features/auth/domain/repo/login_repo.dart';
+import '../../../../core/utils/get_it_constants.dart';
 import '../../../../core/utils/validate_input.dart';
 import '../../../../core/widget/custom_primary_button.dart';
 import '../../../../core/routes/routes.dart';
@@ -12,8 +12,6 @@ import '../../../../core/theme/text_style.dart';
 import '../../../../core/widget/custom_text_form_field.dart';
 import '../manager/login_cubit/login_cubit.dart';
 import '../manager/login_cubit/login_state.dart';
-
-final getIt = GetIt.instance;
 
 class Login extends StatefulWidget {
   const Login({super.key});
