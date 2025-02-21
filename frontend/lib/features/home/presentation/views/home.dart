@@ -189,7 +189,7 @@ class _HomeState extends State<Home> {
             questName: quest.name ?? "Unnamed Quest",
             questDesc:
                 "${quest.xpReward ?? 0} XP • ${quest.goldReward ?? 0} Gold",
-            goal: quest.difficulty == 'hard' ? 1000 : 100,
+            goal: quest.goal ?? 1000,
             questImageIcon: const AssetImage('assets/icons/RunningChIcon.png'),
             progress: quest.isCompleted == true ? 1.0 : 0.5,
           ),
