@@ -242,7 +242,6 @@ func CompleteQuest() gin.HandlerFunc {
 		}
 
 		// 2. Find the quest in user's "quests" array
-		//    (Ensure your User model uses `bson:"quests"` for this array!)
 		var quest *models.Quest
 		for i := range user.CurrentQuests {
 			if user.CurrentQuests[i].ID.Hex() == questOID.Hex() {
@@ -258,6 +257,13 @@ func CompleteQuest() gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "quest already completed"})
 			return
 		}
+
+		// 2.5. Check if the quest is being completed within 24 hours of being given
+		if time.Now().After(quest.GivenAt.Add(24 * time.Hour)) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "quest expired; complete within 24 hours"})
+			return
+		}
+
 		if quest.XPReward == nil || quest.GoldReward == nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid quest rewards"})
 			return
