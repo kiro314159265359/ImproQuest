@@ -9,7 +9,8 @@ import (
 type Streak struct {
 	ID            bson.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
 	Current       int           `json:"current" bson:"current" validate:"gte=0"`
-	HighestStreak time.Time     `json:"highest_streak" bson:"highest_streak" validate:"required"`
+	HighestCount  int           `json:"highest_count" bson:"highest_count" validate:"gte=0"`
+	LastCompleted time.Time     `bson:"last_completed" json:"last_completed" validate:"required"`
 }
 
 type User struct {
