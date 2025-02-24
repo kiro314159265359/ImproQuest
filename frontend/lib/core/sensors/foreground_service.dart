@@ -1,11 +1,9 @@
 import 'dart:async';
 import 'dart:isolate';
-
 import 'package:flutter_activity_recognition/flutter_activity_recognition.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:geolocator/geolocator.dart' as geo;
-
-import '../utils/tracking_utils.dart';
+import 'tracking_utils.dart';
 
 class ForegroundService {
   static void start() {
@@ -19,6 +17,7 @@ class ForegroundService {
   static void stop() {
     FlutterForegroundTask.stopService();
   }
+
   static void startCallback() {
     FlutterForegroundTask.setTaskHandler(ForegroundTaskHandler());
     FlutterForegroundTask.setTaskHandler(ForegroundTaskHandler());
@@ -33,8 +32,10 @@ class ForegroundTaskHandler extends TaskHandler {
 
   @override
   Future<void> onStart(DateTime timestamp, TaskStarter starter) async {
-    _activitySubscription = FlutterActivityRecognition.instance.activityStream.listen(
-      (activity) => TrackingUtils.handleActivityDetected(activity, _startLocationTracking, _stopLocationTracking),
+    _activitySubscription =
+        FlutterActivityRecognition.instance.activityStream.listen(
+      (activity) => TrackingUtils.handleActivityDetected(
+          activity, _startLocationTracking, _stopLocationTracking),
       onError: (error) => _onActivityError(error.toString()),
     );
 
@@ -42,7 +43,6 @@ class ForegroundTaskHandler extends TaskHandler {
     _startLocationTracking();
   }
 
-  @override
   Future<void> onEvent(DateTime timestamp, SendPort? sendPort) async {}
 
   @override
@@ -55,7 +55,8 @@ class ForegroundTaskHandler extends TaskHandler {
   void onRepeatEvent(DateTime timestamp) {
     // Get latest activity and location in regular intervals
     FlutterActivityRecognition.instance.activityStream.first.then((activity) {
-      TrackingUtils.handleActivityDetected(activity, _startLocationTracking, _stopLocationTracking);
+      TrackingUtils.handleActivityDetected(
+          activity, _startLocationTracking, _stopLocationTracking);
     });
 
     if (_positionSubscription == null) {
@@ -71,7 +72,8 @@ class ForegroundTaskHandler extends TaskHandler {
     if (_positionSubscription != null) return; // Avoid multiple subscriptions
 
     _positionSubscription = geo.Geolocator.getPositionStream(
-      locationSettings: geo.LocationSettings(accuracy: geo.LocationAccuracy.high, distanceFilter: 5),
+      locationSettings: const geo.LocationSettings(
+          accuracy: geo.LocationAccuracy.high, distanceFilter: 5),
     ).listen(
       (position) => _onLocationUpdated(position),
       onError: (error) => _onActivityError(error.toString()),
@@ -89,9 +91,11 @@ class ForegroundTaskHandler extends TaskHandler {
     print("Total Distance: $_totalDistance meters");
 
     // Send updated distance to the app (if needed)
-    FlutterForegroundTask.updateService(notificationText: "Total Distance: ${_totalDistance.toStringAsFixed(2)} m");
+    FlutterForegroundTask.updateService(
+        notificationText:
+            "Total Distance: ${_totalDistance.toStringAsFixed(2)} m");
   }
-  
+
   void _initService() {
     FlutterForegroundTask.init(
       androidNotificationOptions: AndroidNotificationOptions(

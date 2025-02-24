@@ -1,12 +1,10 @@
 import 'dart:async';
-
 import 'package:flutter_activity_recognition/flutter_activity_recognition.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:geolocator/geolocator.dart' as geo;
 import 'package:permission_handler/permission_handler.dart';
-
-import '../services/foreground_service.dart';
-import '../utils/tracking_utils.dart';
+import 'foreground_service.dart';
+import 'tracking_utils.dart';
 import 'activity_event.dart';
 import 'activity_state.dart';
 
@@ -15,7 +13,6 @@ class ActivityBloc extends Bloc<ActivityEvent, ActivityState> {
   StreamSubscription<geo.Position>? _positionSubscription;
   geo.Position? _lastPosition;
   double _totalDistance = 0.0;
-  
 
   ActivityBloc() : super(ActivityInitial()) {
     on<StartActivityTracking>(_onStartTracking);
@@ -30,12 +27,12 @@ class ActivityBloc extends Bloc<ActivityEvent, ActivityState> {
   ) async {
     try {
       await _requestPermissions();
-      
-      _activitySubscription = FlutterActivityRecognition.instance.activityStream
-          .listen(
-            (activity) => add(ActivityDetected(activity)),
-            onError: (error) => add(ActivityError(error.toString())),
-          );
+
+      _activitySubscription =
+          FlutterActivityRecognition.instance.activityStream.listen(
+        (activity) => add(ActivityDetected(activity)),
+        onError: (error) => add(ActivityError(error.toString())),
+      );
 
       ForegroundService.start();
 
@@ -51,8 +48,9 @@ class ActivityBloc extends Bloc<ActivityEvent, ActivityState> {
   ) async {
     if (state is ActivityTracking) {
       final currentState = state as ActivityTracking;
-      
-      TrackingUtils.handleActivityDetected(event.activity, _startLocationTracking, _stopLocationTracking);
+
+      TrackingUtils.handleActivityDetected(
+          event.activity, _startLocationTracking, _stopLocationTracking);
 
       emit(currentState.copyWith(
         activity: event.activity,
@@ -67,9 +65,11 @@ class ActivityBloc extends Bloc<ActivityEvent, ActivityState> {
   ) {
     if (state is ActivityTracking) {
       final currentState = state as ActivityTracking;
-      
-      _totalDistance += TrackingUtils.calculateDistance(_lastPosition, TrackingUtils.createPosition(event.latitude, event.longitude));
-      _lastPosition = TrackingUtils.createPosition(event.latitude, event.longitude);
+
+      _totalDistance += TrackingUtils.calculateDistance(_lastPosition,
+          TrackingUtils.createPosition(event.latitude, event.longitude));
+      _lastPosition =
+          TrackingUtils.createPosition(event.latitude, event.longitude);
 
       emit(currentState.copyWith(
         distance: _totalDistance,
@@ -99,11 +99,11 @@ class ActivityBloc extends Bloc<ActivityEvent, ActivityState> {
   }
 
   Future<void> _requestPermissions() async {
-    final activityPermission = 
+    final activityPermission =
         await FlutterActivityRecognition.instance.checkPermission();
-        
+
     if (activityPermission == ActivityPermission.DENIED) {
-      final newPermission = 
+      final newPermission =
           await FlutterActivityRecognition.instance.requestPermission();
       if (newPermission != ActivityPermission.GRANTED) {
         throw Exception('Activity recognition permission denied');

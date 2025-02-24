@@ -11,8 +11,8 @@ class UserApi extends UserRepo {
 
   @override
   Future<UserModel> getUserData() async {
+    await apiService.put(EndPoints.userQuests);
     var response = await apiService.get(EndPoints.userData);
-
     return UserModel.fromJson(jsonDecode(response.toString()));
   }
 

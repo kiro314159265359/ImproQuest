@@ -1,7 +1,6 @@
-import 'package:equatable/equatable.dart';
 import 'package:flutter_activity_recognition/flutter_activity_recognition.dart';
 
-abstract class ActivityEvent extends Equatable {
+abstract class ActivityEvent {
   const ActivityEvent();
 
   @override

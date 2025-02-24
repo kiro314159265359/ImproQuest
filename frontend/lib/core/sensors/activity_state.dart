@@ -1,7 +1,6 @@
-import 'package:equatable/equatable.dart';
 import 'package:flutter_activity_recognition/flutter_activity_recognition.dart';
 
-abstract class ActivityState extends Equatable {
+abstract class ActivityState {
   const ActivityState();
 
   @override

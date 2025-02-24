@@ -49,6 +49,7 @@ dependencies:
   flutter_activity_recognition: ^4.0.0
   geolocator: ^13.0.2
   flame: ^1.24.0
+  flutter_foreground_task:
   # image_picker:
 dev_dependencies:
   flutter_test:

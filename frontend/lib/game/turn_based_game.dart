@@ -4,14 +4,16 @@ import 'package:flame/components.dart';
 import 'package:flame/sprite.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
-
 import 'components/simple_progress_bar.dart';
-import 'logic/game_state.dart'; // to access GameState and its stats
+import 'components/status_container.dart';
+import 'logic/game_state.dart';
 
 class TurnBasedGame extends FlameGame {
   SpriteAnimationComponent? heroAnimationComponent;
   SpriteAnimationComponent? enemyAnimationComponent;
   SpriteComponent? backgroundComponent;
+  StatusContainer? playerStatusContainer;
+  StatusContainer? enemyStatusContainer;
 
   // Progress bar components:
   SimpleProgressBar? playerHealthBar;
@@ -69,35 +71,76 @@ class TurnBasedGame extends FlameGame {
     add(playerHealthBar!);
 
     // Initiative bar just above the health bar.
-    playerInitiativeBar = SimpleProgressBar(
-      progress: 0.0,
-      size: barSizeInitiative,
-      position: heroAnimationComponent!.position + Vector2(75, 65),
-      foregroundColor: Colors.blue,
-      backgroundColor: Colors.grey,
-    );
-    add(playerInitiativeBar!);
 
-    // 5. Add progress bars for the enemy.
-    // Health bar above enemy sprite.
-    enemyHealthBar = SimpleProgressBar(
-      progress: 1.0,
-      size: barSizeHealth,
-      position: enemyAnimationComponent!.position + Vector2(-175, 50),
-      foregroundColor: Colors.green,
-      backgroundColor: Colors.red,
+    playerStatusContainer = StatusContainer(
+      position: heroAnimationComponent!.position + Vector2(75, -50),
+      size: Vector2(150, 50),
+      progressBar: SimpleProgressBar(
+        progress: 1.0,
+        size: Vector2(100, 10),
+        position: Vector2(10, 25), // relative inside container
+        foregroundColor: Colors.green,
+        backgroundColor: Colors.red,
+      ),
+      hpText: TextComponent(
+        text: 'HP: 100/100',
+        position: Vector2(10, 5),
+        textRenderer: TextPaint(
+          style: const TextStyle(color: Colors.white, fontSize: 12),
+        ),
+      ),
     );
-    add(enemyHealthBar!);
+    add(playerStatusContainer!);
 
-    // Initiative bar above the enemy health bar.
-    enemyInitiativeBar = SimpleProgressBar(
-      progress: 0.0,
-      size: barSizeInitiative,
-      position: enemyAnimationComponent!.position + Vector2(-175, 65),
-      foregroundColor: Colors.blue,
-      backgroundColor: Colors.grey,
+    // Create a status container for the enemy
+    enemyStatusContainer = StatusContainer(
+      position: enemyAnimationComponent!.position + Vector2(-200, 50),
+      size: Vector2(150, 50),
+      progressBar: SimpleProgressBar(
+        progress: 1.0,
+        size: Vector2(100, 10),
+        position: Vector2(10, 25),
+        foregroundColor: Colors.green,
+        backgroundColor: Colors.red,
+      ),
+      hpText: TextComponent(
+        text: 'HP: 50/50',
+        position: Vector2(10, 5),
+        textRenderer: TextPaint(
+          style: const TextStyle(color: Colors.white, fontSize: 12),
+        ),
+      ),
     );
-    add(enemyInitiativeBar!);
+    add(enemyStatusContainer!);
+    // playerInitiativeBar = SimpleProgressBar(
+    //   progress: 0.0,
+    //   size: barSizeInitiative,
+    //   position: heroAnimationComponent!.position + Vector2(75, 65),
+    //   foregroundColor: Colors.blue,
+    //   backgroundColor: Colors.grey,
+    // );
+    // add(playerInitiativeBar!);
+    //
+    // // 5. Add progress bars for the enemy.
+    // // Health bar above enemy sprite.
+    // enemyHealthBar = SimpleProgressBar(
+    //   progress: 1.0,
+    //   size: barSizeHealth,
+    //   position: enemyAnimationComponent!.position + Vector2(-175, 50),
+    //   foregroundColor: Colors.green,
+    //   backgroundColor: Colors.red,
+    // );
+    // add(enemyHealthBar!);
+    //
+    // // Initiative bar above the enemy health bar.
+    // enemyInitiativeBar = SimpleProgressBar(
+    //   progress: 0.0,
+    //   size: barSizeInitiative,
+    //   position: enemyAnimationComponent!.position + Vector2(-175, 65),
+    //   foregroundColor: Colors.blue,
+    //   backgroundColor: Colors.grey,
+    // );
+    // add(enemyInitiativeBar!);
   }
 
   /// Updates the enemy sprite based on whether the enemy is a boss or not.
@@ -140,32 +183,56 @@ class TurnBasedGame extends FlameGame {
         enemyAnimationComponent!.position - Vector2(0, 35);
   }
 
-  /// Call this method from the UI with the latest BLoC state to update the bars.
   void updateBars(GameState state) {
-    if (playerHealthBar == null ||
-        playerInitiativeBar == null ||
-        enemyHealthBar == null ||
-        enemyInitiativeBar == null) {
+    if (playerStatusContainer == null || enemyStatusContainer == null) {
       return;
     }
+    // Calculate progress for health bars.
     double playerHealthProgress =
         state.player.currentHp / state.player.vitality;
     double enemyHealthProgress = state.enemy.currentHp / state.enemy.vitality;
-    const double initiativeThreshold = 100.0;
-    double playerInitiativeProgress =
-        state.playerInitiative / initiativeThreshold;
-    double enemyInitiativeProgress =
-        state.enemyInitiative / initiativeThreshold;
 
-    playerHealthBar!.progress = playerHealthProgress;
-    playerInitiativeBar!.progress = playerInitiativeProgress;
-    enemyHealthBar!.progress = enemyHealthProgress;
-    enemyInitiativeBar!.progress = enemyInitiativeProgress;
+    // Update the progress bars.
+    playerStatusContainer!.progressBar.progress = playerHealthProgress;
+    enemyStatusContainer!.progressBar.progress = enemyHealthProgress;
 
-    // Force refresh of progress bars
-    playerHealthBar?.update(0);
-    playerInitiativeBar?.update(0);
-    enemyHealthBar?.update(0);
-    enemyInitiativeBar?.update(0);
+    // Update the HP text.
+    playerStatusContainer!.hpText.text =
+        'HP: ${state.player.currentHp}/${state.player.vitality}';
+    enemyStatusContainer!.hpText.text =
+        'HP: ${state.enemy.currentHp}/${state.enemy.vitality}';
+
+    // Force a refresh by calling update(0) on children if needed.
+    playerStatusContainer!.progressBar.update(0);
+    enemyStatusContainer!.progressBar.update(0);
   }
+
+  /// Call this method from the UI with the latest BLoC state to update the bars.
+  // void updateBars(GameState state) {
+  //   if (playerHealthBar == null ||
+  //       playerInitiativeBar == null ||
+  //       enemyHealthBar == null ||
+  //       enemyInitiativeBar == null) {
+  //     return;
+  //   }
+  //   double playerHealthProgress =
+  //       state.player.currentHp / state.player.vitality;
+  //   double enemyHealthProgress = state.enemy.currentHp / state.enemy.vitality;
+  //   const double initiativeThreshold = 100.0;
+  //   double playerInitiativeProgress =
+  //       state.playerInitiative / initiativeThreshold;
+  //   double enemyInitiativeProgress =
+  //       state.enemyInitiative / initiativeThreshold;
+  //
+  //   playerHealthBar!.progress = playerHealthProgress;
+  //   playerInitiativeBar!.progress = playerInitiativeProgress;
+  //   enemyHealthBar!.progress = enemyHealthProgress;
+  //   enemyInitiativeBar!.progress = enemyInitiativeProgress;
+  //
+  //   // Force refresh of progress bars
+  //   playerHealthBar?.update(0);
+  //   playerInitiativeBar?.update(0);
+  //   enemyHealthBar?.update(0);
+  //   enemyInitiativeBar?.update(0);
+  // }
 }
