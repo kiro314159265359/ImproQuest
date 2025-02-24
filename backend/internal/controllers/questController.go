@@ -202,132 +202,208 @@ func DeleteQuest() gin.HandlerFunc {
 	}
 }
 
-func CompleteQuest(c *gin.Context) {
-	userID := c.GetString("id")
-	if userID == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "user ID not found in context"})
-		return
-	}
-
-	questID := c.Param("questId")
-	if questID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "quest ID is required"})
-		return
-	}
-
-	// Convert IDs
-	userOID, err := bson.ObjectIDFromHex(userID)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID"})
-		return
-	}
-
-	questOID, err := bson.ObjectIDFromHex(questID)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid quest ID"})
-		return
-	}
-
-	// Get database collection
-	collection := database.Users()
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	// 1. Fetch user document
-	var user models.User
-	err = collection.FindOne(ctx, bson.M{"_id": userOID}).Decode(&user)
-	if helpers.HandleError(c, err) {
-		return
-	}
-
-	// 2. Find the quest in user's "quests" array
-	//    (Ensure your User model uses `bson:"quests"` for this array!)
-	var quest *models.Quest
-	for i := range user.CurrentQuests {
-		if user.CurrentQuests[i].ID.Hex() == questOID.Hex() {
-			quest = &user.CurrentQuests[i]
-			break
+func CompleteQuest() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userID := c.GetString("id")
+		if userID == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "user ID not found in context"})
+			return
 		}
-	}
-	if quest == nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "quest not found"})
-		return
-	}
-	if quest.IsCompleted {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "quest already completed"})
-		return
-	}
-	if quest.XPReward == nil || quest.GoldReward == nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid quest rewards"})
-		return
-	}
 
-	// 3. Update user to award XP/gold & mark quest as completed
-	filter := bson.M{
-		"_id":                 userOID,
-		"quests._id":          questOID,
-		"quests.is_completed": false,
-	}
-	update := bson.M{
-		"$inc": bson.M{
-			"xp":   *quest.XPReward,
-			"gold": *quest.GoldReward,
-		},
-		"$set": bson.M{
-			"quests.$.is_completed": true,
-		},
-	}
-	result, err := collection.UpdateOne(ctx, filter, update)
-	if helpers.HandleError(c, err) {
-		return
-	}
-	if result.ModifiedCount == 0 {
-		c.JSON(http.StatusConflict, gin.H{"error": "quest completion failed"})
-		return
-	}
-
-	// 4. Fetch updated user to get the new XP total
-	err = collection.FindOne(ctx, bson.M{"_id": userOID}).Decode(&user)
-	if helpers.HandleError(c, err) {
-		return
-	}
-
-	// 5. Level-up check
-	levelUps := 0
-	for {
-		threshold := helpers.XpThresholdForLevel(user.Level)
-		// Ensure threshold > 0 to avoid infinite loops if level == 0
-		if user.XP >= threshold && threshold > 0 {
-			user.XP -= threshold
-			user.Level++
-			levelUps++
-		} else {
-			break
+		questID := c.Param("questId")
+		if questID == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "quest ID is required"})
+			return
 		}
-	}
 
-	// 6. If user leveled up, update user doc with new XP and level
-	if levelUps > 0 {
-		_, err := collection.UpdateOne(
-			ctx,
-			bson.M{"_id": userOID},
-			bson.M{"$set": bson.M{
-				"xp":    user.XP,
-				"level": user.Level,
-			}},
-		)
+		// Convert IDs
+		userOID, err := bson.ObjectIDFromHex(userID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID"})
+			return
+		}
+
+		questOID, err := bson.ObjectIDFromHex(questID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid quest ID"})
+			return
+		}
+
+		// Get database collection
+		collection := database.Users()
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		// 1. Fetch user document
+		var user models.User
+		err = collection.FindOne(ctx, bson.M{"_id": userOID}).Decode(&user)
 		if helpers.HandleError(c, err) {
 			return
 		}
-	}
 
-	// 7. Send response
-	c.JSON(http.StatusOK, gin.H{
-		"message":       "Quest completed!",
-		"xp_gained":     *quest.XPReward,
-		"gold_gained":   *quest.GoldReward,
-		"new_level":     user.Level,
-		"current_xp":    user.XP,
-		"levels_gained": levelUps,
-	})
+		// 2. Find the quest in user's "quests" array
+		var quest *models.Quest
+		for i := range user.CurrentQuests {
+			if user.CurrentQuests[i].ID.Hex() == questOID.Hex() {
+				quest = &user.CurrentQuests[i]
+				break
+			}
+		}
+		if quest == nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "quest not found"})
+			return
+		}
+		if quest.IsCompleted {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "quest already completed"})
+			return
+		}
+
+		if time.Now().After(quest.GivenAt.Add(24 * time.Hour)) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "quest expired; complete within 24 hours"})
+			return
+		}
+
+		if quest.XPReward == nil || quest.GoldReward == nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid quest rewards"})
+			return
+		}
+
+		// 3. Update user to award XP/gold & mark quest as completed
+		filter := bson.M{
+			"_id":                 userOID,
+			"quests._id":          questOID,
+			"quests.is_completed": false,
+		}
+		update := bson.M{
+			"$inc": bson.M{
+				"xp":   *quest.XPReward,
+				"gold": *quest.GoldReward,
+			},
+			"$set": bson.M{
+				"quests.$.is_completed": true,
+			},
+		}
+		result, err := collection.UpdateOne(ctx, filter, update)
+		if helpers.HandleError(c, err) {
+			return
+		}
+		if result.ModifiedCount == 0 {
+			c.JSON(http.StatusConflict, gin.H{"error": "quest completion failed"})
+			return
+		}
+
+		// 4. Fetch updated user to get the new XP total
+		err = collection.FindOne(ctx, bson.M{"_id": userOID}).Decode(&user)
+		if helpers.HandleError(c, err) {
+			return
+		}
+
+		// 5. Level-up check
+		levelUps := 0
+		for {
+			threshold := helpers.XpThresholdForLevel(user.Level)
+			// Ensure threshold > 0 to avoid infinite loops if level == 0
+			if user.XP >= threshold && threshold > 0 {
+				user.XP -= threshold
+				user.Level++
+				levelUps++
+			} else {
+				break
+			}
+		}
+
+		// 6. If user leveled up, update user doc with new XP and level
+		if levelUps > 0 {
+			_, err := collection.UpdateOne(
+				ctx,
+				bson.M{"_id": userOID},
+				bson.M{"$set": bson.M{
+					"xp":    user.XP,
+					"level": user.Level,
+				}},
+			)
+			if helpers.HandleError(c, err) {
+				return
+			}
+		}
+
+		// 7. Send response
+		c.JSON(http.StatusOK, gin.H{
+			"message":       "Quest completed!",
+			"xp_gained":     *quest.XPReward,
+			"gold_gained":   *quest.GoldReward,
+			"new_level":     user.Level,
+			"current_xp":    user.XP,
+			"levels_gained": levelUps,
+		})
+	}
+}
+
+func UpdateStreakHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// 1. Get user id from context
+		userID := c.GetString("id")
+		if userID == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found in context"})
+			return
+		}
+
+		// Convert the userID to an ObjectID
+		userOID, err := bson.ObjectIDFromHex(userID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+			return
+		}
+
+		// 2. Fetch the user from the database
+		collection := database.Users() // Assume your database package exposes a Users() collection.
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		var user models.User
+		if err := collection.FindOne(ctx, bson.M{"_id": userOID}).Decode(&user); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "User not found"})
+			return
+		}
+
+		// 3. Check if all quests are completed using the helper
+		if !helpers.AreAllQuestsCompleted(user.CurrentQuests) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Not all quests are completed"})
+			return
+		}
+
+		// 4. Update the streak if the quests are all done
+		currentTime := time.Now()
+		today := currentTime.Truncate(24 * time.Hour)
+		yesterday := today.AddDate(0, 0, -1)
+
+		// Update the streak only if not already updated today.
+		if user.Streak.LastCompleted.IsZero() || !helpers.SameDay(user.Streak.LastCompleted, today) {
+			if helpers.SameDay(user.Streak.LastCompleted, yesterday) {
+				user.Streak.Current++ // Increment streak if completed yesterday
+			} else {
+				user.Streak.Current = 1 // Reset streak if a day was skipped
+			}
+			user.Streak.LastCompleted = today
+
+			// Optionally, update the highest streak record if you maintain a count.
+			if user.Streak.Current > user.Streak.HighestCount {
+				user.Streak.HighestCount = user.Streak.Current
+			}
+		}
+
+		// 5. Save the updated streak back to the database
+		update := bson.M{"$set": bson.M{"streak": user.Streak}}
+		_, err = collection.UpdateOne(ctx, bson.M{"_id": userOID}, update)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update streak"})
+			return
+		}
+
+		// 6. Respond with success and the updated streak information
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Streak updated successfully",
+			"streak":  user.Streak,
+		})
+	}
 }

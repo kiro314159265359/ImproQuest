@@ -232,10 +232,8 @@ func UpdateUser() gin.HandlerFunc {
 // controllers/user.go
 func AssignRandomQuests() gin.HandlerFunc {
 	return func(c *gin.Context) {
-
 		userID := c.GetString("id")
-		// Convert userID to ObjectID
-		fmt.Print("User ID :", userID)
+		fmt.Println("User ID:", userID)
 
 		objectID, err := bson.ObjectIDFromHex(userID)
 		if err != nil {
@@ -244,7 +242,6 @@ func AssignRandomQuests() gin.HandlerFunc {
 			return
 		}
 
-		// Fetch all quests from the database
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
@@ -267,14 +264,22 @@ func AssignRandomQuests() gin.HandlerFunc {
 			return
 		}
 
-		// Shuffle and select quests
-		rand.New(rand.NewSource(time.Now().UnixNano()))
+		// Shuffle the quests using the global rand package
+		rand.Seed(time.Now().UnixNano())
 		rand.Shuffle(len(allQuests), func(i, j int) {
 			allQuests[i], allQuests[j] = allQuests[j], allQuests[i]
 		})
+
+		// Select the first 4 quests
 		selectedQuests := allQuests[:4]
 
-		// Update user document
+		// Set the GivenAt field for each selected quest to the current time
+		now := time.Now()
+		for i := range selectedQuests {
+			selectedQuests[i].GivenAt = now
+		}
+
+		// Update the user document to assign these quests
 		filter := bson.M{"_id": objectID}
 		update := bson.M{"$set": bson.M{"quests": selectedQuests}}
 		updateResult, err := userCollection.UpdateOne(ctx, filter, update)
@@ -284,7 +289,6 @@ func AssignRandomQuests() gin.HandlerFunc {
 			return
 		}
 
-		// Check if user exists
 		if updateResult.MatchedCount == 0 {
 			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 			return

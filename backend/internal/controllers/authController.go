@@ -132,6 +132,7 @@ func Signup() gin.HandlerFunc {
 			Gender:      req.Gender,
 			Created_at:  time.Now(),
 			Updated_at:  time.Now(),
+			Level:       1,
 			ID:          bson.NewObjectID(),
 		}
 		access, refresh, err := helpers.GenerateAllTokens(user.ID.Hex(), *user.UserType)
