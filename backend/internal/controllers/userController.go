@@ -230,6 +230,7 @@ func UpdateUser() gin.HandlerFunc {
 }
 
 // controllers/user.go
+
 func AssignRandomQuests() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID := c.GetString("id")
@@ -245,6 +246,29 @@ func AssignRandomQuests() gin.HandlerFunc {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
+		// Retrieve the current user's quests to decide if new quests should be assigned
+		var userDoc struct {
+			Quests []models.Quest `bson:"quests"`
+		}
+
+		err = userCollection.FindOne(ctx, bson.M{"_id": objectID}).Decode(&userDoc)
+		if err != nil {
+			logger.Errorf("Failed to get user: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get user"})
+			return
+		}
+		// If quests are not null, check if the first quest's GivenAt has not passed its next 12AM.
+		if len(userDoc.Quests) > 0 {
+			now := time.Now()
+			quest := userDoc.Quests[0]
+			threshold := time.Date(quest.GivenAt.Year(), quest.GivenAt.Month(), quest.GivenAt.Day(), 0, 0, 0, 0, quest.GivenAt.Location()).Add(24 * time.Hour)
+			if now.Before(threshold) {
+				c.JSON(http.StatusOK, gin.H{"quests": userDoc.Quests})
+				return
+			}
+		}
+
+		// Proceed to assign new quests if quests are null or their assigned day has passed.
 		var allQuests []models.Quest
 		cursor, err := questCollection.Find(ctx, bson.M{})
 		if err != nil {
@@ -265,7 +289,7 @@ func AssignRandomQuests() gin.HandlerFunc {
 		}
 
 		// Shuffle the quests using the global rand package
-		rand.Seed(time.Now().UnixNano())
+		rand.New(rand.NewSource(time.Now().UnixNano()))
 		rand.Shuffle(len(allQuests), func(i, j int) {
 			allQuests[i], allQuests[j] = allQuests[j], allQuests[i]
 		})
