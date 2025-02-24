@@ -143,6 +143,7 @@ class Streak {
 class Quests {
   String? sId;
   String? name;
+  int? goal;
   int? xpReward;
   int? goldReward;
   String? difficulty;
@@ -151,6 +152,7 @@ class Quests {
   Quests(
       {this.sId,
       this.name,
+      this.goal,
       this.xpReward,
       this.goldReward,
       this.difficulty,
@@ -159,6 +161,7 @@ class Quests {
   Quests.fromJson(Map<String, dynamic> json) {
     sId = json['_id'];
     name = json['name'];
+    goal = json['goal'];
     xpReward = json['xp_reward'];
     goldReward = json['gold_reward'];
     difficulty = json['difficulty'];
@@ -169,6 +172,7 @@ class Quests {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['_id'] = sId;
     data['name'] = name;
+    data['goal'] = goal;
     data['xp_reward'] = xpReward;
     data['gold_reward'] = goldReward;
     data['difficulty'] = difficulty;

@@ -21,8 +21,10 @@ List<ShopItem> getNewTemporaryItems() {
 }
 
 class ShopBloc extends Bloc<ShopEvent, ShopState> {
-  int temporaryCurrency = 100;
-  int permanentCurrency = getIt<UserModel>().gold ?? 0;
+  int temporaryCurrency = 0;
+  UserModel user = getIt<UserModel>();
+  late int permanentCurrency;
+
   // Store permanent items separately.
   List<ShopItem> permanentItemsCache = [
     ShopItem(
@@ -53,7 +55,9 @@ class ShopBloc extends Bloc<ShopEvent, ShopState> {
   final List<ShopItem> temporaryInventory = [];
   final List<ShopItem> permanentInventory = [];
 
-  ShopBloc() : super(ShopInitial()) {
+  ShopBloc({required this.user}) : super(ShopInitial()) {
+
+    permanentCurrency = user.gold ?? -1;
     on<FetchShopItemsEvent>(_onFetchShopItems);
     on<BuyShopItemEvent>(_onBuyShopItem);
     on<RewardTemporaryGoldEvent>(_onRewardTemporaryGold);
@@ -91,6 +95,7 @@ class ShopBloc extends Bloc<ShopEvent, ShopState> {
       }
       permanentCurrency -= item.price;
       await Future.delayed(const Duration(seconds: 1));
+
       permanentInventory.add(item);
     } else {
       if (temporaryCurrency < item.price) {

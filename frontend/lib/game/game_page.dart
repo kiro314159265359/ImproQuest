@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flame/game.dart';
 import '../core/theme/color_manger.dart';
 import '../core/utils/get_it_constants.dart';
+import '../features/home/data/model/user_model.dart';
 import 'logic/shop_bloc.dart';
 import 'turn_based_game.dart';
 import 'logic/game_bloc.dart';
@@ -23,12 +24,21 @@ class GamePage extends StatefulWidget {
 class GamePageState extends State<GamePage> {
   final TurnBasedGame flameGame = TurnBasedGame();
   late GameViewModel viewModel;
+  late ShopBloc temporaryShopBloc;
   bool _temporaryShopOpened =
       false; // Ensure reward is dispatched only once per battle
 
   @override
   void initState() {
     super.initState();
+    temporaryShopBloc = ShopBloc(user: getIt<UserModel>());
+  }
+
+  @override
+  void dispose() {
+    // Dispose the ShopBloc when the game ends.
+    temporaryShopBloc.close();
+    super.dispose();
   }
 
   // Helper method to build enemy preview card for a blind.
@@ -162,15 +172,14 @@ class GamePageState extends State<GamePage> {
                 state.player.currentHp > 0 &&
                 !_temporaryShopOpened) {
               _temporaryShopOpened = true;
-              final shopBloc = getIt<ShopBloc>();
               // Reward the battle.
-              shopBloc.add(RewardTemporaryGoldEvent(50));
+              temporaryShopBloc.add(RewardTemporaryGoldEvent(50));
               Future.delayed(const Duration(milliseconds: 300), () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (_) => BlocProvider<ShopBloc>.value(
-                      value: shopBloc,
+                      value: temporaryShopBloc,
                       child: const TemporaryShopPage(),
                     ),
                   ),
@@ -245,12 +254,19 @@ class GamePageState extends State<GamePage> {
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        final shopBloc = getIt<ShopBloc>();
-        shopBloc.add(ResetTemporaryGoldEvent());
-        return true; // allow pop after resetting
+        // Optionally, reset temporary shop state here if needed.
+        temporaryShopBloc.add(ResetTemporaryGoldEvent());
+        return true;
       },
-      child: BlocProvider<GameBloc>(
-        create: (_) => GameBloc(),
+      child: MultiBlocProvider(
+        providers: [
+          // Provide the game bloc as usual.
+          BlocProvider<GameBloc>(
+            create: (_) => GameBloc(),
+          ),
+          // The temporary shop bloc is provided for this game session.
+          BlocProvider<ShopBloc>.value(value: temporaryShopBloc),
+        ],
         child: Scaffold(
           appBar: AppBar(
             leading: IconButton(
@@ -272,6 +288,7 @@ class GamePageState extends State<GamePage> {
             builder: (context, state) {
               viewModel = GameViewModel(context.read<GameBloc>());
               final bloc = context.read<GameBloc>();
+              // Choose between the fight UI and the menu based on state.
               return state.inFightMenu
                   ? Center(child: buildMenu(state, bloc))
                   : buildFightUI(state);

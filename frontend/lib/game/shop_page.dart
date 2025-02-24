@@ -11,13 +11,34 @@ class ShopPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Retrieve the ShopBloc instance from getIt and dispatch the event.
+    // Retrieve the ShopBloc instance from getIt and dispatch the fetch event.
     final shopBloc = getIt<ShopBloc>()..add(FetchShopItemsEvent());
 
     return BlocProvider<ShopBloc>.value(
       value: shopBloc,
       child: Scaffold(
-        appBar: AppBar(title: const Text('Shop')),
+        appBar: AppBar(
+          title: const Text('Shop'),
+          actions: [
+            BlocBuilder<ShopBloc, ShopState>(
+              builder: (context, state) {
+                int gold = 0;
+                if (state is ShopLoaded) {
+                  gold = state.permanentCurrency;
+                }
+                return Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Center(
+                    child: Text(
+                      'Gold: $gold',
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
         body: BlocListener<ShopBloc, ShopState>(
           listener: (context, state) {
             if (state is ShopPurchaseSuccess) {

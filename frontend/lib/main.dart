@@ -3,6 +3,7 @@ import 'package:flutter_application_2/core/routes/app_routes.dart';
 import 'package:flutter_application_2/core/theme/app_theme.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_application_2/features/auth/domain/repo/login_repo.dart';
+import 'core/service/api/api_service.dart';
 import 'core/utils/get_it_constants.dart';
 import 'features/home/data/api/user_api.dart';
 import 'features/home/presentation/manager/user_cubit.dart';
@@ -30,7 +31,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     AppRoutes appRoutes = AppRoutes();
     return BlocProvider(
-      create: (context) => UserCubit(UserApi()),
+      create: (context) => UserCubit(UserApi(getIt<ApiService>())),
       child: MaterialApp(
           // locale: DevicePreview.locale(context),
           // builder: DevicePreview.appBuilder,

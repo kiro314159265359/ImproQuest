@@ -1,11 +1,13 @@
 import 'package:flame/flame.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_2/features/app_layout/presentation/views/widgets/custom_bar_icon.dart';
+import 'package:flutter_application_2/game/logic/shop_bloc.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'dart:math' as math;
 import '../../../../core/routes/routes.dart';
 import '../../../../core/theme/color_manger.dart';
 import '../../../../core/utils/app_icons.dart';
+import '../../../../core/utils/get_it_constants.dart';
 import '../manager/cubit/app_layout_cubit.dart';
 import '../manager/cubit/app_layout_state.dart';
 
@@ -75,6 +77,7 @@ class AppLayout extends StatelessWidget {
                       onPressed: () {
                         Flame.device.fullScreen();
                         Flame.device.setPortrait();
+
                         Navigator.pushNamed(context, Routes.gameScreen);
                       },
                       tooltip: 'Fight',

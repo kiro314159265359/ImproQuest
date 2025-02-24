@@ -51,7 +51,6 @@ class TemporaryShopPage extends StatelessWidget {
                   gold = 0;
                 } else if (state is ShopError) {
                   gold = -1;
-                  print(state.message);
                 } else if (state is ShopInitial) {
                   // Dispatch fetch if we’re in the initial state.
                   context.read<ShopBloc>().add(FetchShopItemsEvent());

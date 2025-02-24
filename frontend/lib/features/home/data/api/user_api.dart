@@ -3,11 +3,11 @@ import 'package:flutter_application_2/features/home/data/model/user_model.dart';
 import 'package:flutter_application_2/features/home/domain/repo/user_repo.dart';
 import '../../../../core/service/api/api_service.dart';
 import '../../../../core/service/api/end_points.dart';
-import '../../../../core/utils/get_it_constants.dart';
 
 class UserApi extends UserRepo {
+  final ApiService apiService;
   // Retrieve the same ApiService instance registered in main.dart
-  final ApiService apiService = getIt<ApiService>();
+  UserApi(this.apiService);
 
   @override
   Future<UserModel> getUserData() async {
