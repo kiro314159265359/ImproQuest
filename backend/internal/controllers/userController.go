@@ -259,10 +259,15 @@ func AssignRandomQuests() gin.HandlerFunc {
 		}
 		// If quests are not null, check if the first quest's GivenAt has not passed its next 12AM.
 		if len(userDoc.Quests) > 0 {
-			now := time.Now()
 			quest := userDoc.Quests[0]
-			threshold := time.Date(quest.GivenAt.Year(), quest.GivenAt.Month(), quest.GivenAt.Day(), 0, 0, 0, 0, quest.GivenAt.Location()).Add(24 * time.Hour)
-			if now.Before(threshold) {
+			// Get the current time in the same location as the quest's GivenAt
+			now := time.Now().In(quest.GivenAt.Location())
+			// Calculate today's midnight
+			todayMidnight := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+
+			// If the quest was assigned after today's midnight, it's still valid.
+			if quest.GivenAt.After(todayMidnight) {
+				fmt.Println("Quests are still valid, not assigning new ones.")
 				c.JSON(http.StatusOK, gin.H{"quests": userDoc.Quests})
 				return
 			}
