@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_2/core/theme/background_theme.dart';
+import 'package:flutter_application_2/core/utils/app_icons.dart';
 import 'package:flutter_application_2/core/widget/appbar_stats.dart';
 import 'package:flutter_application_2/features/home/presentation/views/widgets/custom_quest_card.dart';
 import 'package:flutter_application_2/features/home/presentation/views/widgets/custom_rich_text.dart';
@@ -93,7 +94,8 @@ class _HomeState extends State<Home> {
                                 fontSize: 24, color: ColorManager.whiteColor),
                             textAlign: TextAlign.center),
                         CustomRichText(
-                          text1: '1 Quest ',
+                          text1:
+                              '${context.read<UserCubit>().completedQuestCount} Quest ',
                           textStyle1: TextStyles.styleSemiBold(context,
                               fontSize: 18, color: const Color(0xFFA4FF72)),
                           text2: 'completed',
@@ -107,7 +109,8 @@ class _HomeState extends State<Home> {
                                   BorderRadius.all(Radius.circular(16))),
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 4),
-                          child: Text("3 Quests left",
+                          child: Text(
+                              "${context.read<UserCubit>().remainingQuestCount} Quests left",
                               style: TextStyles.styleSemiBold(context,
                                   fontSize: 18, color: ColorManager.whiteColor),
                               textAlign: TextAlign.center),
@@ -127,8 +130,10 @@ class _HomeState extends State<Home> {
                         backgroundColor: ColorManager.containerBackGround,
                         radius: 60,
                         lineWidth: 10.0,
-                        percent: 0.25,
-                        center: Text("25%",
+                        percent:
+                            context.read<UserCubit>().questCompletionPercent,
+                        center: Text(
+                            "${(context.read<UserCubit>().questCompletionPercent * 100).toStringAsFixed(0)}%",
                             style: TextStyles.styleSemiBold(context,
                                 fontSize: 20, color: ColorManager.whiteColor),
                             textAlign: TextAlign.center),
@@ -185,13 +190,25 @@ class _HomeState extends State<Home> {
         final quest = quests[index];
         return Padding(
           padding: const EdgeInsets.only(bottom: 5),
-          child: CustomQuestCard(
-            questName: quest.name ?? "Unnamed Quest",
-            questDesc:
-                "${quest.xpReward ?? 0} XP • ${quest.goldReward ?? 0} Gold",
-            goal: quest.goal ?? 1000,
-            questImageIcon: const AssetImage('assets/icons/RunningChIcon.png'),
-            progress: quest.isCompleted == true ? 1.0 : 0.5,
+          child: Card(
+            color: ColorManager.gunmetal,
+            child: Column(
+              children: [
+                CustomQuestCard(
+                  questName: quest.name ?? "Unnamed Quest",
+                  questDesc:
+                      "${quest.xpReward ?? 0} XP • ${quest.goldReward ?? 0} Gold",
+                  goal: quest.goal ?? 1000,
+                  questImageIcon: AppIcons.runningIcon,
+                  progress: quest.isCompleted == true ? 1.0 : 0.5,
+                ),
+                ElevatedButton(
+                    onPressed: () async {
+                      await context.read<UserCubit>().completeQuest(quest);
+                    },
+                    child: const Text("OK"))
+              ],
+            ),
           ),
         );
       },

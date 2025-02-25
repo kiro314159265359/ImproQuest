@@ -5,7 +5,7 @@ import '../../../../../core/theme/text_style.dart';
 class CustomQuestCard extends StatefulWidget {
   final String questName;
   final String questDesc;
-  final AssetImage questImageIcon;
+  final String questImageIcon;
   final double progress;
   final int goal;
   const CustomQuestCard(
@@ -35,7 +35,7 @@ class _CustomQuestCardState extends State<CustomQuestCard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     ImageIcon(
-                      widget.questImageIcon,
+                      AssetImage(widget.questImageIcon),
                       color: ColorManager.whiteColor,
                       size: 25,
                     ),

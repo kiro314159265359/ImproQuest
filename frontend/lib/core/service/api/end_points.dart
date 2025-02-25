@@ -9,8 +9,9 @@ class EndPoints {
 
   static const String userData = "/users/mydata";
 
-  static const String userQuests = "/users/quests";
+  static const String quests = "/users/quests";
 
+  static const String streak = "/quests/streak";
 // static const String resetPassword = "/reset_password/";
   //
   // static const String profileData = "/profile/";

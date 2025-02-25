@@ -16,22 +16,22 @@ class UserCubit extends Cubit<UserState> {
   Future<UserModel> fetchUserData() async {
     emit(UserLoading());
     try {
-      final currentUser = await userRepo.getUserData();
-      emit(UserLoaded(currentUser));
+      currentUser = await userRepo.getUserData();
+      emit(UserLoaded(currentUser!));
 
       // Update GetIt with the new UserModel.
       if (getIt.isRegistered<UserModel>()) {
         getIt.unregister<UserModel>();
       }
-      getIt.registerSingleton<UserModel>(currentUser);
+      getIt.registerSingleton<UserModel>(currentUser!);
 
       // Register or update the ShopBloc with the fetched user.
       if (getIt.isRegistered<ShopBloc>()) {
         getIt.unregister<ShopBloc>();
       }
-      getIt.registerSingleton<ShopBloc>(ShopBloc(user: currentUser));
+      getIt.registerSingleton<ShopBloc>(ShopBloc(user: currentUser!));
 
-      return currentUser;
+      return currentUser!;
     } catch (error) {
       if (error is DioException) {
         emit(UserError(ServerFailure.fromDioError(error)));
@@ -58,7 +58,70 @@ class UserCubit extends Cubit<UserState> {
         emit(UpdateError(ServerFailure.fromDioError(error)));
       } else {
         emit(UpdateError(ServerFailure(error.toString())));
-        emit(UserLoaded(currentUser!));
+        if (currentUser != null) {
+          emit(UserLoaded(currentUser!));
+        }
+      }
+    }
+  }
+
+  int get completedQuestCount =>
+      currentUser?.quests?.where((q) => q.isCompleted == true).length ?? 0;
+
+  int get totalQuestCount => currentUser?.quests?.length ?? 0;
+
+  int get remainingQuestCount => totalQuestCount - completedQuestCount;
+
+  double get questCompletionPercent =>
+      totalQuestCount > 0 ? completedQuestCount / totalQuestCount : 0.0;
+
+  Future<void> completeQuest(Quests? q) async {
+    if (q?.isCompleted == true) return;
+
+    try {
+      await userRepo.completeQuest(q?.sId);
+
+      currentUser = await userRepo.getUserData();
+
+      // Log counts for debugging.
+      print(
+          'Total quests: $totalQuestCount, Completed quests: $completedQuestCount');
+
+      // If all quests are complete, attempt to complete the streak.
+      if (totalQuestCount > 0 && completedQuestCount == totalQuestCount) {
+        print('All quests completed, calling completeStreak');
+        try {
+          // Add a timeout to prevent hanging.
+          await userRepo.completeStreak().timeout(const Duration(seconds: 5));
+        } catch (streakError) {
+          print('completeStreak error or timeout: $streakError');
+        }
+        // Allow a moment for the backend to process.
+        await Future.delayed(const Duration(milliseconds: 300));
+        currentUser = await userRepo.getUserData();
+        print(
+            'After streak, Total quests: $totalQuestCount, Completed quests: $completedQuestCount');
+      }
+
+      emit(UserLoaded(currentUser!));
+
+      if (getIt.isRegistered<UserModel>()) {
+        getIt.unregister<UserModel>();
+      }
+      getIt.registerSingleton<UserModel>(currentUser!);
+
+      if (getIt.isRegistered<ShopBloc>()) {
+        getIt.unregister<ShopBloc>();
+      }
+      getIt.registerSingleton<ShopBloc>(ShopBloc(user: currentUser!));
+    } catch (error) {
+      if (error is DioException) {
+        emit(UpdateError(ServerFailure.fromDioError(error)));
+      } else {
+        emit(UpdateError(ServerFailure(error.toString())));
+        if (currentUser != null) {
+          emit(UserLoaded(currentUser!));
+        }
       }
     }
   }

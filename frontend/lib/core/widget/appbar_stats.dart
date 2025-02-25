@@ -23,14 +23,14 @@ class _AppBarStatsState extends State<AppBarStats> {
     return BlocBuilder<UserCubit, UserState>(
       builder: (context, state) {
         if (state is UserLoaded) {
-          return _buildAppBatStats(state.user);
+          return _buildAppBatStats(context, state.user);
         }
         return const SizedBox.shrink();
       },
     );
   }
 
-  Widget _buildAppBatStats(UserModel user) {
+  Widget _buildAppBatStats(BuildContext context, UserModel user) {
     var w = MediaQuery.of(context).size.width;
     var h = MediaQuery.of(context).size.height;
     return Row(
@@ -44,7 +44,7 @@ class _AppBarStatsState extends State<AppBarStats> {
               child: LinearPercentIndicator(
                 width: w * 0.3,
                 lineHeight: 25,
-                percent: (user.xp! / 240),
+                percent: (user.xp! / 1959541954191981),
                 center: CustomRichText(
                   text1: "${user.xp}/240",
                   textStyle1: TextStyles.styleMedium(context,
