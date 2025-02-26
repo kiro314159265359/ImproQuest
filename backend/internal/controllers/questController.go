@@ -12,6 +12,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 
 	"github.com/HarDizzeR/Project/backend/internal/database"
 	"github.com/HarDizzeR/Project/backend/internal/helpers"
@@ -269,10 +270,9 @@ func CompleteQuest() gin.HandlerFunc {
 		}
 
 		// 3. Update user to award XP/gold & mark quest as completed
+		// Using filtered positional operator to target the specific quest by ID
 		filter := bson.M{
-			"_id":                 userOID,
-			"quests._id":          questOID,
-			"quests.is_completed": false,
+			"_id": userOID,
 		}
 		update := bson.M{
 			"$inc": bson.M{
@@ -280,10 +280,17 @@ func CompleteQuest() gin.HandlerFunc {
 				"gold": *quest.GoldReward,
 			},
 			"$set": bson.M{
-				"quests.$.is_completed": true,
+				"quests.$[elem].is_completed": true,
 			},
 		}
-		result, err := collection.UpdateOne(ctx, filter, update)
+
+		// Define the array filter to match only the quest with the specified ID.
+		arrayFilters := []any{bson.M{"elem._id": questOID}}
+
+		// Use the UpdateOne options builder and pass arrayFilters directly.
+		opts := options.UpdateOne().SetArrayFilters(arrayFilters)
+
+		result, err := collection.UpdateOne(ctx, filter, update, opts)
 		if helpers.HandleError(c, err) {
 			return
 		}
