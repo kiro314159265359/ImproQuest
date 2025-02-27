@@ -92,12 +92,12 @@ class UserCubit extends Cubit<UserState> {
         print('All quests completed, calling completeStreak');
         try {
           // Add a timeout to prevent hanging.
-          await userRepo.completeStreak().timeout(const Duration(seconds: 5));
+          await userRepo.completeStreak();
         } catch (streakError) {
           print('completeStreak error or timeout: $streakError');
         }
         // Allow a moment for the backend to process.
-        await Future.delayed(const Duration(milliseconds: 300));
+
         currentUser = await userRepo.getUserData();
         print(
             'After streak, Total quests: $totalQuestCount, Completed quests: $completedQuestCount');
