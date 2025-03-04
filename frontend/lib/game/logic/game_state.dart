@@ -15,6 +15,7 @@ class GameState {
   final bool inFightMenu;
   final double playerInitiative;
   final double enemyInitiative;
+  final String? lastAttackActor; // "player", "enemy", or null
 
   GameState({
     required this.player,
@@ -28,6 +29,7 @@ class GameState {
     this.inFightMenu = true,
     this.playerInitiative = 0,
     this.enemyInitiative = 0,
+    this.lastAttackActor,
   });
 
   GameState copyWith({
@@ -42,6 +44,7 @@ class GameState {
     bool? inFightMenu,
     double? playerInitiative,
     double? enemyInitiative,
+    String? lastAttackActor,
   }) {
     return GameState(
       player: player ?? this.player,
@@ -55,6 +58,7 @@ class GameState {
       inFightMenu: inFightMenu ?? this.inFightMenu,
       playerInitiative: playerInitiative ?? this.playerInitiative,
       enemyInitiative: enemyInitiative ?? this.enemyInitiative,
+      lastAttackActor: lastAttackActor, // override even with null
     );
   }
 
@@ -93,6 +97,7 @@ class GameState {
       inFightMenu: true,
       playerInitiative: 0,
       enemyInitiative: 0,
+      lastAttackActor: null,
     );
   }
 }

@@ -22,6 +22,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     on<UseInventoryItemEvent>(_onUseInventoryItem);
     on<NextFightEvent>(_onNextFight);
     on<SelectBlindEvent>(_onSelectBlind);
+    on<ClearAttackEvent>(_onClearAttack);
 
     _timer = Timer.periodic(const Duration(milliseconds: 100), (_) {
       add(TickEvent());
@@ -35,7 +36,6 @@ class GameBloc extends Bloc<GameEvent, GameState> {
   }
 
   void _onTickEvent(TickEvent event, Emitter<GameState> emit) {
-    // Do not update if the game is over, a turn is active, or we are in the menu.
     if (state.gameOver || state.currentTurn != Turn.none || state.inFightMenu)
       return;
 
@@ -80,9 +80,12 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     bool enemyDefeated = newEnemyHp <= 0;
     Character updatedEnemy =
         state.enemy.copyWith(currentHp: enemyDefeated ? 0 : newEnemyHp);
+
+    // Set lastAttackActor to "player"
     GameState newState = state.copyWith(
       enemy: updatedEnemy,
       message: msg,
+      lastAttackActor: "player",
     );
 
     if (enemyDefeated) {
@@ -92,9 +95,11 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       );
       emit(newState);
     } else {
+      // Preserve lastAttackActor when updating other properties
       newState = newState.copyWith(
         currentTurn: Turn.none,
         playerInitiative: 0,
+        lastAttackActor: newState.lastAttackActor,
       );
       emit(newState);
     }
@@ -138,6 +143,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     GameState newState = state.copyWith(
       player: updatedPlayer,
       message: msg,
+      lastAttackActor: "enemy",
     );
 
     if (playerDefeated) {
@@ -147,10 +153,12 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       );
       emit(newState);
     } else {
+      // Preserve lastAttackActor for the animation to trigger
       newState = newState.copyWith(
         currentTurn: Turn.none,
         enemyInitiative: 0,
         message: '$msg\nWaiting for turn...',
+        lastAttackActor: newState.lastAttackActor,
       );
       emit(newState);
     }
@@ -169,7 +177,6 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     }
   }
 
-  // New event handler for when a blind is selected from the menu.
   void _onSelectBlind(SelectBlindEvent event, Emitter<GameState> emit) {
     if (!state.inFightMenu) return;
     final newEnemy = generateEnemy(state.currentAnte, event.blind);
@@ -183,7 +190,6 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     ));
   }
 
-  // Advances the fight progression after winning a fight.
   void _onNextFight(NextFightEvent event, Emitter<GameState> emit) {
     int newAnte = state.currentAnte;
     int newBlind = state.currentBlind;
@@ -193,7 +199,6 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       if (state.currentBlind < 3) {
         newBlind = state.currentBlind + 1;
       } else {
-        // Boss defeated
         if (!state.endlessMode) {
           if (state.currentAnte < 8) {
             newAnte = state.currentAnte + 1;
@@ -231,7 +236,6 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     ));
   }
 
-  // Generates an enemy based on the current ante and blind.
   Character generateEnemy(int currentAnte, int currentBlind) {
     bool isBoss = currentBlind == 3;
     bool isBig = currentBlind == 2;
@@ -260,9 +264,9 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       baseAgility = 12;
     } else {
       baseVitality = 60;
-      baseStrength = 15;
+      baseStrength = 1;
       baseEndurance = 5;
-      baseAgility = 10;
+      baseAgility = 100;
     }
 
     int vitality = baseVitality * currentAnte;
@@ -279,5 +283,9 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       currentHp: vitality,
       isBoss: isBoss,
     );
+  }
+
+  void _onClearAttack(ClearAttackEvent event, Emitter<GameState> emit) {
+    emit(state.copyWith(lastAttackActor: null));
   }
 }

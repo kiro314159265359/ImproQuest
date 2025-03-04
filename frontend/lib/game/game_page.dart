@@ -164,9 +164,21 @@ class GamePageState extends State<GamePage> {
               previous.player.currentHp != current.player.currentHp ||
               previous.enemy.currentHp != current.enemy.currentHp ||
               previous.playerInitiative != current.playerInitiative ||
-              previous.enemyInitiative != current.enemyInitiative,
+              previous.enemyInitiative != current.enemyInitiative ||
+              previous.lastAttackActor !=
+                  current.lastAttackActor, // added condition
           listener: (context, state) {
             flameGame.updateBars(state);
+            // Trigger attack animation if needed.
+            if (state.lastAttackActor == "player") {
+              flameGame.playAttackAnimationForHero();
+              print("Animation player played");
+              context.read<GameBloc>().add(ClearAttackEvent());
+            } else if (state.lastAttackActor == "enemy") {
+              flameGame.playAttackAnimationForEnemy();
+              print("Animation player played");
+              context.read<GameBloc>().add(ClearAttackEvent());
+            }
             // When battle ends and player is alive, dispatch reward and open shop.
             if (state.gameOver &&
                 state.player.currentHp > 0 &&

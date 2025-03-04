@@ -22,3 +22,6 @@ class SelectBlindEvent extends GameEvent {
   final int blind;
   SelectBlindEvent(this.blind);
 }
+
+// New event for clearing the attack flag.
+class ClearAttackEvent extends GameEvent {}
