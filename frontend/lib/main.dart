@@ -1,4 +1,4 @@
-import 'package:device_preview/device_preview.dart';
+// import 'package:device_preview/device_preview.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_2/core/routes/app_routes.dart';
 import 'package:flutter_application_2/core/theme/app_theme.dart';

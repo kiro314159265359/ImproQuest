@@ -32,7 +32,7 @@ class _AppBarStatsState extends State<AppBarStats> {
 
   Widget _buildAppBatStats(BuildContext context, UserModel user) {
     var w = MediaQuery.of(context).size.width;
-    var h = MediaQuery.of(context).size.height;
+    // var h = MediaQuery.of(context).size.height;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.start,

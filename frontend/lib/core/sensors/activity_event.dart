@@ -3,7 +3,6 @@ import 'package:flutter_activity_recognition/flutter_activity_recognition.dart';
 abstract class ActivityEvent {
   const ActivityEvent();
 
-  @override
   List<Object?> get props => [];
 }
 

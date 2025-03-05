@@ -96,26 +96,26 @@ class ForegroundTaskHandler extends TaskHandler {
             "Total Distance: ${_totalDistance.toStringAsFixed(2)} m");
   }
 
-  void _initService() {
-    FlutterForegroundTask.init(
-      androidNotificationOptions: AndroidNotificationOptions(
-        channelId: 'foreground_service',
-        channelName: 'Foreground Service Notification',
-        channelDescription:
-            'This notification appears when the foreground service is running.',
-        onlyAlertOnce: true,
-      ),
-      iosNotificationOptions: const IOSNotificationOptions(
-        showNotification: true,
-        playSound: false,
-      ),
-      foregroundTaskOptions: ForegroundTaskOptions(
-        eventAction: ForegroundTaskEventAction.repeat(5000),
-        autoRunOnBoot: true,
-        autoRunOnMyPackageReplaced: true,
-        allowWakeLock: true,
-        allowWifiLock: true,
-      ),
-    );
-  }
+  // void _initService() {
+  //   FlutterForegroundTask.init(
+  //     androidNotificationOptions: AndroidNotificationOptions(
+  //       channelId: 'foreground_service',
+  //       channelName: 'Foreground Service Notification',
+  //       channelDescription:
+  //           'This notification appears when the foreground service is running.',
+  //       onlyAlertOnce: true,
+  //     ),
+  //     iosNotificationOptions: const IOSNotificationOptions(
+  //       showNotification: true,
+  //       playSound: false,
+  //     ),
+  //     foregroundTaskOptions: ForegroundTaskOptions(
+  //       eventAction: ForegroundTaskEventAction.repeat(5000),
+  //       autoRunOnBoot: true,
+  //       autoRunOnMyPackageReplaced: true,
+  //       allowWakeLock: true,
+  //       allowWifiLock: true,
+  //     ),
+  //   );
+  // }
 }

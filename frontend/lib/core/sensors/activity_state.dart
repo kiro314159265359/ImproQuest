@@ -3,7 +3,6 @@ import 'package:flutter_activity_recognition/flutter_activity_recognition.dart';
 abstract class ActivityState {
   const ActivityState();
 
-  @override
   List<Object?> get props => [];
 }
 
