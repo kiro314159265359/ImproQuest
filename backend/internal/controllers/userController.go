@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"context"
-	"fmt"
 	"math/rand"
 	"net/http"
 	"strconv"
@@ -233,7 +232,6 @@ func UpdateUser() gin.HandlerFunc {
 func AssignRandomQuests() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID := c.GetString("id")
-		fmt.Println("User ID:", userID)
 
 		objectID, err := bson.ObjectIDFromHex(userID)
 		if err != nil {
