@@ -2,6 +2,7 @@ import 'package:flame/game.dart';
 import 'package:flame/components.dart';
 import 'package:flame/sprite.dart';
 import 'package:flutter/material.dart';
+import '../core/theme/color_manger.dart';
 import 'components/simple_progress_bar.dart';
 import 'components/status_container.dart';
 import 'logic/game_state.dart';
@@ -49,24 +50,60 @@ class GameCharacter extends SpriteAnimationComponent with HasGameRef {
   }
 
   StatusContainer createStatusContainer() {
-    final yOffset = (characterType == "hero") ? -100 : -100;
+    final xOffset = (characterType == "hero") ? 85 : -250;
 
     return StatusContainer(
-      position: Vector2(position.x - 75, position.y + yOffset),
-      size: Vector2(150, 50),
-      progressBar: SimpleProgressBar(
+      position: Vector2(position.x + xOffset, position.y),
+      size: Vector2(200, 100),
+      nameText: TextComponent(
+        text: 'SUNG JINWOO',
+        textRenderer: TextPaint(
+          style:
+              const TextStyle(color: ColorManager.primaryColor, fontSize: 14),
+        ),
+      ),
+      levelText: TextComponent(
+        text: 'LEVEL 25',
+        textRenderer: TextPaint(
+          style: const TextStyle(color: Colors.white, fontSize: 12),
+        ),
+      ),
+      hpLabelText: TextComponent(
+        text: 'HP',
+        textRenderer: TextPaint(
+          style: const TextStyle(color: Colors.white, fontSize: 12),
+        ),
+      ),
+      hpValueText: TextComponent(
+        text: '100/100',
+        textRenderer: TextPaint(
+          style: const TextStyle(color: Colors.white, fontSize: 12),
+        ),
+      ),
+      hpBar: SimpleProgressBar(
         progress: 1.0,
-        size: Vector2(100, 10),
+        size: Vector2(180, 8),
         position: Vector2(10, 25),
         foregroundColor: Colors.green,
         backgroundColor: Colors.red,
       ),
-      hpText: TextComponent(
-        text: 'HP: 100/100',
-        position: Vector2(10, 5),
+      initLabelText: TextComponent(
+        text: 'INIT',
         textRenderer: TextPaint(
           style: const TextStyle(color: Colors.white, fontSize: 12),
         ),
+      ),
+      initValueText: TextComponent(
+        text: '0/100',
+        textRenderer: TextPaint(
+          style: const TextStyle(color: Colors.white, fontSize: 12),
+        ),
+      ),
+      initBar: SimpleProgressBar(
+        progress: 0.0,
+        size: Vector2(180, 8),
+        foregroundColor: Colors.blue,
+        backgroundColor: Colors.grey,
       ),
     );
   }
@@ -91,12 +128,18 @@ class GameCharacter extends SpriteAnimationComponent with HasGameRef {
     animation = originalAnimation;
   }
 
-  void updateHealthInfo(int currentHp, int maxHp) {
+  void updateHealthInfo(int currentHp, int maxHp, double playerInitiative) {
     if (statusContainer != null) {
       final healthProgress = currentHp / maxHp;
-      statusContainer!.progressBar.progress = healthProgress;
-      statusContainer!.hpText.text = 'HP: $currentHp/$maxHp';
-      statusContainer!.progressBar.update(0);
+      const double initiativeThreshold = 100.0;
+      double playerInitiativeProgress = playerInitiative / initiativeThreshold;
+      statusContainer!.hpBar.progress = healthProgress;
+      statusContainer!.hpValueText.text = '$currentHp/$maxHp';
+      statusContainer!.initBar.progress = playerInitiativeProgress;
+      statusContainer!.initValueText.text =
+          '${(playerInitiativeProgress * 100).toInt()}/100';
+      statusContainer!.hpBar.update(0);
+      statusContainer!.initBar.update(0);
     }
   }
 }
@@ -133,7 +176,7 @@ class TurnBasedGame extends FlameGame {
       idlePath: 'sprites/character/Shinobi/Idle.png',
       attackPath: 'sprites/character/Shinobi/Attack_1.png',
       size: Vector2(256, 256),
-      position: Vector2(128, size.y - 180),
+      position: Vector2(100, size.y - 300),
     );
     add(hero!);
   }
@@ -144,7 +187,7 @@ class TurnBasedGame extends FlameGame {
       idlePath: 'sprites/character/Fighter/Idle.png',
       attackPath: 'sprites/character/Fighter/Attack_1.png',
       size: Vector2(256, 256),
-      position: Vector2(size.x - 128, 128),
+      position: Vector2(size.x - 100, 180),
       isFlipped: true,
     );
     add(enemy!);
@@ -177,8 +220,14 @@ class TurnBasedGame extends FlameGame {
   }
 
   void updateBars(GameState state) {
-    hero?.updateHealthInfo(state.player.currentHp, state.player.vitality);
-    enemy?.updateHealthInfo(state.enemy.currentHp, state.enemy.vitality);
+    hero?.statusContainer?.nameText.text = state.player.name;
+    enemy?.statusContainer?.nameText.text = state.enemy.name;
+    hero?.statusContainer?.levelText.text = 'LEVEL ${state.player.level}';
+    enemy?.statusContainer?.levelText.text = 'LEVEL ${state.enemy.level}';
+    hero?.updateHealthInfo(
+        state.player.currentHp, state.player.vitality, state.playerInitiative);
+    enemy?.updateHealthInfo(
+        state.enemy.currentHp, state.enemy.vitality, state.enemyInitiative);
   }
 
   Future<void> playAttackAnimationForHero() async {

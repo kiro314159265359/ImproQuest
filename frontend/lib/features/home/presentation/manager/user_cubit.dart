@@ -83,24 +83,10 @@ class UserCubit extends Cubit<UserState> {
 
       currentUser = await userRepo.getUserData();
 
-      // Log counts for debugging.
-      print(
-          'Total quests: $totalQuestCount, Completed quests: $completedQuestCount');
-
-      // If all quests are complete, attempt to complete the streak.
       if (totalQuestCount > 0 && completedQuestCount == totalQuestCount) {
-        print('All quests completed, calling completeStreak');
-        try {
-          // Add a timeout to prevent hanging.
-          await userRepo.completeStreak();
-        } catch (streakError) {
-          print('completeStreak error or timeout: $streakError');
-        }
-        // Allow a moment for the backend to process.
+        await userRepo.completeStreak();
 
         currentUser = await userRepo.getUserData();
-        print(
-            'After streak, Total quests: $totalQuestCount, Completed quests: $completedQuestCount');
       }
 
       emit(UserLoaded(currentUser!));

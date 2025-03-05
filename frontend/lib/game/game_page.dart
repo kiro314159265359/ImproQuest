@@ -1,5 +1,6 @@
 import 'package:flame/flame.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_application_2/game/components/game_button.dart';
 import 'package:flutter_application_2/game/logic/shop_event.dart';
 import 'package:flutter_application_2/game/shop_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -155,9 +156,11 @@ class GamePageState extends State<GamePage> {
   }
 
   Widget buildFightUI(GameState state) {
-    return Column(
+    return Stack(
       children: [
-        Expanded(child: GameWidget(game: flameGame)),
+        Positioned.fill(
+          child: GameWidget(game: flameGame),
+        ),
         BlocListener<GameBloc, GameState>(
           listenWhen: (previous, current) =>
               previous.gameOver != current.gameOver ||
@@ -206,58 +209,61 @@ class GamePageState extends State<GamePage> {
           },
           child: Container(),
         ),
-        Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                state.message,
-                style: const TextStyle(fontSize: 18),
-                textAlign: TextAlign.center,
-              ),
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        Positioned(
+          bottom: 20,
+          left: 0,
+          right: 0,
+          child: Container(
+            color: Colors.transparent,
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                ElevatedButton(
-                  onPressed: state.currentTurn == Turn.player && !state.gameOver
-                      ? viewModel.attack
-                      : null,
-                  child: const Text('Attack'),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    GameButton(
+                        text: "Attack",
+                        onPressed:
+                            state.currentTurn == Turn.player && !state.gameOver
+                                ? viewModel.attack
+                                : null,
+                        width: 140,
+                        height: 50),
+                    GameButton(
+                        text: "Defend",
+                        onPressed:
+                            state.currentTurn == Turn.player && !state.gameOver
+                                ? viewModel.defend
+                                : null,
+                        width: 140,
+                        height: 50),
+                  ],
                 ),
-                ElevatedButton(
-                  onPressed: state.currentTurn == Turn.player && !state.gameOver
-                      ? viewModel.defend
-                      : null,
-                  child: const Text('Defend'),
-                ),
-                ElevatedButton(
-                  onPressed: state.currentTurn == Turn.player && !state.gameOver
-                      ? viewModel.openInventory
-                      : null,
-                  child: const Text('Inventory'),
-                ),
+                const SizedBox(height: 25),
+                GameButton(
+                    text: "Inventory",
+                    onPressed:
+                        state.currentTurn == Turn.player && !state.gameOver
+                            ? viewModel.openInventory
+                            : null,
+                    width: 320,
+                    height: 50),
               ],
             ),
-            if (state.gameOver && state.player.currentHp == 0)
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => const GamePage()),
-                  );
-                },
-                child: const Text('Restart'),
-              ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                'Player HP: ${state.player.currentHp}/${state.player.vitality}  |  Enemy HP: ${state.enemy.currentHp}/${state.enemy.vitality}  |  Ante: ${state.currentAnte}, Blind: ${state.currentBlind}${state.endlessMode ? " (Endless)" : ""}',
-                style: const TextStyle(fontSize: 16),
-              ),
-            ),
-          ],
+          ),
         ),
+        if (state.gameOver && state.player.currentHp == 0)
+          GameButton(
+              text: "Restart",
+              onPressed: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const GamePage()),
+                );
+              },
+              width: 320,
+              height: 50),
       ],
     );
   }

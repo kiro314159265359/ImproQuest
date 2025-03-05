@@ -251,31 +251,36 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       enemyName = smallNames[_random.nextInt(smallNames.length)];
     }
 
-    int baseVitality, baseStrength, baseEndurance, baseAgility;
+    int baseVitality, baseStrength, baseEndurance, baseAgility, level;
     if (isBoss) {
       baseVitality = 100;
       baseStrength = 25;
       baseEndurance = 10;
       baseAgility = 10;
+      level = 5;
     } else if (isBig) {
       baseVitality = 80;
       baseStrength = 20;
       baseEndurance = 8;
       baseAgility = 12;
+      level = 3;
     } else {
       baseVitality = 60;
       baseStrength = 1;
       baseEndurance = 5;
       baseAgility = 100;
+      level = 2;
     }
 
     int vitality = baseVitality * currentAnte;
     int strength = baseStrength * currentAnte;
     int endurance = baseEndurance * currentAnte;
     int agility = baseAgility * currentAnte;
+    int lvl = level * currentAnte;
 
     return Character(
       name: enemyName,
+      level: lvl,
       strength: strength,
       endurance: endurance,
       agility: agility,

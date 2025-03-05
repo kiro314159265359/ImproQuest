@@ -66,6 +66,7 @@ class GameState {
     return GameState(
       player: Character(
         name: user.username ?? 'Hero',
+        level: user.level ?? 10,
         strength: user.stats?.strength ?? 20,
         endurance: user.stats?.endurance ?? 10,
         agility: user.stats?.agility ?? 15,
@@ -82,6 +83,7 @@ class GameState {
       // ),
       enemy: Character(
         name: 'Goblin',
+        level: 15,
         strength: 15,
         endurance: 5,
         agility: 10,
