@@ -22,3 +22,20 @@ func HandleError(c *gin.Context, err error) bool {
 	}
 	return false
 }
+
+func GetRankForLevel(level int) string {
+	switch {
+	case level < 20:
+		return "E"
+	case level < 40:
+		return "D"
+	case level < 60:
+		return "C"
+	case level < 80:
+		return "B"
+	case level < 100:
+		return "A"
+	default:
+		return "S"
+	}
+}

@@ -298,11 +298,11 @@ func CompleteQuest() gin.HandlerFunc {
 			return
 		}
 
-		// 5. Level-up check
+		// 5. Level-up check and rank update
 		levelUps := 0
 		for {
 			threshold := helpers.XpThresholdForLevel(user.Level)
-			// Ensure threshold > 0 to avoid infinite loops if level == 0
+			// Ensure threshold > 0 to avoid infinite loops
 			if user.XP >= threshold && threshold > 0 {
 				user.XP -= threshold
 				user.Level++
@@ -312,14 +312,18 @@ func CompleteQuest() gin.HandlerFunc {
 			}
 		}
 
-		// 6. If user leveled up, update user doc with new XP and level
+		// Update rank if user leveled up
 		if levelUps > 0 {
+			newRank := helpers.GetRankForLevel(user.Level)
+			user.Rank = newRank
+
 			_, err := collection.UpdateOne(
 				ctx,
 				bson.M{"_id": userOID},
 				bson.M{"$set": bson.M{
 					"xp":    user.XP,
 					"level": user.Level,
+					"rank":  user.Rank,
 				}},
 			)
 			if helpers.HandleError(c, err) {
@@ -327,7 +331,7 @@ func CompleteQuest() gin.HandlerFunc {
 			}
 		}
 
-		// 7. Send response
+		// 6. Send response
 		c.JSON(http.StatusOK, gin.H{
 			"message":       "Quest completed!",
 			"xp_gained":     *quest.XPReward,
@@ -335,6 +339,7 @@ func CompleteQuest() gin.HandlerFunc {
 			"new_level":     user.Level,
 			"current_xp":    user.XP,
 			"levels_gained": levelUps,
+			"new_rank":      user.Rank,
 		})
 	}
 }
