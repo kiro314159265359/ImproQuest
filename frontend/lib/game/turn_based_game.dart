@@ -6,6 +6,7 @@ import '../core/theme/color_manger.dart';
 import 'components/simple_progress_bar.dart';
 import 'components/status_container.dart';
 import 'logic/game_state.dart';
+import 'logic/game_bloc.dart'; // Add import for GameBloc
 
 // Custom game character component with visibility control and animations
 class GameCharacter extends SpriteAnimationComponent with HasGameRef {
@@ -25,12 +26,21 @@ class GameCharacter extends SpriteAnimationComponent with HasGameRef {
     this.isFlipped = false,
   }) : super(size: size, position: position, anchor: Anchor.center);
 
+  // Refactored method to load animations
+  Future<SpriteAnimation> _loadAnimation(String path,
+      {int frames = 6, double stepTime = 0.1}) async {
+    final image = await gameRef.images.load(path);
+    final sheet = SpriteSheet(image: image, srcSize: Vector2(128, 128));
+    return sheet.createAnimation(row: 0, stepTime: stepTime, to: frames);
+  }
+
   @override
   Future<void> onLoad() async {
     await super.onLoad();
 
-    // Load idle animation
-    await loadIdleAnimation();
+    // Load idle animation using new helper method
+    idleAnimation = await _loadAnimation(idlePath);
+    animation = idleAnimation;
 
     // Apply flip if needed
     if (isFlipped) {
@@ -40,13 +50,6 @@ class GameCharacter extends SpriteAnimationComponent with HasGameRef {
     // Create status container
     statusContainer = createStatusContainer();
     gameRef.add(statusContainer!);
-  }
-
-  Future<void> loadIdleAnimation() async {
-    final image = await gameRef.images.load(idlePath);
-    final sheet = SpriteSheet(image: image, srcSize: Vector2(128, 128));
-    idleAnimation = sheet.createAnimation(row: 0, stepTime: 0.1, to: 6);
-    animation = idleAnimation;
   }
 
   StatusContainer createStatusContainer() {
@@ -108,15 +111,13 @@ class GameCharacter extends SpriteAnimationComponent with HasGameRef {
     );
   }
 
-  Future<void> playAttackAnimation() async {
+  Future<void> playAttackAnimation({Function? onComplete}) async {
     final originalAnimation = animation;
 
-    // Load attack animation
-    final attackImage = await gameRef.images.load(attackPath);
-    final attackSheet =
-        SpriteSheet(image: attackImage, srcSize: Vector2(128, 128));
+    // Load attack animation using helper method
     final attackAnimation =
-        attackSheet.createAnimation(row: 0, stepTime: 0.1, to: 4)..loop = false;
+        await _loadAnimation(attackPath, frames: 4, stepTime: 0.1)
+          ..loop = false;
 
     // Switch to attack animation
     animation = attackAnimation;
@@ -126,6 +127,9 @@ class GameCharacter extends SpriteAnimationComponent with HasGameRef {
 
     // Restore original animation
     animation = originalAnimation;
+
+    // Execute callback if provided
+    onComplete?.call();
   }
 
   void updateHealthInfo(int currentHp, int maxHp, double playerInitiative) {
@@ -148,17 +152,36 @@ class TurnBasedGame extends FlameGame {
   GameCharacter? hero;
   GameCharacter? enemy;
   SpriteComponent? backgroundComponent;
+  Function? onHeroAnimationComplete;
+  Function? onEnemyAnimationComplete;
+  GameBloc? gameBloc; // Add reference to GameBloc
+
+  // Helper method to create characters with consistent configuration
+  Future<GameCharacter> _createCharacter({
+    required String type,
+    required String idlePath,
+    required String attackPath,
+    required Vector2 position,
+    required bool isFlipped,
+  }) async {
+    final character = GameCharacter(
+      characterType: type,
+      idlePath: idlePath,
+      attackPath: attackPath,
+      size: Vector2(256, 256),
+      position: position,
+      isFlipped: isFlipped,
+    );
+
+    add(character);
+    return character;
+  }
 
   @override
   Future<void> onLoad() async {
     await super.onLoad();
-
-    // Load background
     await loadBackground();
-
-    // Create hero and enemy characters
-    await createHero();
-    await createEnemy();
+    await createCharacters();
   }
 
   Future<void> loadBackground() async {
@@ -170,27 +193,23 @@ class TurnBasedGame extends FlameGame {
     add(backgroundComponent!);
   }
 
-  Future<void> createHero() async {
-    hero = GameCharacter(
-      characterType: "hero",
+  Future<void> createCharacters() async {
+    // Create hero and enemy using the helper method
+    hero = await _createCharacter(
+      type: "hero",
       idlePath: 'sprites/character/Shinobi/Idle.png',
       attackPath: 'sprites/character/Shinobi/Attack_1.png',
-      size: Vector2(256, 256),
       position: Vector2(100, size.y - 300),
+      isFlipped: false,
     );
-    add(hero!);
-  }
 
-  Future<void> createEnemy() async {
-    enemy = GameCharacter(
-      characterType: "enemy",
+    enemy = await _createCharacter(
+      type: "enemy",
       idlePath: 'sprites/character/Fighter/Idle.png',
       attackPath: 'sprites/character/Fighter/Attack_1.png',
-      size: Vector2(256, 256),
       position: Vector2(size.x - 100, 180),
       isFlipped: true,
     );
-    add(enemy!);
   }
 
   Future<void> updateEnemy(dynamic enemyObj) async {
@@ -230,15 +249,37 @@ class TurnBasedGame extends FlameGame {
         state.enemy.currentHp, state.enemy.vitality, state.enemyInitiative);
   }
 
-  Future<void> playAttackAnimationForHero() async {
-    if (hero != null) {
-      await hero!.playAttackAnimation();
+  // Generic method to handle animations with callbacks
+  Future<void> _playCharacterAnimation(GameCharacter? character,
+      {Function? onComplete}) async {
+    if (character != null) {
+      await character.playAttackAnimation(onComplete: onComplete);
+    } else {
+      // If character is null, still call the completion callback
+      onComplete?.call();
     }
   }
 
-  Future<void> playAttackAnimationForEnemy() async {
-    if (enemy != null) {
-      await enemy!.playAttackAnimation();
+  Future<void> playAttackAnimationForHero({Function? onComplete}) async {
+    await _playCharacterAnimation(hero, onComplete: onComplete);
+  }
+
+  Future<void> playAttackAnimationForEnemy({Function? onComplete}) async {
+    await _playCharacterAnimation(enemy, onComplete: onComplete);
+  }
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+
+    // Update game logic through the bloc
+    if (gameBloc != null) {
+      gameBloc!.updateInitiative(dt);
     }
+  }
+
+  // Set the GameBloc instance
+  void setGameBloc(GameBloc bloc) {
+    gameBloc = bloc;
   }
 }
