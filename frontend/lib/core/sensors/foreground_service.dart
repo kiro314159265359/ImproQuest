@@ -222,33 +222,13 @@ class ForegroundTaskHandler extends TaskHandler {
         return;
       }
 
-      // Check permissions - needed for reliable tracking
-      var permission = await geo.Geolocator.checkPermission();
-      if (permission == geo.LocationPermission.denied) {
-        permission = await geo.Geolocator.requestPermission();
-        if (permission == geo.LocationPermission.denied) {
-          _onError("Location permission denied");
-          return;
-        }
-      }
-
-      if (permission == geo.LocationPermission.deniedForever) {
-        _onError("Location permission permanently denied");
-        return;
-      }
-
       _positionSubscription = geo.Geolocator.getPositionStream(
         locationSettings: const geo.LocationSettings(
             accuracy: geo.LocationAccuracy.high, distanceFilter: 5),
       ).listen(
         (position) => _onLocationUpdated(position),
-        onError: (error) => _onError("Location error: $error"),
-        onDone: () => _onError("Location stream closed unexpectedly"),
-        cancelOnError: false,
+        onError: (error) => _onError(error.toString()),
       );
-
-      // Update notification to show tracking is active
-      _updateNotification();
     } catch (e) {
       _onError("Failed to start location tracking: $e");
     }
@@ -260,20 +240,16 @@ class ForegroundTaskHandler extends TaskHandler {
   }
 
   void _onLocationUpdated(geo.Position position) {
-    try {
-      // Add distance only if it's a valid distance
-      final additionalDistance =
-          TrackingUtils.calculateDistance(_lastPosition, position);
+    // Add distance only if it's a valid distance
+    final additionalDistance =
+        TrackingUtils.calculateDistance(_lastPosition, position);
 
-      if (additionalDistance > 0) {
-        _totalDistance += additionalDistance;
-        _lastPosition = position;
+    if (additionalDistance > 0) {
+      _totalDistance += additionalDistance;
+      _lastPosition = position;
 
-        // Update notification with new distance
-        _updateNotification();
-      }
-    } catch (e) {
-      _onError("Error processing location update: $e");
+      // Update notification with new distance
+      _updateNotification();
     }
   }
 }
