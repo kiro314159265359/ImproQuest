@@ -1,19 +1,22 @@
 // import 'package:device_preview/device_preview.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_2/core/routes/app_routes.dart';
+import 'package:flutter_application_2/core/services/permission_service.dart';
 import 'package:flutter_application_2/core/theme/app_theme.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_application_2/features/auth/domain/repo/login_repo.dart';
-import 'core/service/api/api_service.dart';
 import 'core/utils/get_it_constants.dart';
-import 'features/home/data/api/user_api.dart';
 import 'features/home/presentation/manager/user_cubit.dart';
 import 'core/utils/auth_helpers.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Set up dependencies
   await setupDependencies();
+
+  // Request permissions at app startup
+  await getIt<PermissionService>().requestInitialPermissions();
 
   // Determine the initial route
   final initialRoute = await determineInitialRoute(getIt<LoginRepo>());
@@ -31,12 +34,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     AppRoutes appRoutes = AppRoutes();
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider(
-          create: (context) => UserCubit(UserApi(getIt<ApiService>())),
-        ),
-      ],
+    return BlocProvider(
+      create: (context) => getIt<UserCubit>(),
       child: MaterialApp(
           // locale: DevicePreview.locale(context),
           // builder: DevicePreview.appBuilder,
