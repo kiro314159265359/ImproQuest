@@ -140,58 +140,43 @@ class Streak {
   }
 }
 
-// Add the progress field to the Quests class
-
 class Quests {
   String? sId;
   String? name;
-  String? description;
+  int? goal;
   int? xpReward;
   int? goldReward;
-  // Add these properties if they don't exist
-  int? goal;
-  double progress = 0.0;
+  String? difficulty;
   bool? isCompleted;
-  // ...existing properties...
 
-  Quests({
-    this.sId,
-    this.name,
-    this.description,
-    this.xpReward,
-    this.goldReward,
-    this.goal,
-    this.progress = 0.0,
-    this.isCompleted,
-    // ...existing properties...
-  });
+  Quests(
+      {this.sId,
+      this.name,
+      this.goal,
+      this.xpReward,
+      this.goldReward,
+      this.difficulty,
+      this.isCompleted});
 
-  factory Quests.fromJson(Map<String, dynamic> json) {
-    return Quests(
-      sId: json['_id'],
-      name: json['name'],
-      description: json['description'],
-      xpReward: json['xpReward'],
-      goldReward: json['goldReward'],
-      goal: json['goal'],
-      // Initialize progress to 0.0 when creating from JSON
-      progress: 0.0,
-      isCompleted: json['isCompleted'],
-      // ...existing properties...
-    );
+  Quests.fromJson(Map<String, dynamic> json) {
+    sId = json['_id'];
+    name = json['name'];
+    goal = json['goal'];
+    xpReward = json['xp_reward'];
+    goldReward = json['gold_reward'];
+    difficulty = json['difficulty'];
+    isCompleted = json['is_completed'];
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = {};
+    final Map<String, dynamic> data = <String, dynamic>{};
     data['_id'] = sId;
     data['name'] = name;
-    data['description'] = description;
-    data['xpReward'] = xpReward;
-    data['goldReward'] = goldReward;
     data['goal'] = goal;
-    // No need to include progress in the JSON as it's local-only
-    data['isCompleted'] = isCompleted;
-    // ...existing properties...
+    data['xp_reward'] = xpReward;
+    data['gold_reward'] = goldReward;
+    data['difficulty'] = difficulty;
+    data['is_completed'] = isCompleted;
     return data;
   }
 }
