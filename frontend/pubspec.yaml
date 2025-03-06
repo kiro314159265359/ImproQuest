@@ -50,6 +50,7 @@ dependencies:
   flame: ^1.24.0
   flutter_foreground_task: ^8.17.0
   device_info_plus: ^11.3.0
+  equatable: ^2.0.7
   # image_picker:
 dev_dependencies:
   flutter_test:

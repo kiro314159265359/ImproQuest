@@ -18,6 +18,7 @@ class ActivityBloc extends Bloc<ActivityEvent, ActivityState> {
   StreamSubscription<geo.Position>? _positionSubscription;
   geo.Position? _lastPosition;
   double _totalDistance = 0.0;
+  double _lastDistance = 0.0;
   ForegroundBackgroundBridge? _bridge;
 
   ActivityBloc() : super(ActivityInitial()) {
@@ -38,7 +39,7 @@ class ActivityBloc extends Bloc<ActivityEvent, ActivityState> {
       // Restore data from previous session
       final savedData = await SharedDataUtil.getTrackingData();
       if (savedData != null) {
-        _totalDistance = savedData['distance'] ?? 0.0;
+        _totalDistance = savedData.distance;
 
         // Re-attach to foreground service
         add(StartActivityTracking());
@@ -102,13 +103,33 @@ class ActivityBloc extends Bloc<ActivityEvent, ActivityState> {
   ) async {
     if (state is ActivityTracking) {
       final currentState = state as ActivityTracking;
-      final distance = event.data['totalDistance'] as double? ?? _totalDistance;
-      _totalDistance = distance;
+      final trackingData = event.data is TrackingData
+          ? event.data as TrackingData
+          : TrackingData.fromJson(event.data);
+
+      _totalDistance = trackingData.distance;
+
+      // Create an Activity object properly with required positional arguments
+      Activity? activity;
+      if (trackingData.activityType != null) {
+        activity =
+            Activity(trackingData.activityType!, ActivityConfidence.HIGH);
+      }
 
       emit(currentState.copyWith(
-        distance: distance,
+        distance: trackingData.distance,
         timestamp: DateTime.now(),
+        activity: activity,
       ));
+
+      // Also update quest progress with the new distance
+      if (_lastDistance < _totalDistance) {
+        final newDistanceCovered = _totalDistance - _lastDistance;
+        if (currentState.quests != null) {
+          await updateQuestProgress(currentState.quests, newDistanceCovered);
+        }
+        _lastDistance = _totalDistance;
+      }
     }
   }
 
@@ -128,14 +149,18 @@ class ActivityBloc extends Bloc<ActivityEvent, ActivityState> {
 
     // Save the final tracking data before stopping
     if (_totalDistance > 0) {
-      await SharedDataUtil.saveTrackingData(
+      ActivityType? activityType;
+      if (state is ActivityTracking &&
+          (state as ActivityTracking).activity != null) {
+        activityType = (state as ActivityTracking).activity!.type;
+      }
+
+      await SharedDataUtil.saveTrackingData(TrackingData(
         distance: _totalDistance,
-        activityType: (state is ActivityTracking &&
-                (state as ActivityTracking).activity != null)
-            ? (state as ActivityTracking).activity!.type.toString()
-            : 'unknown',
+        activityType: activityType,
         timestamp: DateTime.now(),
-      );
+        isActive: false,
+      ));
     }
 
     ForegroundService.stop();
@@ -235,14 +260,38 @@ class ActivityBloc extends Bloc<ActivityEvent, ActivityState> {
   }
 
   // Add method to update quest progress
-  Future<void> updateQuestProgress(List<Quests>? quests, double newDistance) async {
+  Future<void> updateQuestProgress(
+      List<Quests>? quests, double newDistance) async {
     if (quests == null || quests.isEmpty) return;
-    
+
+    bool anyQuestCompleted = false;
+
     // Update progress for each active quest
     for (final quest in quests) {
       if (quest.sId != null && quest.isCompleted != true) {
-        await QuestProgressManager.updateQuestProgress(quest.sId!, newDistance);
+        final updatedProgress = await QuestProgressManager.updateQuestProgress(
+            quest.sId!, newDistance);
+
+        // Update the quest's progress in memory too
+        quest.progress = updatedProgress;
+
+        // Check if the quest is now completed
+        if (quest.goal != null && updatedProgress >= quest.goal!) {
+          anyQuestCompleted = true;
+        }
       }
+    }
+
+    // If any quest is completed, notify the UI to update
+    if (anyQuestCompleted && state is ActivityTracking) {
+      final currentState = state as ActivityTracking;
+      emit(currentState.copyWith(
+        quests: quests,
+        timestamp: DateTime.now(),
+      ));
+
+      // Optionally: Notify the user about completed quests
+      // This could be done via a callback or event bus
     }
   }
 
@@ -254,4 +303,10 @@ class ActivityBloc extends Bloc<ActivityEvent, ActivityState> {
     ForegroundService.stop();
     return super.close();
   }
+}
+
+class BackgroundDataReceived extends ActivityEvent {
+  final dynamic data;
+
+  const BackgroundDataReceived(this.data);
 }

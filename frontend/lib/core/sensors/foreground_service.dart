@@ -11,6 +11,8 @@ void startCallback() {
 }
 
 class ForegroundService {
+  static const int updateIntervalMillis = 5000;
+
   static void start() {
     _initService();
     FlutterForegroundTask.startService(
@@ -41,8 +43,7 @@ class ForegroundService {
         autoRunOnBoot: true,
         allowWakeLock: true,
         allowWifiLock: true,
-        // Use correct repeat interval (every 5 seconds)
-        eventAction: ForegroundTaskEventAction.repeat(5000),
+        eventAction: ForegroundTaskEventAction.repeat(updateIntervalMillis),
       ),
     );
   }
@@ -62,6 +63,8 @@ class ForegroundTaskHandler extends TaskHandler {
   geo.Position? _lastPosition;
   double _totalDistance = 0.0;
   Activity? _currentActivity;
+  bool _isActive = false;
+  DateTime _lastUpdateTime = DateTime.now();
 
   @override
   Future<void> onStart(DateTime timestamp, TaskStarter starter) async {
@@ -69,46 +72,96 @@ class ForegroundTaskHandler extends TaskHandler {
       // Restore previous tracking data if any
       final savedData = await SharedDataUtil.getTrackingData();
       if (savedData != null) {
-        _totalDistance = savedData['distance'] ?? 0.0;
+        _totalDistance = savedData.distance;
+        _isActive = savedData.isActive;
       }
 
-      _activitySubscription =
-          FlutterActivityRecognition.instance.activityStream.listen(
-        (activity) => TrackingUtils.handleActivityDetected(
-            activity, _startLocationTracking, _stopLocationTracking),
-        onError: (error) => _onActivityError(error.toString()),
-      );
+      // Restore last position if available
+      final lastPositionData = await SharedDataUtil.getLastPosition();
+      if (lastPositionData != null) {
+        try {
+          // Create a new Position instead of using copyWith
+          _lastPosition = geo.Position(
+            latitude: lastPositionData['latitude'],
+            longitude: lastPositionData['longitude'],
+            timestamp: DateTime.parse(lastPositionData['timestamp']),
+            accuracy: 0,
+            altitude: 0,
+            heading: 0,
+            speed: 0,
+            speedAccuracy: 0,
+            altitudeAccuracy: 0.0,
+            headingAccuracy: 0.0,
+          );
+        } catch (e) {
+          // Ignore position restoration errors
+        }
+      }
 
-      // Start location tracking immediately in case the user is already active
-      _startLocationTracking();
+      _setupActivityRecognition();
+
+      // Start location tracking if we were active before
+      if (_isActive) {
+        _startLocationTracking();
+      }
     } catch (e) {
-      _onActivityError("Failed to start tracking: $e");
+      _onError("Failed to start tracking: $e");
     }
   }
 
+  void _setupActivityRecognition() {
+    _activitySubscription =
+        FlutterActivityRecognition.instance.activityStream.listen(
+      (activity) {
+        _currentActivity = activity;
+        _isActive = TrackingUtils.isActivityTrackable(activity);
+
+        if (_isActive) {
+          _startLocationTracking();
+        } else {
+          _stopLocationTracking();
+        }
+
+        _updateNotification();
+      },
+      onError: (error) => _onError("Activity recognition error: $error"),
+    );
+  }
+
   Future<void> sendUpdateToMainApp(DateTime timestamp) async {
-    // Save data to shared preferences for recovery and communication
-    await SharedDataUtil.saveTrackingData(
+    final trackingData = TrackingData(
       distance: _totalDistance,
-      activityType: _currentActivity?.type.toString() ?? 'unknown',
+      activityType: _currentActivity?.type,
       timestamp: timestamp,
+      isActive: _isActive,
     );
 
-    // Save data for the main app to access
-    final trackingData = {
-      'totalDistance': _totalDistance,
-      'activityType': _currentActivity?.type.toString() ?? 'unknown',
-      'timestamp': timestamp.toIso8601String(),
-    };
-    await FlutterForegroundTask.saveData(key: 'tracking_data', value: trackingData);
+    // Save data to shared preferences for recovery
+    await SharedDataUtil.saveTrackingData(trackingData);
 
-    // Update notification
+    // Save last known position
+    if (_lastPosition != null) {
+      await SharedDataUtil.saveLastPosition(
+          _lastPosition!.latitude, _lastPosition!.longitude);
+    }
+
+    // Save data for the main app to access
+    await FlutterForegroundTask.saveData(
+        key: 'tracking_data', value: trackingData.toJson());
+
+    _updateNotification();
+    _lastUpdateTime = timestamp;
+  }
+
+  void _updateNotification() {
+    final activityStr =
+        _currentActivity?.type.toString().split('.').last ?? 'Unknown';
+    final statusStr = _isActive ? "Active" : "Inactive";
+
     FlutterForegroundTask.updateService(
-      notificationTitle: 'Activity Tracking',
-      notificationText: "Distance: ${_totalDistance.toStringAsFixed(2)} m",
-      callback: () {
-        // This callback is executed when the notification is tapped
-      },
+      notificationTitle: 'Activity Tracking: $statusStr',
+      notificationText:
+          "Distance: ${_totalDistance.toStringAsFixed(2)}m | Activity: $activityStr",
     );
   }
 
@@ -118,36 +171,43 @@ class ForegroundTaskHandler extends TaskHandler {
     _positionSubscription?.cancel();
 
     // Save final state before destruction
-    await SharedDataUtil.saveTrackingData(
+    final trackingData = TrackingData(
       distance: _totalDistance,
-      activityType: _currentActivity?.type.toString() ?? 'unknown',
+      activityType: _currentActivity?.type,
       timestamp: timestamp,
+      isActive: false,
     );
+    await SharedDataUtil.saveTrackingData(trackingData);
   }
 
   @override
   void onRepeatEvent(DateTime timestamp) {
-    // Get latest activity and location in regular intervals
-    FlutterActivityRecognition.instance.activityStream.first.then((activity) {
-      _currentActivity = activity;
-      TrackingUtils.handleActivityDetected(
-          activity, _startLocationTracking, _stopLocationTracking);
+    // Check if we need to request a fresh activity
+    final timeSinceLastUpdate = timestamp.difference(_lastUpdateTime);
+    if (timeSinceLastUpdate.inSeconds > 30) {
+      FlutterActivityRecognition.instance.activityStream.first.then((activity) {
+        _currentActivity = activity;
+        _isActive = TrackingUtils.isActivityTrackable(activity);
 
-      // Send updated data to main app
+        if (_isActive && _positionSubscription == null) {
+          _startLocationTracking();
+        } else if (!_isActive && _positionSubscription != null) {
+          _stopLocationTracking();
+        }
+
+        sendUpdateToMainApp(timestamp);
+      }).catchError((e) {
+        _onError("Activity error: $e");
+      });
+    } else {
       sendUpdateToMainApp(timestamp);
-    }).catchError((e) {
-      _onActivityError("Activity error: $e");
-    });
-
-    if (_positionSubscription == null) {
-      _startLocationTracking(); // Ensure location tracking continues
     }
   }
 
-  void _onActivityError(String error) {
-    // Update the notification with error info
+  void _onError(String error) {
     FlutterForegroundTask.updateService(
-      notificationText: "Error: $error",
+      notificationTitle: "Tracking Error",
+      notificationText: error,
     );
   }
 
@@ -158,7 +218,7 @@ class ForegroundTaskHandler extends TaskHandler {
       // Check if location service is enabled
       bool serviceEnabled = await geo.Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        _onActivityError("Location services are disabled");
+        _onError("Location services are disabled");
         return;
       }
 
@@ -167,10 +227,10 @@ class ForegroundTaskHandler extends TaskHandler {
             accuracy: geo.LocationAccuracy.high, distanceFilter: 5),
       ).listen(
         (position) => _onLocationUpdated(position),
-        onError: (error) => _onActivityError(error.toString()),
+        onError: (error) => _onError(error.toString()),
       );
     } catch (e) {
-      _onActivityError("Failed to start location tracking: $e");
+      _onError("Failed to start location tracking: $e");
     }
   }
 
@@ -180,11 +240,16 @@ class ForegroundTaskHandler extends TaskHandler {
   }
 
   void _onLocationUpdated(geo.Position position) {
-    _totalDistance += TrackingUtils.calculateDistance(_lastPosition, position);
-    _lastPosition = position;
+    // Add distance only if it's a valid distance
+    final additionalDistance =
+        TrackingUtils.calculateDistance(_lastPosition, position);
 
-    FlutterForegroundTask.updateService(
-        notificationText:
-            "Total Distance: ${_totalDistance.toStringAsFixed(2)} m");
+    if (additionalDistance > 0) {
+      _totalDistance += additionalDistance;
+      _lastPosition = position;
+
+      // Update notification with new distance
+      _updateNotification();
+    }
   }
 }
