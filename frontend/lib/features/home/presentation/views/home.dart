@@ -11,6 +11,7 @@ import '../../../../core/theme/text_style.dart';
 import '../../data/model/user_model.dart';
 import '../manager/user_cubit.dart';
 import '../manager/user_state.dart';
+import '../utils/quest_progress_manager.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -169,33 +170,58 @@ class _HomeState extends State<Home> {
       );
     }
 
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: quests.length,
-      itemBuilder: (context, index) {
-        final quest = quests[index];
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 5),
-          child: Card(
-            color: ColorManager.gunmetal,
-            child: Column(
-              children: [
-                CustomQuestCard(
-                    questName: quest.name ?? "Unnamed Quest",
-                    questDesc:
-                        "${quest.xpReward ?? 0} XP • ${quest.goldReward ?? 0} Gold",
-                    goal: quest.goal ?? 1000,
-                    questImageIcon: AppIcons.runningIcon,
-                    progress: quest.isCompleted == true ? 1.0 : 0.5),
-                ElevatedButton(
-                    onPressed: () async {
-                      await context.read<UserCubit>().completeQuest(quest);
-                    },
-                    child: const Text("OK"))
-              ],
-            ),
-          ),
+    return FutureBuilder<List<Quests>>(
+      future: QuestProgressManager.updateQuestsProgress(quests),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final updatedQuests = snapshot.data ?? quests;
+
+        return ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: updatedQuests.length,
+          itemBuilder: (context, index) {
+            final quest = updatedQuests[index];
+            return FutureBuilder<double>(
+              future: QuestProgressManager.calculateVisualProgress(quest),
+              builder: (context, progressSnapshot) {
+                final progress = progressSnapshot.data ?? 0.0;
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 5),
+                  child: Card(
+                    color: ColorManager.gunmetal,
+                    child: Column(
+                      children: [
+                        CustomQuestCard(
+                            questName: quest.name ?? "Unnamed Quest",
+                            questDesc:
+                                "${quest.xpReward ?? 0} XP • ${quest.goldReward ?? 0} Gold",
+                            goal: quest.goal ?? 1000,
+                            questImageIcon: AppIcons.runningIcon,
+                            progress: progress,
+                            questId: quest.sId,
+                            isCompleted: quest.isCompleted == true),
+                        ElevatedButton(
+                            onPressed: progress >= 1.0 ||
+                                    quest.isCompleted == true
+                                ? () async {
+                                    await context
+                                        .read<UserCubit>()
+                                        .completeQuest(quest);
+                                  }
+                                : null, // Disable button if quest not completed
+                            child: const Text("Complete Quest"))
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+          },
         );
       },
     );
