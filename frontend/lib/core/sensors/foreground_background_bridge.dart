@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'shared_data_util.dart';
-import 'tracking_utils.dart';
 
 /// A class that bridges data communication between foreground service
 /// and the main application using both direct communication and shared preferences.
@@ -10,10 +9,10 @@ class ForegroundBackgroundBridge {
   static const Duration syncPeriod = Duration(seconds: 2);
 
   /// Callback executed when data is received.
-  final Function(TrackingData) onDataReceived;
+  final Function(Map<String, dynamic>) onDataReceived;
 
   Timer? _syncTimer;
-  TrackingData? _lastData;
+  Map<String, dynamic>? _lastData;
 
   ForegroundBackgroundBridge({required this.onDataReceived});
 
@@ -38,11 +37,9 @@ class ForegroundBackgroundBridge {
   /// Check for data sent by the foreground service.
   Future<void> _checkForServiceData() async {
     try {
-      final rawData =
-          await FlutterForegroundTask.getData<Map<String, dynamic>?>(
-              key: 'tracking_data');
-      if (rawData != null) {
-        final data = TrackingData.fromJson(rawData);
+      final data = await FlutterForegroundTask.getData<Map<String, dynamic>?>(
+          key: 'tracking_data');
+      if (data != null) {
         _processData(data);
       } else {
         // If no data from service, fall back to shared preferences
@@ -63,14 +60,19 @@ class ForegroundBackgroundBridge {
   }
 
   /// Process received data and notify listeners if data has changed.
-  void _processData(TrackingData data) {
+  void _processData(Map<String, dynamic> data) {
     // Only notify if data has changed
     if (_lastData == null ||
-        _lastData!.distance != data.distance ||
-        _lastData!.activityType != data.activityType ||
-        _lastData!.isActive != data.isActive) {
-      _lastData = data;
-      onDataReceived(data);
+        _lastData!['totalDistance'] != data['distance'] ||
+        _lastData!['activityType'] != data['activityType']) {
+      final processedData = {
+        'totalDistance': data['distance'] ?? 0.0,
+        'activityType': data['activityType'] ?? 'unknown',
+        'timestamp': data['timestamp'] ?? DateTime.now().toIso8601String(),
+      };
+
+      _lastData = processedData;
+      onDataReceived(processedData);
     }
   }
 }

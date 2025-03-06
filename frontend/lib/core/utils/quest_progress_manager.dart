@@ -24,31 +24,11 @@ class QuestProgressManager {
     return newProgress;
   }
 
-  // Get all stored quest progress as a map of questId -> progress
-  static Future<Map<String, double>> getAllQuestProgress() async {
-    final prefs = await SharedPreferences.getInstance();
-    final Map<String, double> progressMap = {};
-
-    for (final key in prefs.getKeys()) {
-      if (key.startsWith(_questProgressPrefix)) {
-        final questId = key.substring(_questProgressPrefix.length);
-        final progress = prefs.getDouble(key);
-        if (progress != null) {
-          progressMap[questId] = progress;
-        }
-      }
-    }
-
-    return progressMap;
-  }
-
-  // Clear progress for a specific quest (implementation was missing)
-  static Future<void> clearQuestProgress(String questId) async {
+  // Reset progress for a specific quest
+  static Future<void> resetQuestProgress(String questId) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('$_questProgressPrefix$questId');
   }
-
-
 
   // Reset all quest progress
   static Future<void> resetAllQuestProgress() async {
