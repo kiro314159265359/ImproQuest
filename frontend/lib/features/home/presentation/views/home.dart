@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_2/core/sensors/activity_bloc.dart';
-import 'package:flutter_application_2/core/sensors/activity_event.dart';
-import 'package:flutter_application_2/core/sensors/activity_state.dart';
 import 'package:flutter_application_2/core/theme/background_theme.dart';
 import 'package:flutter_application_2/core/utils/app_icons.dart';
-import 'package:flutter_application_2/core/utils/get_it_constants.dart';
 import 'package:flutter_application_2/core/widget/appbar_stats.dart';
 import 'package:flutter_application_2/features/home/presentation/views/widgets/custom_quest_card.dart';
 import 'package:flutter_application_2/features/home/presentation/views/widgets/custom_rich_text.dart';
@@ -25,32 +21,18 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  late ActivityBloc _activityBloc;
-  bool _activityStarted = false;
-
   @override
   void initState() {
     super.initState();
-    // Get ActivityBloc from GetIt
-    _activityBloc = getIt<ActivityBloc>();
-
-    // Start activity tracking
-    _startActivityTracking();
-
-    // Fetch user data
     context.read<UserCubit>().fetchUserData();
   }
 
-  void _startActivityTracking() {
-    // Only start tracking if not already tracking
-    if (!_activityStarted && _activityBloc.state is! ActivityTracking) {
-      _activityBloc.add(StartActivityTracking());
-      _activityStarted = true;
-    }
-  }
-
-  // We don't need to stop tracking when leaving the homepage
-  // as it should continue in the background
+  // @override
+  // void dispose() {
+  //   // Stop activity tracking when leaving the home page
+  //   context.read<ActivityBloc>().add(StopActivityTracking());
+  //   super.dispose();
+  // }
 
   @override
   Widget build(BuildContext context) {

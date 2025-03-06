@@ -4,8 +4,6 @@ import 'package:flutter_application_2/features/auth/domain/repo/login_repo.dart'
 import 'package:flutter_application_2/features/home/data/api/user_api.dart';
 import 'package:flutter_application_2/features/home/presentation/manager/user_cubit.dart';
 import 'package:flutter_application_2/core/network/dio_interceptor.dart';
-import 'package:flutter_application_2/core/sensors/activity_bloc.dart';
-import 'package:flutter_application_2/core/services/permission_service.dart';
 import 'package:get_it/get_it.dart';
 
 final getIt = GetIt.instance;
@@ -29,9 +27,6 @@ Future<void> setupDependencies() async {
   getIt.registerSingleton<LoginRepo>(loginRepo);
   getIt.registerSingleton<UserCubit>(UserCubit(userApi));
 
-  // Register the permission service
-  getIt.registerLazySingleton<PermissionService>(() => PermissionService());
 
-  // Register ActivityBloc as lazy singleton
-  getIt.registerLazySingleton<ActivityBloc>(() => ActivityBloc());
+
 }
