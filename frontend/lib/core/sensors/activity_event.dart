@@ -29,6 +29,15 @@ class LocationUpdated extends ActivityEvent {
   List<Object?> get props => [latitude, longitude];
 }
 
+class BackgroundDataReceived extends ActivityEvent {
+  final Map<String, dynamic> data;
+
+  const BackgroundDataReceived(this.data);
+
+  @override
+  List<Object?> get props => [data];
+}
+
 class ActivityError extends ActivityEvent {
   final String error;
 

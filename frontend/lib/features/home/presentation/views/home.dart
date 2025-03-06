@@ -11,6 +11,9 @@ import '../../../../core/theme/text_style.dart';
 import '../../data/model/user_model.dart';
 import '../manager/user_cubit.dart';
 import '../manager/user_state.dart';
+import '../../../../core/sensors/activity_bloc.dart';
+import '../../../../core/sensors/activity_event.dart';
+import '../../../../core/sensors/activity_state.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -24,7 +27,16 @@ class _HomeState extends State<Home> {
   void initState() {
     super.initState();
     context.read<UserCubit>().fetchUserData();
+    // Start activity tracking when the home page loads
+    context.read<ActivityBloc>().add(StartActivityTracking());
   }
+
+  // @override
+  // void dispose() {
+  //   // Stop activity tracking when leaving the home page
+  //   context.read<ActivityBloc>().add(StopActivityTracking());
+  //   super.dispose();
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -75,13 +87,6 @@ class _HomeState extends State<Home> {
               height: 150,
               child: Card(
                 color: ColorManager.gunmetal,
-                //TODO: Clean this BS
-                // margin: const EdgeInsets.symmetric(horizontal: 4),
-                // decoration: const BoxDecoration(
-                //     color: ColorManager.gunmetal,
-                //     borderRadius: BorderRadius.all(Radius.circular(12))),
-                // width: double.infinity,
-                // height: 150,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
@@ -151,19 +156,6 @@ class _HomeState extends State<Home> {
               ),
             ),
             _buildQuestsList(user.quests),
-            // const CustomQuestCard(
-            //     questName: "LOGIN",
-            //     questDesc: "Check-in to your system today.",
-            //     goal: 1,
-            //     questImageIcon: AssetImage('assets/icons/LoginChIcon.png'),
-            //     progress: 1),
-            // SizedBox(height: h * 0.01),
-            // const CustomQuestCard(
-            //     questName: "RUNNING",
-            //     questDesc: "Run 1km [ 100XP ]",
-            //     goal: 1000,
-            //     questImageIcon: AssetImage('assets/icons/RunningChIcon.png'),
-            //     progress: 0.5)
           ],
         ),
       ),
@@ -194,13 +186,31 @@ class _HomeState extends State<Home> {
             color: ColorManager.gunmetal,
             child: Column(
               children: [
-                CustomQuestCard(
-                  questName: quest.name ?? "Unnamed Quest",
-                  questDesc:
-                      "${quest.xpReward ?? 0} XP • ${quest.goldReward ?? 0} Gold",
-                  goal: quest.goal ?? 1000,
-                  questImageIcon: AppIcons.runningIcon,
-                  progress: quest.isCompleted == true ? 1.0 : 0.5,
+                BlocBuilder<ActivityBloc, ActivityState>(
+                  builder: (context, activityState) {
+                    // Calculate progress based on activity tracking data
+                    double progress = quest.isCompleted == true ? 1.0 : 0.0;
+
+                    if (activityState is ActivityTracking &&
+                        quest.isCompleted != true) {
+                      // Calculate progress as a ratio of current distance to quest goal
+                      double currentDistance = activityState.distance;
+                      double goalDistance = quest.goal?.toDouble() ?? 1000.0;
+
+                      // Ensure progress is between 0.0 and 1.0
+                      progress =
+                          (currentDistance / goalDistance).clamp(0.0, 1.0);
+                    }
+
+                    return CustomQuestCard(
+                      questName: quest.name ?? "Unnamed Quest",
+                      questDesc:
+                          "${quest.xpReward ?? 0} XP • ${quest.goldReward ?? 0} Gold",
+                      goal: quest.goal ?? 1000,
+                      questImageIcon: AppIcons.runningIcon,
+                      progress: progress,
+                    );
+                  },
                 ),
                 ElevatedButton(
                     onPressed: () async {
