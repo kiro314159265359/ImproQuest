@@ -190,17 +190,26 @@ class ActivityBloc extends Bloc<ActivityEvent, ActivityState> {
     Emitter<ActivityState> emit,
   ) {
     if (state is ActivityTracking) {
-      final currentState = state as ActivityTracking;
+      try {
+        final currentState = state as ActivityTracking;
+        final currentPosition =
+            TrackingUtils.createPosition(event.latitude, event.longitude);
 
-      _totalDistance += TrackingUtils.calculateDistance(_lastPosition,
-          TrackingUtils.createPosition(event.latitude, event.longitude));
-      _lastPosition =
-          TrackingUtils.createPosition(event.latitude, event.longitude);
+        final additionalDistance =
+            TrackingUtils.calculateDistance(_lastPosition, currentPosition);
 
-      emit(currentState.copyWith(
-        distance: _totalDistance,
-        timestamp: DateTime.now(),
-      ));
+        if (additionalDistance > 0) {
+          _totalDistance += additionalDistance;
+          _lastPosition = currentPosition;
+
+          emit(currentState.copyWith(
+            distance: _totalDistance,
+            timestamp: DateTime.now(),
+          ));
+        }
+      } catch (e) {
+        emit(ActivityFailure("Error updating location: $e"));
+      }
     }
   }
 
@@ -212,10 +221,35 @@ class ActivityBloc extends Bloc<ActivityEvent, ActivityState> {
   }
 
   void _startLocationTracking() {
-    _positionSubscription = geo.Geolocator.getPositionStream().listen(
-      (position) => add(LocationUpdated(position.latitude, position.longitude)),
-      onError: (error) => add(ActivityError(error.toString())),
-    );
+    if (_positionSubscription != null)
+      return; // Prevent duplicate subscriptions
+
+    try {
+      _positionSubscription = geo.Geolocator.getPositionStream(
+        locationSettings: const geo.LocationSettings(
+          accuracy: geo.LocationAccuracy.high,
+          distanceFilter: 3,
+          timeLimit:
+              Duration(seconds: 10), // Add a timeout to prevent stale data
+        ),
+      ).listen(
+        (position) =>
+            add(LocationUpdated(position.latitude, position.longitude)),
+        onError: (error) => add(ActivityError(error.toString())),
+        cancelOnError: false, // Don't cancel on error, just log it
+      );
+
+      // Attempt to get an initial position
+      geo.Geolocator.getCurrentPosition(
+              desiredAccuracy: geo.LocationAccuracy.high)
+          .then((position) {
+        _lastPosition = position;
+      }).catchError((error) {
+        add(ActivityError("Failed to get initial position: $error"));
+      });
+    } catch (e) {
+      add(ActivityError("Failed to start location tracking: $e"));
+    }
   }
 
   void _stopLocationTracking() {
