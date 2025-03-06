@@ -3,7 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_application_2/features/home/presentation/manager/user_state.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/utils/get_it_constants.dart';
-
+import '../../../../core/utils/quest_progress_manager.dart'; // Add this import
 import '../../../../game/logic/shop_bloc.dart';
 import '../../data/model/user_model.dart';
 import '../../domain/repo/user_repo.dart';
@@ -20,6 +20,10 @@ class UserCubit extends Cubit<UserState> {
       // Fetch user data from API
       currentUser = await userRepo.getUserData();
 
+      // Merge local quest progress with API data
+      if (currentUser != null && currentUser!.quests != null) {
+        await _mergeLocalQuestProgress();
+      }
 
       emit(UserLoaded(currentUser!));
 
@@ -46,6 +50,35 @@ class UserCubit extends Cubit<UserState> {
     }
   }
 
+  // New method to merge local quest progress with API data
+  Future<void> _mergeLocalQuestProgress() async {
+    try {
+      // Get all stored local progress
+      final progressMap = await QuestProgressManager.getAllQuestProgress();
+
+      // Apply local progress to each quest
+      for (final quest in currentUser!.quests!) {
+        if (quest.sId != null && progressMap.containsKey(quest.sId)) {
+          // If the quest is not completed, apply the local progress
+          if (quest.isCompleted != true) {
+            // Assuming there's a progress field in the Quest model
+            // If not, you'll need to extend the model
+            quest.progress = progressMap[quest.sId] ?? 0.0;
+
+            // Check if we should mark the quest as completed based on local progress
+            if (quest.goal != null && quest.progress >= quest.goal!) {
+              await completeQuest(quest);
+            }
+          } else {
+            // Quest is already completed, clear its local progress
+            await QuestProgressManager.clearQuestProgress(quest.sId!);
+          }
+        }
+      }
+    } catch (e) {
+      print('Error merging local quest progress: $e');
+    }
+  }
 
   Future<void> updateUserData(UserModel updatedUser) async {
     emit(UserUpdating());

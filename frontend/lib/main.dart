@@ -9,6 +9,7 @@ import 'core/utils/get_it_constants.dart';
 import 'features/home/data/api/user_api.dart';
 import 'features/home/presentation/manager/user_cubit.dart';
 import 'core/utils/auth_helpers.dart';
+import 'core/sensors/activity_bloc.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,6 +36,9 @@ class MyApp extends StatelessWidget {
       providers: [
         BlocProvider(
           create: (context) => UserCubit(UserApi(getIt<ApiService>())),
+        ),
+        BlocProvider(
+          create: (context) => ActivityBloc(),
         ),
       ],
       child: MaterialApp(
