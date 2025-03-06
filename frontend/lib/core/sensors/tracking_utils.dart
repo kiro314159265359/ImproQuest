@@ -58,16 +58,6 @@ class TrackingUtils {
       currentPosition.longitude,
     );
 
-    // Filter out unrealistic movements (e.g., GPS errors)
-    // Assuming a person can't move more than 30 meters per second (108 km/h)
-    final timeElapsed =
-        currentPosition.timestamp.difference(lastPosition.timestamp);
-    final secondsElapsed = timeElapsed.inMilliseconds / 1000;
-
-    // If speed exceeds 30m/s (108 km/h), probably a GPS error
-    if (secondsElapsed > 0 && distance / secondsElapsed > 30) {
-      return 0.0;
-    }
 
     return distance;
   }
