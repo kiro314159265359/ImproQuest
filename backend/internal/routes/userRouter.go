@@ -19,6 +19,8 @@ func UserRoutes(incomingRoutes *gin.Engine) {
 	users.PATCH("/:id", controllers.UpdateUser())
 	users.PATCH("/:id/stats", controllers.UpdateUserStats())
 
+	users.POST("/customQuest", controllers.CreateCustomQuest())
+
 	users.PUT("/quests", controllers.AssignRandomQuests())
 	users.PUT("/updateQuestProgress", controllers.UpdateRunningQuestProgress())
 

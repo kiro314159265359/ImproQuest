@@ -16,4 +16,5 @@ type Quest struct {
 	GoldReward  *float64      `json:"gold_reward" bson:"gold_reward" validate:"required,gte=0"`
 	IsCompleted bool          `json:"is_completed" bson:"is_completed"`
 	GivenAt     time.Time     `json:"given_at" bson:"given_at"`
+	IsCustom    bool          `json:"is_custom" bson:"is_custom"` // Added to identify user-created quests
 }
