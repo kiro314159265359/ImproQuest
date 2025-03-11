@@ -2,8 +2,6 @@ package controllers
 
 import (
 	"context"
-	"fmt"
-	"math/rand"
 	"net/http"
 	"strconv"
 	"time"
@@ -234,7 +232,6 @@ func UpdateUser() gin.HandlerFunc {
 func AssignRandomQuests() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID := c.GetString("id")
-		fmt.Println("User ID:", userID)
 
 		objectID, err := bson.ObjectIDFromHex(userID)
 		if err != nil {
@@ -246,75 +243,84 @@ func AssignRandomQuests() gin.HandlerFunc {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		// Retrieve the current user's quests to decide if new quests should be assigned
-		var userDoc struct {
-			Quests []models.Quest `bson:"quests"`
-		}
-
-		err = userCollection.FindOne(ctx, bson.M{"_id": objectID}).Decode(&userDoc)
+		// Retrieve the current user's data to get rank and check quests
+		var user models.User
+		err = userCollection.FindOne(ctx, bson.M{"_id": objectID}).Decode(&user)
 		if err != nil {
 			logger.Errorf("Failed to get user: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get user"})
 			return
 		}
-		// If quests are not null, check if the first quest's GivenAt has not passed its next 12AM.
-		if len(userDoc.Quests) > 0 {
-			quest := userDoc.Quests[0]
-			// Get the current time in the same location as the quest's GivenAt
-			now := time.Now().In(quest.GivenAt.Location())
-			// Calculate today's midnight
-			todayMidnight := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 
-			// If the quest was assigned after today's midnight, it's still valid.
-			if quest.GivenAt.After(todayMidnight) {
-				fmt.Println("Quests are still valid, not assigning new ones.")
-				c.JSON(http.StatusOK, gin.H{"quests": userDoc.Quests})
-				return
+		// Separate custom quests from daily quests
+		var customQuests, dailyQuests []models.Quest
+		var hasRunningQuest bool
+
+		for _, quest := range user.CurrentQuests {
+			if quest.IsCustom {
+				customQuests = append(customQuests, quest)
+			} else if quest.Type != nil && *quest.Type == "Running" {
+				// Check if the running quest is still valid (assigned after today's midnight)
+				now := time.Now().In(quest.GivenAt.Location())
+				todayMidnight := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+
+				if quest.GivenAt.After(todayMidnight) {
+					dailyQuests = append(dailyQuests, quest)
+					hasRunningQuest = true
+				}
 			}
 		}
 
-		// Proceed to assign new quests if quests are null or their assigned day has passed.
-		var allQuests []models.Quest
-		cursor, err := questCollection.Find(ctx, bson.M{})
+		// If we already have a valid running quest, just return the combined quests
+		if hasRunningQuest {
+			combinedQuests := append(customQuests, dailyQuests...)
+			c.JSON(http.StatusOK, gin.H{
+				"quests":  combinedQuests,
+				"message": "Found existing valid running quest",
+			})
+			return
+		}
+
+		// Find the single running quest
+		var runningQuest models.Quest
+		runningQuestType := "Running"
+		err = questCollection.FindOne(ctx, bson.M{"type": runningQuestType}).Decode(&runningQuest)
 		if err != nil {
-			logger.Errorf("Error fetching quests: %v", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch quests"})
+			logger.Errorf("Error fetching running quest: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch running quest"})
 			return
 		}
 
-		if err = cursor.All(ctx, &allQuests); err != nil {
-			logger.Errorf("Error decoding quests: %v", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to decode quests"})
-			return
-		}
+		// Get the multiplier based on user's rank
+		multiplier := helpers.GetQuestMultiplier(user.Rank)
 
-		if len(allQuests) < 4 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Not enough quests available"})
-			return
-		}
-
-		// Shuffle the quests using the global rand package
-		rand.New(rand.NewSource(time.Now().UnixNano()))
-		rand.Shuffle(len(allQuests), func(i, j int) {
-			allQuests[i], allQuests[j] = allQuests[j], allQuests[i]
-		})
-
-		// Select the first 4 quests
-		selectedQuests := allQuests[:4]
-
-		// Set the GivenAt field for each selected quest to the current time
+		// Apply rank multiplier to rewards
 		now := time.Now()
-		for i := range selectedQuests {
-			selectedQuests[i].GivenAt = now
+		runningQuest.GivenAt = now
+
+		if runningQuest.XPReward != nil {
+			xpReward := *runningQuest.XPReward * multiplier
+			runningQuest.XPReward = &xpReward
 		}
+
+		if runningQuest.GoldReward != nil {
+			goldReward := *runningQuest.GoldReward * multiplier
+			runningQuest.GoldReward = &goldReward
+		}
+
+		// Mark as not custom
+		runningQuest.IsCustom = false
+
+		// Combine custom quests with the new running quest
+		newQuests := append(customQuests, runningQuest)
 
 		// Update the user document to assign these quests
 		filter := bson.M{"_id": objectID}
-		update := bson.M{"$set": bson.M{"quests": selectedQuests}}
+		update := bson.M{"$set": bson.M{"quests": newQuests}}
 		updateResult, err := userCollection.UpdateOne(ctx, filter, update)
 		if err != nil {
-			logger.Errorf("Error updating user quests: %v", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to assign quests"})
+			logger.Errorf("Error updating user quest: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to assign quest"})
 			return
 		}
 
@@ -323,7 +329,10 @@ func AssignRandomQuests() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"quests": selectedQuests})
+		c.JSON(http.StatusOK, gin.H{
+			"quests":     newQuests,
+			"multiplier": multiplier,
+		})
 	}
 }
 
@@ -383,4 +392,188 @@ func UpdateUserStats() gin.HandlerFunc {
 		})
 	}
 
+}
+
+func UpdateRunningQuestProgress() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Get user ID from context (set by auth middleware)
+		userID := c.GetString("id")
+		if userID == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "user ID not found in context"})
+			return
+		}
+
+		// Parse request body
+		var requestData struct {
+			Progress float64 `json:"progress" binding:"required,gte=0"`
+		}
+		if err := c.ShouldBindJSON(&requestData); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request data: " + err.Error()})
+			return
+		}
+
+		// Convert user ID to ObjectID
+		userOID, err := bson.ObjectIDFromHex(userID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID format"})
+			return
+		}
+
+		// Get database collections
+		userCollection := database.Users()
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		// Find user and their quests
+		var user models.User
+		err = userCollection.FindOne(ctx, bson.M{"_id": userOID}).Decode(&user)
+		if err != nil {
+			if err == mongo.ErrNoDocuments {
+				c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+			} else {
+				logger.Errorf("Error fetching user: %v", err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "database error"})
+			}
+			return
+		}
+
+		// Check if user has any quests
+		if len(user.CurrentQuests) == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "user has no active quests"})
+			return
+		}
+
+		// Find the running quest
+		var runningQuest *models.Quest
+		for i, quest := range user.CurrentQuests {
+			if quest.Type != nil && *quest.Type == "Running" {
+				runningQuest = &user.CurrentQuests[i]
+				break
+			}
+		}
+
+		if runningQuest == nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "no running quest found"})
+			return
+		}
+
+		// Check if quest is already completed
+		if runningQuest.IsCompleted {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "quest is already completed"})
+			return
+		}
+
+		// Update progress
+		progress := requestData.Progress
+		runningQuest.Progress = &progress
+
+		// Check if quest goal has been met and set as completed if so
+		if runningQuest.Goal != nil && progress >= *runningQuest.Goal {
+			runningQuest.Progress = runningQuest.Goal
+			runningQuest.IsCompleted = true
+		}
+
+		// Update in database using the $ positional operator to update the specific quest in the array
+		updateResult, err := userCollection.UpdateOne(
+			ctx,
+			bson.M{"_id": userOID, "quests._id": runningQuest.ID},
+			bson.M{
+				"$set": bson.M{
+					"quests.$.progress":     progress,
+					"quests.$.is_completed": runningQuest.IsCompleted,
+				},
+			},
+		)
+
+		if err != nil {
+			logger.Errorf("Error updating quest progress: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update quest progress"})
+			return
+		}
+
+		if updateResult.MatchedCount == 0 {
+			c.JSON(http.StatusNotFound, gin.H{"error": "quest not found"})
+			return
+		}
+
+		// Return success response with updated quest
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Quest progress updated successfully",
+			"quest":   runningQuest,
+		})
+	}
+}
+
+func CreateCustomQuest() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Get authenticated user ID from context
+		userID := c.GetString("id")
+		if userID == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "user ID not found in context"})
+			return
+		}
+
+		// Parse request body for quest details
+		var questReq struct {
+			Name       string  `json:"name" binding:"required,min=3,max=100"`
+			XPReward   float64 `json:"xp_reward" bson:"xp_reward" validate:"required,gte=0"`
+			GoldReward float64 `json:"gold_reward" bson:"gold_reward" validate:"required,gte=0"`
+			Type       string  `json:"type" binding:"required,oneof=Mental Habit"`
+		}
+
+		if err := c.ShouldBindJSON(&questReq); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request: " + err.Error()})
+			return
+		}
+
+		// Convert user ID to ObjectID
+		userOID, err := bson.ObjectIDFromHex(userID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID format"})
+			return
+		}
+
+		// Create quest object
+		newQuest := models.Quest{
+			ID:          bson.NewObjectID(),
+			Name:        &questReq.Name,
+			XPReward:    &questReq.XPReward,
+			GoldReward:  &questReq.GoldReward,
+			Type:        &questReq.Type,
+			IsCompleted: false,
+			GivenAt:     time.Now(),
+		}
+
+		// Mark quest as custom to prevent it from being removed during daily quest assignments
+		newQuest.IsCustom = true
+
+		// Get user collection
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		userCollection := database.Users()
+
+		// Add to user's quests using $push operator
+		update := bson.M{
+			"$push": bson.M{
+				"quests": newQuest,
+			},
+		}
+
+		result, err := userCollection.UpdateOne(ctx, bson.M{"_id": userOID}, update)
+		if err != nil {
+			logger.Errorf("Error adding custom quest: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to add custom quest"})
+			return
+		}
+
+		if result.MatchedCount == 0 {
+			c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+			return
+		}
+
+		c.JSON(http.StatusCreated, gin.H{
+			"message": "Custom quest created successfully",
+			"quest":   newQuest,
+		})
+	}
 }

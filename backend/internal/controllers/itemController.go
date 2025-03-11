@@ -14,7 +14,7 @@ import (
 )
 
 func AddItemToInventory(c *gin.Context) {
-	// Get user ID from context
+	// Get user ID from context and convert it
 	userIDStr := c.GetString("id")
 	userID, err := bson.ObjectIDFromHex(userIDStr)
 	if err != nil {
@@ -22,7 +22,7 @@ func AddItemToInventory(c *gin.Context) {
 		return
 	}
 
-	// Get item ID from request params
+	// Get item ID from request params and convert it
 	itemIDStr := c.Param("itemId")
 	itemID, err := bson.ObjectIDFromHex(itemIDStr)
 	if err != nil {
@@ -30,34 +30,62 @@ func AddItemToInventory(c *gin.Context) {
 		return
 	}
 
-	// Find and update inventory
-	collection := database.Inventories()
-	filter := bson.M{"user_id": userID}
-
-	update := bson.M{
-		"$push": bson.M{"items": itemID},
-		"$inc":  bson.M{"size": 1}, // Optional: if you want to track inventory size
+	// Retrieve the item to get its price
+	var item struct {
+		ID    bson.ObjectID `bson:"_id"`
+		Price float64       `bson:"price"`
+		// Include other fields as needed
 	}
-
-	result, err := collection.UpdateOne(
-		context.Background(),
-		filter,
-		update,
-	)
-
+	err = database.Items().FindOne(context.Background(), bson.M{"_id": itemID}).Decode(&item)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "database operation failed"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "item not found"})
 		return
 	}
 
-	if result.MatchedCount == 0 {
+	// Retrieve the user to check current gold amount
+	var user models.User
+	err = database.Users().FindOne(context.Background(), bson.M{"_id": userID}).Decode(&user)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		return
+	}
+
+	// Check if the user has enough gold to buy the item
+	if user.Gold < item.Price {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "insufficient funds"})
+		return
+	}
+
+	// Update user's gold by subtracting the item price
+	userUpdate := bson.M{
+		"$inc": bson.M{"gold": -item.Price},
+	}
+	userUpdateResult, err := database.Users().UpdateOne(context.Background(), bson.M{"_id": userID}, userUpdate)
+	if err != nil || userUpdateResult.ModifiedCount == 0 {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update user funds"})
+		return
+	}
+
+	// Add the item to the user's inventory and update its size
+	invCollection := database.Inventories()
+	invFilter := bson.M{"user_id": userID}
+	invUpdate := bson.M{
+		"$push": bson.M{"items": itemID},
+		"$inc":  bson.M{"size": 1},
+	}
+	invResult, err := invCollection.UpdateOne(context.Background(), invFilter, invUpdate)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update inventory"})
+		return
+	}
+	if invResult.MatchedCount == 0 {
 		c.JSON(http.StatusNotFound, gin.H{"error": "inventory not found for user"})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"status":        "success",
-		"modifiedCount": result.ModifiedCount,
+		"modifiedCount": invResult.ModifiedCount,
 	})
 }
 
