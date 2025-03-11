@@ -39,3 +39,22 @@ func GetRankForLevel(level int) string {
 		return "S"
 	}
 }
+
+func GetQuestMultiplier(Rank string) float64 {
+	switch {
+	case Rank == "E":
+		return 1.1
+	case Rank == "D":
+		return 1.2
+	case Rank == "C":
+		return 1.3
+	case Rank == "B":
+		return 1.4
+	case Rank == "A":
+		return 1.5
+	case Rank == "S":
+		return 2.0
+	default:
+		return 1.0
+	}
+}

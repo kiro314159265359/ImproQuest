@@ -24,9 +24,9 @@ var questCollection *mongo.Collection = database.Quests()
 type QuestRequest struct {
 	Name       *string  `json:"Name" validate:"required,min=3,max=100"`
 	XPReward   *float64 `json:"XPReward" validate:"required,gte=0"`
-	Goal       *float64 `json:"goal" bson:"goal"`
 	GoldReward *float64 `json:"GoldReward" validate:"required,gte=0"`
-	Difficulty *string  `json:"Difficulty" validate:"required,oneof=Easy Medium Hard"`
+	Goal       *float64 `json:"goal" bson:"goal"`
+	Type       *string  `json:"type" bson:"type" validate:"required,oneof=Running Mental Habit"`
 }
 
 // Create Quest
@@ -58,7 +58,7 @@ func CreateQuest() gin.HandlerFunc {
 			XPReward:   questReq.XPReward,
 			Goal:       questReq.Goal,
 			GoldReward: questReq.GoldReward,
-			Difficulty: questReq.Difficulty,
+			Type:       questReq.Type,
 		}
 
 		quest.ID = bson.NewObjectID()
@@ -412,3 +412,4 @@ func UpdateStreakHandler() gin.HandlerFunc {
 		})
 	}
 }
+
