@@ -26,7 +26,4 @@ Future<void> setupDependencies() async {
   getIt.registerSingleton<ApiService>(apiService);
   getIt.registerSingleton<LoginRepo>(loginRepo);
   getIt.registerSingleton<UserCubit>(UserCubit(userApi));
-
-
-
 }
