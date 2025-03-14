@@ -75,7 +75,7 @@ class AppLayout extends StatelessWidget {
                       onPressed: () {
                         Flame.device.fullScreen();
                         Flame.device.setPortrait();
-
+              
                         Navigator.pushNamed(context, Routes.gameScreen);
                       },
                       tooltip: 'Fight',

@@ -1,6 +1,5 @@
 // The callback function should always be a top-level or static function.
 import 'dart:async';
-
 import 'package:flutter_activity_recognition/flutter_activity_recognition.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:geolocator/geolocator.dart' as geo;

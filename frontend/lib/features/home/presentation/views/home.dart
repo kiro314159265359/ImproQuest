@@ -16,9 +16,9 @@ import '../../data/model/user_model.dart';
 import '../manager/user_cubit.dart';
 import '../manager/user_state.dart';
 
-// Handle data received from the foreground service
+/// Callback for handling foreground task data.
+/// Delegates distance updates and quest progress checking to the cubit.
 void _onReceiveTaskData(Object data) {
-  print('onReceiveTaskData from HOME: $data');
   if (data is Map<String, dynamic> && _HomeState.currentState != null) {
     _HomeState.currentState!._handleTaskData(data);
   }
@@ -32,86 +32,44 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  // Add static reference to current state for the callback
+  // Static reference for callback access.
   static _HomeState? currentState;
-  Map<String, bool> questLoadingState = {};
 
-  // Add variables to store tracking data
-  String _currentActivity = 'UNKNOWN';
-  String _confidence = 'UNKNOWN';
-  bool _isTracking = false;
-  double _totalDistance = 0.0;
-  DateTime _lastUpdated = DateTime.now();
-
-  // Reference to the debug dialog if it's open
-  StateSetter? _debugDialogSetState;
+  // Local map to manage loading states for custom quests.
+  final Map<String, bool> questLoadingState = {};
 
   @override
   void initState() {
     super.initState();
-    currentState = this; // Store reference to current state
-    context.read<UserCubit>().fetchUserData();
-
-    // Register callback to handle data from foreground service
+    // Assign the current instance for callback use.
+    currentState = this;
+    // Only fetch new user data if the cubit's state is still initial.
+    if (context.read<UserCubit>().state is UserInitial) {
+      print("testing fetchUserData");
+      context.read<UserCubit>().fetchUserData();
+    }
+    // Register foreground task callback.
     FlutterForegroundTask.addTaskDataCallback(_onReceiveTaskData);
   }
 
   @override
   void dispose() {
-    if (currentState == this) {
-      currentState = null; // Clear reference when disposed
-    }
-    // Remove callback
     FlutterForegroundTask.removeTaskDataCallback(_onReceiveTaskData);
-    _debugDialogSetState = null; // Clear dialog reference
+    currentState = null;
     super.dispose();
   }
 
-  // Handle data received from foreground service
+  /// Handles background task data by delegating to the cubit's update method.
   void _handleTaskData(Map<String, dynamic> data) {
-    setState(() {
-      _currentActivity = data['activity'] ?? 'UNKNOWN';
-      _confidence = data['confidence'] ?? 'UNKNOWN';
-      _isTracking = data['isTracking'] ?? false;
-      _totalDistance = data['totalDistance'] ?? 0.0;
-      _lastUpdated = DateTime.now();
-
-      // Update quest progress for distance-based quests
-      _updateQuestProgress();
-
-      // Update the debug dialog if it's open
-      if (_debugDialogSetState != null) {
-        _debugDialogSetState!(() {});
-      }
-    });
-  }
-
-  // Update quest progress based on distance
-  void _updateQuestProgress() {
-    if (mounted && _isTracking) {
-      final state = context.read<UserCubit>().state;
-      if (state is UserLoaded) {
-        final quests = state.user.quests;
-        if (quests != null) {
-          for (var quest in quests) {
-            // Assume quests with goals over 100 are distance-based (in meters)
-            // This is a simplification - in a real app, you'd have quest types
-            if (quest.isCompleted != true &&
-                quest.goal != null &&
-                quest.goal! > 100) {
-              if (_totalDistance >= quest.goal!) {
-                // Auto-complete quest when distance goal is reached
-                context.read<UserCubit>().completeQuest(quest);
-              }
-            }
-          }
-        }
-      }
-    }
+    final totalDistance = data['totalDistance'] ?? 0.0;
+    context.read<UserCubit>().updateDistanceAndCheckQuests(totalDistance);
   }
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
       resizeToAvoidBottomInset: false,
       body: BackgroundTheme(
@@ -125,13 +83,15 @@ class _HomeState extends State<Home> {
           },
           builder: (context, state) {
             if (state is UserLoaded) {
-              return _buildHomeContent(state.user);
+              return _buildHomeContent(state.user, screenWidth, screenHeight);
             }
+            // While waiting for a loaded state (hydrated or freshly fetched)
             return const Center(child: CircularProgressIndicator());
           },
         ),
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: "addQuest",
         backgroundColor: ColorManager.primaryColor,
         tooltip: "Add Custom Quest",
         onPressed: () {
@@ -142,19 +102,18 @@ class _HomeState extends State<Home> {
     );
   }
 
-  Widget _buildHomeContent(UserModel user) {
-    var w = MediaQuery.of(context).size.width;
-    var h = MediaQuery.of(context).size.height;
+  Widget _buildHomeContent(
+      UserModel user, double screenWidth, double screenHeight) {
     return SingleChildScrollView(
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: w * 0.04, vertical: h * 0.02),
+        padding: EdgeInsets.symmetric(
+            horizontal: screenWidth * 0.04, vertical: screenHeight * 0.02),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(height: h * 0.025),
+            SizedBox(height: screenHeight * 0.025),
             const AppBarStats(),
-            SizedBox(height: h * 0.025),
+            SizedBox(height: screenHeight * 0.025),
             CustomRichText(
               text1: 'Welcome, ',
               textStyle1: TextStyles.styleExtraBold(context,
@@ -163,86 +122,90 @@ class _HomeState extends State<Home> {
               textStyle2: TextStyles.styleExtraBold(context,
                   fontSize: 30, color: ColorManager.primaryColor),
             ),
-            SizedBox(height: h * 0.025),
-            SizedBox(
-              height: 150,
-              child: Card(
-                color: ColorManager.gunmetal,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text("DAILY QUESTS",
-                            style: TextStyles.styleBold(context,
-                                fontSize: 24, color: ColorManager.whiteColor),
-                            textAlign: TextAlign.center),
-                        CustomRichText(
-                          text1:
-                              '${context.read<UserCubit>().completedQuestCount} Quest ',
-                          textStyle1: TextStyles.styleSemiBold(context,
-                              fontSize: 18, color: ColorManager.lightGreen),
-                          text2: 'completed',
-                          textStyle2: TextStyles.styleSemiBold(context,
-                              fontSize: 18, color: const Color(0xFFB7B7B9)),
-                        ),
-                        Container(
-                          decoration: const BoxDecoration(
-                              color: ColorManager.containerBackGround,
-                              borderRadius:
-                                  BorderRadius.all(Radius.circular(16))),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
-                          child: Text(
-                              "${context.read<UserCubit>().remainingQuestCount} Quests left",
-                              style: TextStyles.styleSemiBold(context,
-                                  fontSize: 18, color: ColorManager.whiteColor),
-                              textAlign: TextAlign.center),
-                        ),
-                      ],
-                    ),
-                    CircularPercentIndicator(
-                      animation: true,
-                      widgetIndicator: Transform.translate(
-                        offset: const Offset(-5, 0),
-                        child: const Icon(
-                          Icons.circle,
-                          color: Colors.black,
-                          size: 9,
-                        ),
-                      ),
-                      backgroundColor: ColorManager.containerBackGround,
-                      radius: 60,
-                      lineWidth: 10.0,
-                      percent: context
-                          .read<UserCubit>()
-                          .questCompletionPercent, // user quest progress
-                      center: Text(
-                          "${(context.read<UserCubit>().questCompletionPercent * 100).toStringAsFixed(0)}%",
-                          style: TextStyles.styleSemiBold(context,
-                              fontSize: 20, color: ColorManager.whiteColor),
-                          textAlign: TextAlign.center),
-                      linearGradient: const LinearGradient(
-                          begin: Alignment.topRight,
-                          end: Alignment.bottomLeft,
-                          colors: <Color>[
-                            ColorManager.lightGreen,
-                            ColorManager.lightGreen
-                          ]),
-                      rotateLinearGradient: true,
-                      circularStrokeCap: CircularStrokeCap.round,
-                    )
-                  ],
-                ),
-              ),
-            ),
-            _buildQuestsList(context.read<UserCubit>().quests),
+            SizedBox(height: screenHeight * 0.025),
+            _buildDailyQuestCard(),
+            _buildQuestsList(user.quests),
             LabelBox(
               labelText: "Your Quests",
               child: _buildCustomQuestsList(
                   context.read<UserCubit>().customQuests),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDailyQuestCard() {
+    return SizedBox(
+      height: 150,
+      child: Card(
+        color: ColorManager.gunmetal,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Column(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Text(
+                  "DAILY QUESTS",
+                  style: TextStyles.styleBold(context,
+                      fontSize: 24, color: ColorManager.whiteColor),
+                  textAlign: TextAlign.center,
+                ),
+                CustomRichText(
+                  text1:
+                      '${context.read<UserCubit>().completedQuestCount} Quest ',
+                  textStyle1: TextStyles.styleSemiBold(context,
+                      fontSize: 18, color: ColorManager.lightGreen),
+                  text2: 'completed',
+                  textStyle2: TextStyles.styleSemiBold(context,
+                      fontSize: 18, color: const Color(0xFFB7B7B9)),
+                ),
+                Container(
+                  decoration: const BoxDecoration(
+                      color: ColorManager.containerBackGround,
+                      borderRadius: BorderRadius.all(Radius.circular(16))),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  child: Text(
+                    "${context.read<UserCubit>().remainingQuestCount} Quests left",
+                    style: TextStyles.styleSemiBold(context,
+                        fontSize: 18, color: ColorManager.whiteColor),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
+            ),
+            CircularPercentIndicator(
+              animation: true,
+              widgetIndicator: Transform.translate(
+                offset: const Offset(-5, 0),
+                child: const Icon(
+                  Icons.circle,
+                  color: Colors.black,
+                  size: 9,
+                ),
+              ),
+              backgroundColor: ColorManager.containerBackGround,
+              radius: 60,
+              lineWidth: 10.0,
+              percent: context.read<UserCubit>().questCompletionPercent,
+              center: Text(
+                "${(context.read<UserCubit>().questCompletionPercent * 100).toStringAsFixed(0)}%",
+                style: TextStyles.styleSemiBold(context,
+                    fontSize: 20, color: ColorManager.whiteColor),
+                textAlign: TextAlign.center,
+              ),
+              linearGradient: const LinearGradient(
+                  begin: Alignment.topRight,
+                  end: Alignment.bottomLeft,
+                  colors: <Color>[
+                    ColorManager.lightGreen,
+                    ColorManager.lightGreen
+                  ]),
+              rotateLinearGradient: true,
+              circularStrokeCap: CircularStrokeCap.round,
             )
           ],
         ),
@@ -255,12 +218,17 @@ class _HomeState extends State<Home> {
       return Padding(
         padding: const EdgeInsets.only(top: 150),
         child: Center(
-          child: Text("No quests available",
-              style: TextStyles.styleSemiBold(context,
-                  fontSize: 20, color: ColorManager.whiteColor)),
+          child: Text(
+            "No quests available",
+            style: TextStyles.styleSemiBold(context,
+                fontSize: 20, color: ColorManager.whiteColor),
+          ),
         ),
       );
     }
+
+    final state = context.read<UserCubit>().state;
+    final totalDistance = state is UserLoaded ? state.totalDistance : 0.0;
 
     return ListView.builder(
       shrinkWrap: true,
@@ -268,17 +236,11 @@ class _HomeState extends State<Home> {
       itemCount: quests.length,
       itemBuilder: (context, index) {
         final quest = quests[index];
-        // Calculate progress based on distance for distance-based quests
-        double progress = quest.isCompleted == true ? 1.0 : 0.0;
-
-        // If this is a distance-based quest, calculate progress based on actual distance
-        if (quest.isCompleted != true &&
-            quest.goal != null &&
-            quest.goal! > 100) {
-          progress = _totalDistance / quest.goal!;
-          // Cap progress at 1.0 (100%)
-          if (progress > 1.0) progress = 1.0;
-        }
+        double progress = quest.isCompleted == true
+            ? 1.0
+            : (quest.goal != null
+                ? (totalDistance / quest.goal!).clamp(0.0, 1.0)
+                : 0.0);
 
         return Padding(
           padding: const EdgeInsets.only(bottom: 5),
@@ -300,9 +262,11 @@ class _HomeState extends State<Home> {
       return Padding(
         padding: const EdgeInsets.only(top: 150),
         child: Center(
-          child: Text("No custom quests available",
-              style: TextStyles.styleSemiBold(context,
-                  fontSize: 20, color: ColorManager.whiteColor)),
+          child: Text(
+            "No custom quests available",
+            style: TextStyles.styleSemiBold(context,
+                fontSize: 20, color: ColorManager.whiteColor),
+          ),
         ),
       );
     }
@@ -313,7 +277,8 @@ class _HomeState extends State<Home> {
       itemCount: quests.length,
       itemBuilder: (context, index) {
         final quest = quests[index];
-        bool isLoading = questLoadingState[quest.sId] ?? false;
+        final questId = quest.sId ?? 'quest_$index';
+        final isLoading = questLoadingState[questId] ?? false;
 
         return Padding(
           padding: const EdgeInsets.only(bottom: 5),
@@ -322,16 +287,14 @@ class _HomeState extends State<Home> {
             questDesc:
                 "${quest.xpReward ?? 0} XP • ${quest.goldReward ?? 0} Gold",
             questImageIcon: AppIcons.runningIcon,
-            progress: quest.isCompleted!,
+            progress: quest.isCompleted ?? false,
             onCompleteQuest: () async {
               setState(() {
-                questLoadingState[quest.sId!] = true;
+                questLoadingState[questId] = true;
               });
-
               await context.read<UserCubit>().completeQuest(quest);
-
               setState(() {
-                questLoadingState[quest.sId!] = false;
+                questLoadingState[questId] = false;
               });
             },
             isLoading: isLoading,

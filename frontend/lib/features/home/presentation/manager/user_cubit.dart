@@ -1,5 +1,5 @@
-import 'package:bloc/bloc.dart';
 import 'package:dio/dio.dart';
+import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:flutter_application_2/features/home/presentation/manager/user_state.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/utils/get_it_constants.dart';
@@ -7,7 +7,7 @@ import '../../../../game/logic/shop_bloc.dart';
 import '../../data/model/user_model.dart';
 import '../../domain/repo/user_repo.dart';
 
-class UserCubit extends Cubit<UserState> {
+class UserCubit extends HydratedCubit<UserState> {
   final UserRepo userRepo;
   UserModel? currentUser;
 
@@ -17,6 +17,7 @@ class UserCubit extends Cubit<UserState> {
     emit(UserLoading());
     try {
       currentUser = await userRepo.getUserData();
+      // Always emit a UserLoaded state so that persistence works.
       emit(UserLoaded(currentUser!));
 
       // Update GetIt with the new UserModel.
@@ -45,14 +46,20 @@ class UserCubit extends Cubit<UserState> {
   Future<void> updateUserData(UserModel updatedUser) async {
     emit(UserUpdating());
     try {
-      final currentUser = await userRepo.updateUserData(updatedUser);
+      currentUser = await userRepo.updateUserData(updatedUser);
+
+      // Emit as loaded so that state persists.
+      emit(UserLoaded(currentUser!));
 
       if (getIt.isRegistered<UserModel>()) {
         getIt.unregister<UserModel>();
       }
-      getIt.registerSingleton<UserModel>(currentUser);
-
-      emit(UserUpdated(currentUser));
+      getIt.registerSingleton<UserModel>(currentUser!);
+      
+      if (getIt.isRegistered<ShopBloc>()) {
+        getIt.unregister<ShopBloc>();
+      }
+      getIt.registerSingleton<ShopBloc>(ShopBloc(user: currentUser!));
     } catch (error) {
       if (error is DioException) {
         emit(UpdateError(ServerFailure.fromDioError(error)));
@@ -91,17 +98,17 @@ class UserCubit extends Cubit<UserState> {
 
       if (totalQuestCount > 0 && completedQuestCount == totalQuestCount) {
         await userRepo.completeStreak();
-
         currentUser = await userRepo.getUserData();
       }
 
+      // Always emit as loaded.
       emit(UserLoaded(currentUser!));
 
       if (getIt.isRegistered<UserModel>()) {
         getIt.unregister<UserModel>();
       }
       getIt.registerSingleton<UserModel>(currentUser!);
-
+      
       if (getIt.isRegistered<ShopBloc>()) {
         getIt.unregister<ShopBloc>();
       }
@@ -159,13 +166,14 @@ class UserCubit extends Cubit<UserState> {
 
       currentUser = await userRepo.getUserData();
 
-      emit(UserUpdated(currentUser!));
+      // Emit loaded state
+      emit(UserLoaded(currentUser!));
 
       if (getIt.isRegistered<UserModel>()) {
         getIt.unregister<UserModel>();
       }
       getIt.registerSingleton<UserModel>(currentUser!);
-
+      
       if (getIt.isRegistered<ShopBloc>()) {
         getIt.unregister<ShopBloc>();
       }
@@ -180,5 +188,90 @@ class UserCubit extends Cubit<UserState> {
         }
       }
     }
+  }
+
+  Future<bool> updateQuestProgress(String? questId, double? progress) async {
+    emit(UserUpdating());
+    try {
+      await userRepo.updateQuestProgress(questId!, progress!);
+
+      currentUser = await userRepo.getUserData();
+
+      // Emit as loaded.
+      emit(UserLoaded(currentUser!));
+
+      if (getIt.isRegistered<UserModel>()) {
+        getIt.unregister<UserModel>();
+      }
+      getIt.registerSingleton<UserModel>(currentUser!);
+      
+      if (getIt.isRegistered<ShopBloc>()) {
+        getIt.unregister<ShopBloc>();
+      }
+      getIt.registerSingleton<ShopBloc>(ShopBloc(user: currentUser!));
+
+      return true;
+    } catch (error) {
+      if (error is DioException) {
+        emit(UpdateError(ServerFailure.fromDioError(error)));
+      } else {
+        emit(UpdateError(ServerFailure(error.toString())));
+        if (currentUser != null) {
+          emit(UserLoaded(currentUser!));
+        }
+      }
+      return false;
+    }
+  }
+
+  void updateDistance(double distance) {
+    if (state is UserLoaded) {
+      final currentState = state as UserLoaded;
+      emit(UserLoaded(currentState.user, totalDistance: distance));
+    }
+  }
+
+  /// Handles distance updates and checks quest progress.
+  Future<void> updateDistanceAndCheckQuests(double distance) async {
+    updateDistance(distance);
+    if (state is UserLoaded) {
+      final loadedState = state as UserLoaded;
+      final questsToComplete = loadedState.user.quests?.where((quest) =>
+          quest.isCompleted != true &&
+          quest.goal != null &&
+          distance >= quest.goal!);
+      if (questsToComplete != null) {
+        for (var quest in questsToComplete) {
+          await completeQuest(quest);
+        }
+      }
+    }
+  }
+
+  // --- HydratedCubit overrides ---
+  @override
+  UserState? fromJson(Map<String, dynamic> json) {
+    try {
+      if (json.containsKey('user')) {
+        final user = UserModel.fromJson(json['user']);
+        final totalDistance = json['totalDistance'] ?? 0.0;
+        currentUser = user;
+        return UserLoaded(user, totalDistance: totalDistance);
+      }
+      return UserInitial();
+    } catch (_) {
+      return UserInitial();
+    }
+  }
+
+  @override
+  Map<String, dynamic>? toJson(UserState state) {
+    if (state is UserLoaded) {
+      return {
+        'user': state.user.toJson(),
+        'totalDistance': state.totalDistance,
+      };
+    }
+    return null;
   }
 }

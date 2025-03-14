@@ -294,7 +294,7 @@ func AssignRandomQuests() gin.HandlerFunc {
 		// Get the multiplier based on user's rank
 		multiplier := helpers.GetQuestMultiplier(user.Rank)
 
-		// Apply rank multiplier to rewards
+		// Apply rank multiplier to rewards and goal
 		now := time.Now()
 		runningQuest.GivenAt = now
 
@@ -306,6 +306,12 @@ func AssignRandomQuests() gin.HandlerFunc {
 		if runningQuest.GoldReward != nil {
 			goldReward := *runningQuest.GoldReward * multiplier
 			runningQuest.GoldReward = &goldReward
+		}
+
+		// Also apply multiplier to the goal for higher ranks
+		if runningQuest.Goal != nil {
+			goal := *runningQuest.Goal * multiplier
+			runningQuest.Goal = &goal
 		}
 
 		// Mark as not custom

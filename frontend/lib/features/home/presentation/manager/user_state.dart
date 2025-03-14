@@ -9,13 +9,13 @@ class UserLoading extends UserState {}
 
 class UserLoaded extends UserState {
   final UserModel user;
+  double totalDistance;
 
-  UserLoaded(this.user);
+  UserLoaded(this.user, {this.totalDistance = 0.0});
 }
 
 class UserError extends UserState {
   Failure failure;
-
   UserError(this.failure);
 }
 

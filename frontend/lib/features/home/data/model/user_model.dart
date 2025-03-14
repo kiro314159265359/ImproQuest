@@ -148,7 +148,7 @@ class Quests {
   String? sId;
   String? name;
   int? goal;
-  int? progress;
+  double? progress;
   int? xpReward;
   int? goldReward;
   bool? isCompleted;

@@ -1,4 +1,3 @@
-// import 'package:device_preview/device_preview.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_2/core/routes/app_routes.dart';
 import 'package:flutter_application_2/core/services/distance_service_handler.dart';
@@ -12,8 +11,9 @@ import 'core/utils/get_it_constants.dart';
 import 'features/home/data/api/user_api.dart';
 import 'features/home/presentation/manager/user_cubit.dart';
 import 'core/utils/auth_helpers.dart';
+import 'package:hydrated_bloc/hydrated_bloc.dart';
+import 'package:path_provider/path_provider.dart';
 
-// Initialize the foreground service
 void _initService() {
   FlutterForegroundTask.init(
     androidNotificationOptions: AndroidNotificationOptions(
@@ -37,7 +37,6 @@ void _initService() {
   );
 }
 
-// Start the foreground service
 Future<ServiceRequestResult> _startService() async {
   if (await FlutterForegroundTask.isRunningService) {
     return FlutterForegroundTask.restartService();
@@ -59,27 +58,25 @@ Future<ServiceRequestResult> _startService() async {
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Use the documents directory to persist data between app restarts.
+  HydratedBloc.storage = await HydratedStorage.build(
+    storageDirectory:
+        HydratedStorageDirectory((await getApplicationDocumentsDirectory()).path),
+  );
   await setupDependencies();
   FlutterForegroundTask.initCommunicationPort();
 
-
-  // Request permissions and initialize service
   bool permissionGranted = await requestPermissions();
   if (permissionGranted) {
     _initService();
-    // Start tracking service after permissions are granted
     await _startService();
   } else {
     print('Necessary permission(s) declined.');
   }
 
-  // Determine the initial route
   final initialRoute = await determineInitialRoute(getIt<LoginRepo>());
 
   runApp(MyApp(initialRoute: initialRoute));
-  // runApp(DevicePreview(
-  //   builder: (context) => MyApp(initialRoute: initialRoute),
-  // ));
 }
 
 class MyApp extends StatelessWidget {
@@ -96,13 +93,12 @@ class MyApp extends StatelessWidget {
         ),
       ],
       child: MaterialApp(
-          // locale: DevicePreview.locale(context),
-          // builder: DevicePreview.appBuilder,
-          debugShowCheckedModeBanner: false,
-          initialRoute: initialRoute,
-          onGenerateRoute: appRoutes.onGenerateRoute,
-          themeMode: ThemeMode.dark,
-          darkTheme: AppTheme.appTheme),
+        debugShowCheckedModeBanner: false,
+        initialRoute: initialRoute,
+        onGenerateRoute: appRoutes.onGenerateRoute,
+        themeMode: ThemeMode.dark,
+        darkTheme: AppTheme.appTheme,
+      ),
     );
   }
 }
