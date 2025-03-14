@@ -90,7 +90,7 @@ class AppLayout extends StatelessWidget {
                           -math.pi / 4,
                         ),
                         child: const ImageIcon(
-                          AssetImage('assets/icons/Swords.png'),
+                          AssetImage(AppIcons.fightIcon),
                           color: ColorManager.whiteColor,
                           size: 25,
                         ),

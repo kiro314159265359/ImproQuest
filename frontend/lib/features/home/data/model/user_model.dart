@@ -19,6 +19,7 @@ class UserModel {
   List<Quests>? quests;
   Stats? stats;
   int? accumDistance;
+  String? rank;
   String? createdAt;
   String? updatedAt;
 
@@ -41,6 +42,7 @@ class UserModel {
       this.quests,
       this.stats,
       this.accumDistance,
+      this.rank,
       this.createdAt,
       this.updatedAt});
 
@@ -80,6 +82,7 @@ class UserModel {
     }
     stats = json['stats'] != null ? Stats.fromJson(json['stats']) : null;
     accumDistance = json['accum_distance'];
+    rank = json['rank'];
     createdAt = json['created_at'];
     updatedAt = json['updated_at'];
   }
@@ -112,6 +115,7 @@ class UserModel {
       data['stats'] = stats!.toJson();
     }
     data['accum_distance'] = accumDistance;
+    data['rank'] = rank;
     data['created_at'] = createdAt;
     data['updated_at'] = updatedAt;
     return data;
@@ -121,7 +125,7 @@ class UserModel {
 class Streak {
   String? sId;
   int? current;
-  String? highestStreak;
+  int? highestStreak;
 
   Streak({this.sId, this.current, this.highestStreak});
 
@@ -144,28 +148,31 @@ class Quests {
   String? sId;
   String? name;
   int? goal;
+  int? progress;
   int? xpReward;
   int? goldReward;
-  String? difficulty;
   bool? isCompleted;
+  bool? isCustom;
 
   Quests(
       {this.sId,
       this.name,
       this.goal,
+      this.progress,
       this.xpReward,
       this.goldReward,
-      this.difficulty,
+      this.isCustom,
       this.isCompleted});
 
   Quests.fromJson(Map<String, dynamic> json) {
     sId = json['_id'];
     name = json['name'];
     goal = json['goal'];
+    progress = json['progress'];
     xpReward = json['xp_reward'];
     goldReward = json['gold_reward'];
-    difficulty = json['difficulty'];
     isCompleted = json['is_completed'];
+    isCustom = json['is_custom'];
   }
 
   Map<String, dynamic> toJson() {
@@ -173,10 +180,11 @@ class Quests {
     data['_id'] = sId;
     data['name'] = name;
     data['goal'] = goal;
+    data['progress'] = progress;
     data['xp_reward'] = xpReward;
     data['gold_reward'] = goldReward;
-    data['difficulty'] = difficulty;
     data['is_completed'] = isCompleted;
+    data['is_custom'] = isCustom;
     return data;
   }
 }

@@ -30,4 +30,15 @@ class UserApi extends UserRepo {
   Future<void> completeStreak() async {
     await apiService.patch(EndPoints.streak);
   }
+
+  @override
+  Future<void> addCustomQuest(
+      String questName, int questXp, int questGold, String questType) async {
+    await apiService.post(EndPoints.customQuest, body: {
+      'name': questName,
+      'xp_reward': questXp,
+      'gold_reward': questGold,
+      'type': questType,
+    });
+  }
 }
