@@ -84,50 +84,47 @@ class GamePageState extends State<GamePage> {
           BlocProvider<ShopBloc>.value(value: temporaryShopBloc),
         ],
         child: Scaffold(
-          appBar: _buildAppBar(context),
-          body: BlocBuilder<GameBloc, GameState>(
-            builder: (context, state) {
-              viewModel = GameViewModel(context.read<GameBloc>());
-              return state.inFightMenu
-                  ? GameMenuUI(
-                      state: state,
-                      bloc: context.read<GameBloc>(),
-                    )
-                  : GameBattleUI(
-                      state: state,
-                      flameGame: flameGame,
-                      viewModel: viewModel,
-                      onBattleEnd: _handleBattleReward,
-                      onRestart: () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (_) => const GamePage()),
+          body: Stack(
+            children: [
+              IconButton(
+                icon: const ImageIcon(
+                  AssetImage('assets/icons/ExitIcon.png'),
+                  color: ColorManager.whiteColor,
+                  size: 35,
+                ),
+                onPressed: () {
+                  Flame.device.restoreFullscreen();
+                  Flame.device.setPortrait();
+                  Navigator.of(context).pop();
+                },
+              ),
+              BlocBuilder<GameBloc, GameState>(
+                builder: (context, state) {
+                  viewModel = GameViewModel(context.read<GameBloc>());
+                  return state.inFightMenu
+                      ? GameMenuUI(
+                          state: state,
+                          bloc: context.read<GameBloc>(),
+                        )
+                      : GameBattleUI(
+                          state: state,
+                          flameGame: flameGame,
+                          viewModel: viewModel,
+                          onBattleEnd: _handleBattleReward,
+                          onRestart: () {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const GamePage()),
+                            );
+                          },
                         );
-                      },
-                    );
-            },
+                },
+              ),
+            ],
           ),
         ),
       ),
-    );
-  }
-
-  AppBar _buildAppBar(BuildContext context) {
-    return AppBar(
-      leading: IconButton(
-        icon: const ImageIcon(
-          AssetImage('assets/icons/ExitIcon.png'),
-          color: ColorManager.whiteColor,
-          size: 35,
-        ),
-        onPressed: () {
-          Flame.device.restoreFullscreen();
-          Flame.device.setPortrait();
-          Navigator.of(context).pop();
-        },
-      ),
-      title: const Text('Turn-Based Fight'),
-      centerTitle: true,
     );
   }
 }

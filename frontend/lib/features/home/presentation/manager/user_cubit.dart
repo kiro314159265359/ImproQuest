@@ -75,6 +75,12 @@ class UserCubit extends Cubit<UserState> {
   double get questCompletionPercent =>
       totalQuestCount > 0 ? completedQuestCount / totalQuestCount : 0.0;
 
+  List<Quests> get quests =>
+      currentUser?.quests?.where((q) => q.isCustom == false).toList() ?? [];
+
+  List<Quests> get customQuests =>
+      currentUser?.quests?.where((q) => q.isCustom == true).toList() ?? [];
+
   Future<void> completeQuest(Quests? q) async {
     if (q?.isCompleted == true) return;
 
@@ -90,6 +96,70 @@ class UserCubit extends Cubit<UserState> {
       }
 
       emit(UserLoaded(currentUser!));
+
+      if (getIt.isRegistered<UserModel>()) {
+        getIt.unregister<UserModel>();
+      }
+      getIt.registerSingleton<UserModel>(currentUser!);
+
+      if (getIt.isRegistered<ShopBloc>()) {
+        getIt.unregister<ShopBloc>();
+      }
+      getIt.registerSingleton<ShopBloc>(ShopBloc(user: currentUser!));
+    } catch (error) {
+      if (error is DioException) {
+        emit(UpdateError(ServerFailure.fromDioError(error)));
+      } else {
+        emit(UpdateError(ServerFailure(error.toString())));
+        if (currentUser != null) {
+          emit(UserLoaded(currentUser!));
+        }
+      }
+    }
+  }
+
+  Future<void> addCustomQuest(
+      String questName, int questDifficultyLevel, String questType) async {
+    emit(UserUpdating());
+    try {
+      int questXp = 0;
+      int questGold = 0;
+
+      switch (questDifficultyLevel) {
+        case 0:
+          questXp = 10;
+          questGold = 10;
+          break;
+        case 1:
+          questXp = 20;
+          questGold = 20;
+          break;
+        case 2:
+          questXp = 30;
+          questGold = 30;
+          break;
+        case 3:
+          questXp = 40;
+          questGold = 40;
+          break;
+        case 4:
+          questXp = 50;
+          questGold = 50;
+          break;
+        case 5:
+          questXp = 60;
+          questGold = 60;
+          break;
+        default:
+          questXp = 0;
+          questGold = 0;
+          break;
+      }
+      await userRepo.addCustomQuest(questName, questXp, questGold, questType);
+
+      currentUser = await userRepo.getUserData();
+
+      emit(UserUpdated(currentUser!));
 
       if (getIt.isRegistered<UserModel>()) {
         getIt.unregister<UserModel>();

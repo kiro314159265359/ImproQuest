@@ -3,7 +3,11 @@ import 'package:flutter_application_2/game/logic/shop_bloc.dart';
 import 'package:flutter_application_2/game/logic/shop_event.dart';
 import 'package:flutter_application_2/game/logic/shop_state.dart';
 import 'package:flutter_application_2/game/viewmodel/shop_view_model.dart';
+import 'package:flutter_application_2/game/widgets/item_card.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../core/theme/color_manger.dart';
+import '../core/theme/text_style.dart';
+import '../core/utils/app_icons.dart';
 import '../core/utils/get_it_constants.dart';
 
 class ShopPage extends StatelessWidget {
@@ -18,26 +22,36 @@ class ShopPage extends StatelessWidget {
       value: shopBloc,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Shop'),
-          actions: [
-            BlocBuilder<ShopBloc, ShopState>(
-              builder: (context, state) {
-                int gold = 0;
-                if (state is ShopLoaded) {
-                  gold = state.permanentCurrency;
-                }
-                return Padding(
+          centerTitle: true,
+          backgroundColor: Colors.transparent,
+          title: BlocBuilder<ShopBloc, ShopState>(
+            builder: (context, state) {
+              int gold = 0;
+              if (state is ShopLoaded) {
+                gold = state.permanentCurrency;
+              }
+
+              return Container(
+                decoration: const BoxDecoration(
+                    color: ColorManager.containerBackGround,
+                    borderRadius: BorderRadius.all(Radius.circular(4))),
+                child: Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Center(
-                    child: Text(
-                      'Gold: $gold',
-                      style: const TextStyle(fontSize: 16),
-                    ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Image.asset(AppIcons.coinsIcon,
+                          width: 25, fit: BoxFit.contain),
+                      Text("$gold",
+                          style: TextStyles.styleMedium(context,
+                              fontSize: 16, color: ColorManager.whiteColor),
+                          textAlign: TextAlign.center),
+                    ],
                   ),
-                );
-              },
-            ),
-          ],
+                ),
+              );
+            },
+          ),
         ),
         body: BlocListener<ShopBloc, ShopState>(
           listener: (context, state) {
@@ -56,7 +70,7 @@ class ShopPage extends StatelessWidget {
                   itemCount: state.items.length,
                   itemBuilder: (context, index) {
                     final item = state.items[index];
-                    return _buildItemTile(context, item, shopViewModel);
+                    return ItemCard(item: item, viewModel: shopViewModel);
                   },
                 );
               } else if (state is ShopError) {
@@ -65,26 +79,6 @@ class ShopPage extends StatelessWidget {
               return Container();
             },
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildItemTile(
-      BuildContext context, dynamic item, ShopViewModel viewModel) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-      child: ListTile(
-        title: Text(item.name),
-        subtitle: Text('${item.description}\nPrice: ${item.price}'),
-        trailing: ElevatedButton(
-          onPressed: () {
-            viewModel.buyItem(item);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Purchased ${item.name}')),
-            );
-          },
-          child: const Text('Buy'),
         ),
       ),
     );

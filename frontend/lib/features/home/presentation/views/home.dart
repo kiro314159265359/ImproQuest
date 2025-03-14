@@ -4,9 +4,12 @@ import 'package:flutter_application_2/core/utils/app_icons.dart';
 import 'package:flutter_application_2/core/widget/appbar_stats.dart';
 import 'package:flutter_application_2/features/home/presentation/views/widgets/custom_quest_card.dart';
 import 'package:flutter_application_2/features/home/presentation/views/widgets/custom_rich_text.dart';
+import 'package:flutter_application_2/features/home/presentation/views/widgets/quest_card.dart';
+import 'package:flutter_application_2/features/settings/presentation/views/widgets/label_box.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
+import '../../../../core/routes/routes.dart';
 import '../../../../core/theme/color_manger.dart';
 import '../../../../core/theme/text_style.dart';
 import '../../data/model/user_model.dart';
@@ -31,6 +34,7 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   // Add static reference to current state for the callback
   static _HomeState? currentState;
+  Map<String, bool> questLoadingState = {};
 
   // Add variables to store tracking data
   String _currentActivity = 'UNKNOWN';
@@ -109,6 +113,7 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       body: BackgroundTheme(
         child: BlocConsumer<UserCubit, UserState>(
           listener: (context, state) {
@@ -127,67 +132,13 @@ class _HomeState extends State<Home> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        heroTag: "home_debug_button",
-        onPressed: _showDebugDialog,
-        child: const Icon(Icons.bug_report),
+        backgroundColor: ColorManager.primaryColor,
+        tooltip: "Add Custom Quest",
+        onPressed: () {
+          Navigator.pushNamed(context, Routes.addQuestScreen);
+        },
+        child: const Icon(Icons.add),
       ),
-    );
-  }
-
-  void _showDebugDialog() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            // Store the setState function so we can update from outside
-            _debugDialogSetState = setState;
-
-            return AlertDialog(
-              title: const Text('Activity Tracking Debug'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Current Activity: $_currentActivity'),
-                  Text('Confidence: $_confidence'),
-                  Text('Tracking Active: ${_isTracking ? 'Yes' : 'No'}'),
-                  Text(
-                      'Total Distance: ${(_totalDistance).toStringAsFixed(2)} m'),
-                  Text(
-                      'Last Updated: ${_lastUpdated.hour}:${_lastUpdated.minute}:${_lastUpdated.second}'),
-                  const SizedBox(height: 10),
-                  StreamBuilder<bool>(
-                    stream: Stream.periodic(const Duration(seconds: 1))
-                        .asyncMap(
-                            (_) => FlutterForegroundTask.isRunningService),
-                    initialData: false,
-                    builder: (context, snapshot) {
-                      final isRunning = snapshot.data ?? false;
-                      return Text(
-                        'Service Status: ${isRunning ? 'Running' : 'Stopped'}',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: isRunning ? Colors.green : Colors.red,
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    _debugDialogSetState = null; // Clear reference when closed
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text("Close"),
-                )
-              ],
-            );
-          },
-        );
-      },
     );
   }
 
@@ -232,7 +183,7 @@ class _HomeState extends State<Home> {
                           text1:
                               '${context.read<UserCubit>().completedQuestCount} Quest ',
                           textStyle1: TextStyles.styleSemiBold(context,
-                              fontSize: 18, color: const Color(0xFFA4FF72)),
+                              fontSize: 18, color: ColorManager.lightGreen),
                           text2: 'completed',
                           textStyle2: TextStyles.styleSemiBold(context,
                               fontSize: 18, color: const Color(0xFFB7B7B9)),
@@ -277,8 +228,8 @@ class _HomeState extends State<Home> {
                           begin: Alignment.topRight,
                           end: Alignment.bottomLeft,
                           colors: <Color>[
-                            Color(0xFFA4FF72),
-                            Color(0xFFA4FF72)
+                            ColorManager.lightGreen,
+                            ColorManager.lightGreen
                           ]),
                       rotateLinearGradient: true,
                       circularStrokeCap: CircularStrokeCap.round,
@@ -287,7 +238,12 @@ class _HomeState extends State<Home> {
                 ),
               ),
             ),
-            _buildQuestsList(user.quests),
+            _buildQuestsList(context.read<UserCubit>().quests),
+            LabelBox(
+              labelText: "Your Quests",
+              child: _buildCustomQuestsList(
+                  context.read<UserCubit>().customQuests),
+            )
           ],
         ),
       ),
@@ -326,52 +282,59 @@ class _HomeState extends State<Home> {
 
         return Padding(
           padding: const EdgeInsets.only(bottom: 5),
-          child: Card(
-            color: ColorManager.gunmetal,
-            child: Column(
-              children: [
-                CustomQuestCard(
-                  questName: quest.name ?? "Unnamed Quest",
-                  questDesc:
-                      "${quest.xpReward ?? 0} XP • ${quest.goldReward ?? 0} Gold",
-                  goal: quest.goal ?? 1000,
-                  questImageIcon: AppIcons.runningIcon,
-                  progress: progress,
-                ),
-                // For distance-based quests, show the current progress
-                if (quest.isCompleted != true &&
-                    quest.goal != null &&
-                    quest.goal! > 100)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          "${(_totalDistance).toStringAsFixed(0)}/${quest.goal} meters",
-                          style: TextStyles.styleRegular(context,
-                              fontSize: 14, color: ColorManager.whiteColor),
-                        ),
-                        if (_isTracking)
-                          const Padding(
-                            padding: EdgeInsets.only(left: 8.0),
-                            child: Icon(
-                              Icons.directions_run,
-                              color: Color(0xFFA4FF72),
-                              size: 16,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ElevatedButton(
-                  onPressed: () async {
-                    await context.read<UserCubit>().completeQuest(quest);
-                  },
-                  child: const Text("OK"),
-                )
-              ],
-            ),
+          child: QuestCard(
+            questName: quest.name ?? "Unnamed Quest",
+            questDesc:
+                "${quest.xpReward ?? 0} XP • ${quest.goldReward ?? 0} Gold",
+            goal: quest.goal ?? 1000,
+            questImageIcon: AppIcons.runningIcon,
+            progress: progress,
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildCustomQuestsList(List<Quests>? quests) {
+    if (quests == null || quests.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 150),
+        child: Center(
+          child: Text("No custom quests available",
+              style: TextStyles.styleSemiBold(context,
+                  fontSize: 20, color: ColorManager.whiteColor)),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: quests.length,
+      itemBuilder: (context, index) {
+        final quest = quests[index];
+        bool isLoading = questLoadingState[quest.sId] ?? false;
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 5),
+          child: CustomQuestCard(
+            questName: quest.name ?? "Unnamed Quest",
+            questDesc:
+                "${quest.xpReward ?? 0} XP • ${quest.goldReward ?? 0} Gold",
+            questImageIcon: AppIcons.runningIcon,
+            progress: quest.isCompleted!,
+            onCompleteQuest: () async {
+              setState(() {
+                questLoadingState[quest.sId!] = true;
+              });
+
+              await context.read<UserCubit>().completeQuest(quest);
+
+              setState(() {
+                questLoadingState[quest.sId!] = false;
+              });
+            },
+            isLoading: isLoading,
           ),
         );
       },

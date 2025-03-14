@@ -9,6 +9,7 @@ import '../../features/home/presentation/manager/user_cubit.dart';
 import '../../features/home/presentation/manager/user_state.dart';
 import '../theme/color_manger.dart';
 import '../theme/text_style.dart';
+import '../utils/app_icons.dart';
 
 class AppBarStats extends StatefulWidget {
   const AppBarStats({super.key});
@@ -102,7 +103,7 @@ class _AppBarStatsState extends State<AppBarStats> {
             CircleAvatar(
               radius: 30,
               backgroundColor: ColorManager.gunmetal,
-              child: Image.asset('assets/icons/CoinsIcon.png',
+              child: Image.asset(AppIcons.coinsIcon,
                   width: 25, fit: BoxFit.contain),
             ),
           ],

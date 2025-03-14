@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
-import '../logic/game_bloc.dart';
-import '../logic/game_event.dart';
+import '../../core/theme/color_manger.dart';
+import '../../core/theme/text_style.dart';
 import '../constants/game_constants.dart';
 
 class EnemyBlindCard extends StatelessWidget {
-  final GameBloc bloc;
   final int blind;
   final int currentAnte;
   final int currentBlind;
 
   const EnemyBlindCard({
     super.key,
-    required this.bloc,
     required this.blind,
     required this.currentAnte,
     required this.currentBlind,
@@ -26,35 +24,52 @@ class EnemyBlindCard extends StatelessWidget {
     final bool isAvailable = blind == currentBlind;
 
     return Card(
-      color: isCompleted ? Colors.grey[300] : Colors.white,
+      color: isAvailable ? ColorManager.primaryColor : ColorManager.gunmetal,
       child: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Column(
           children: [
-            Text(
-              'Blind $blind: $enemyType',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: isCompleted ? Colors.grey : Colors.black,
+            Text('Blind $blind: $enemyType',
+                style: TextStyles.styleSemiBold(context,
+                    fontSize: 18, color: ColorManager.whiteColor)),
+            IntrinsicHeight(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Strength: ${stats.strength}',
+                          style: TextStyles.styleMedium(context,
+                              fontSize: 16, color: ColorManager.whiteColor)),
+                      const SizedBox(height: 14),
+                      Text('Endurance: ${stats.endurance}',
+                          style: TextStyles.styleMedium(context,
+                              fontSize: 16, color: ColorManager.whiteColor)),
+                    ],
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: VerticalDivider(
+                      width: 2,
+                      color: ColorManager.lightGrey,
+                      thickness: 2,
+                    ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Vitality: ${stats.vitality}',
+                          style: TextStyles.styleMedium(context,
+                              fontSize: 16, color: ColorManager.whiteColor)),
+                      const SizedBox(height: 14),
+                      Text('Agility: ${stats.agility}',
+                          style: TextStyles.styleMedium(context,
+                              fontSize: 16, color: ColorManager.whiteColor)),
+                    ],
+                  ),
+                ],
               ),
-            ),
-            Text(
-              'Vitality: ${stats.vitality}, Strength: ${stats.strength}, ' 
-                  'Endurance: ${stats.endurance}, Agility: ${stats.agility}',
-              style: const TextStyle(
-                color: Colors.red,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            ElevatedButton(
-              onPressed: isAvailable
-                  ? () {
-                      bloc.add(SelectBlindEvent(blind));
-                    }
-                  : null,
-              child: const Text('Fight'),
             ),
           ],
         ),

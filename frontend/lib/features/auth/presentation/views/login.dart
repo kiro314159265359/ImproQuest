@@ -21,10 +21,12 @@ class Login extends StatefulWidget {
 }
 
 class _LoginState extends State<Login> {
-  bool rememberMe = false;
+  bool rememberMe = true;
   final formKey = GlobalKey<FormState>();
-  TextEditingController emailController = TextEditingController();
-  TextEditingController passController = TextEditingController();
+  TextEditingController emailController =
+      TextEditingController(text: "nigga@gmail.com");
+  TextEditingController passController =
+      TextEditingController(text: "nigga123");
 
   @override
   Widget build(BuildContext context) {
