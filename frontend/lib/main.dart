@@ -6,9 +6,7 @@ import 'package:flutter_application_2/core/theme/app_theme.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_application_2/features/auth/domain/repo/login_repo.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
-import 'core/service/api/api_service.dart';
 import 'core/utils/get_it_constants.dart';
-import 'features/home/data/api/user_api.dart';
 import 'features/home/presentation/manager/user_cubit.dart';
 import 'core/utils/auth_helpers.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
@@ -28,7 +26,7 @@ void _initService() {
       playSound: false,
     ),
     foregroundTaskOptions: ForegroundTaskOptions(
-      eventAction: ForegroundTaskEventAction.repeat(5000),
+      eventAction: ForegroundTaskEventAction.repeat(2000),
       autoRunOnBoot: true,
       autoRunOnMyPackageReplaced: true,
       allowWakeLock: true,
@@ -60,8 +58,8 @@ Future<void> main() async {
 
   // Use the documents directory to persist data between app restarts.
   HydratedBloc.storage = await HydratedStorage.build(
-    storageDirectory:
-        HydratedStorageDirectory((await getApplicationDocumentsDirectory()).path),
+    storageDirectory: HydratedStorageDirectory(
+        (await getApplicationDocumentsDirectory()).path),
   );
   await setupDependencies();
   FlutterForegroundTask.initCommunicationPort();
@@ -88,8 +86,8 @@ class MyApp extends StatelessWidget {
     AppRoutes appRoutes = AppRoutes();
     return MultiBlocProvider(
       providers: [
-        BlocProvider(
-          create: (context) => UserCubit(UserApi(getIt<ApiService>())),
+        BlocProvider<UserCubit>.value(
+          value: getIt<UserCubit>(),
         ),
       ],
       child: MaterialApp(

@@ -42,11 +42,5 @@ class UserApi extends UserRepo {
     });
   }
   
-  @override
-  Future<void> updateQuestProgress(String questId, double progress) {
-    return apiService.put(EndPoints.questProgress, body: {
-      'questId': questId,
-      'progress': progress,
-    });
-  }
+
 }

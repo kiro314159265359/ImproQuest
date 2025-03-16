@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:flutter_application_2/features/home/presentation/manager/user_state.dart';
 import '../../../../core/error/failure.dart';
@@ -13,20 +14,33 @@ class UserCubit extends HydratedCubit<UserState> {
 
   UserCubit(this.userRepo) : super(UserInitial());
 
+  /// Helper method to get current distance from state
+  double get _currentDistance =>
+      (state is UserLoaded) ? (state as UserLoaded).totalDistance : 0.0;
+
   Future<UserModel> fetchUserData() async {
+    // Capture the previous distance before emitting a new state.
+    double previousDistance = 0.0;
+    if (state is UserLoaded) {
+      previousDistance = (state as UserLoaded).totalDistance;
+    }
+    print("Captured previousDistance: $previousDistance");
+
+    // Now emit loading without affecting the captured value.
     emit(UserLoading());
     try {
-      currentUser = await userRepo.getUserData();
-      // Always emit a UserLoaded state so that persistence works.
-      emit(UserLoaded(currentUser!));
+      final freshUser = await userRepo.getUserData();
+      print("Fetched new user data. Preserving distance: $previousDistance");
+      currentUser = freshUser;
+      // Emit the new state with the preserved distance.
+      emit(UserLoaded(currentUser!, totalDistance: previousDistance));
 
-      // Update GetIt with the new UserModel.
+      // Update GetIt registrations...
       if (getIt.isRegistered<UserModel>()) {
         getIt.unregister<UserModel>();
       }
       getIt.registerSingleton<UserModel>(currentUser!);
 
-      // Register or update the ShopBloc with the fetched user.
       if (getIt.isRegistered<ShopBloc>()) {
         getIt.unregister<ShopBloc>();
       }
@@ -48,14 +62,14 @@ class UserCubit extends HydratedCubit<UserState> {
     try {
       currentUser = await userRepo.updateUserData(updatedUser);
 
-      // Emit as loaded so that state persists.
-      emit(UserLoaded(currentUser!));
+      // Emit as loaded so that state persists with the current distance
+      emit(UserLoaded(currentUser!, totalDistance: _currentDistance));
 
       if (getIt.isRegistered<UserModel>()) {
         getIt.unregister<UserModel>();
       }
       getIt.registerSingleton<UserModel>(currentUser!);
-      
+
       if (getIt.isRegistered<ShopBloc>()) {
         getIt.unregister<ShopBloc>();
       }
@@ -66,7 +80,7 @@ class UserCubit extends HydratedCubit<UserState> {
       } else {
         emit(UpdateError(ServerFailure(error.toString())));
         if (currentUser != null) {
-          emit(UserLoaded(currentUser!));
+          emit(UserLoaded(currentUser!, totalDistance: _currentDistance));
         }
       }
     }
@@ -101,25 +115,33 @@ class UserCubit extends HydratedCubit<UserState> {
         currentUser = await userRepo.getUserData();
       }
 
-      // Always emit as loaded.
-      emit(UserLoaded(currentUser!));
+      // Always emit as loaded with the preserved distance.
+      emit(UserLoaded(currentUser!, totalDistance: _currentDistance));
 
       if (getIt.isRegistered<UserModel>()) {
         getIt.unregister<UserModel>();
       }
       getIt.registerSingleton<UserModel>(currentUser!);
-      
+
       if (getIt.isRegistered<ShopBloc>()) {
         getIt.unregister<ShopBloc>();
       }
       getIt.registerSingleton<ShopBloc>(ShopBloc(user: currentUser!));
+
+      if (quests.isNotEmpty &&
+          quests.every((quest) => quest.isCompleted == true)) {
+        // Send reset command to the background service.
+        await FlutterForegroundTask.stopService();
+        // Optionally, update the local state to reflect that totalDistance is now reset.
+        emit(UserLoaded(currentUser!, totalDistance: 0.0));
+      }
     } catch (error) {
       if (error is DioException) {
         emit(UpdateError(ServerFailure.fromDioError(error)));
       } else {
         emit(UpdateError(ServerFailure(error.toString())));
         if (currentUser != null) {
-          emit(UserLoaded(currentUser!));
+          emit(UserLoaded(currentUser!, totalDistance: _currentDistance));
         }
       }
     }
@@ -166,14 +188,14 @@ class UserCubit extends HydratedCubit<UserState> {
 
       currentUser = await userRepo.getUserData();
 
-      // Emit loaded state
-      emit(UserLoaded(currentUser!));
+      // Emit loaded state with preserved distance
+      emit(UserLoaded(currentUser!, totalDistance: _currentDistance));
 
       if (getIt.isRegistered<UserModel>()) {
         getIt.unregister<UserModel>();
       }
       getIt.registerSingleton<UserModel>(currentUser!);
-      
+
       if (getIt.isRegistered<ShopBloc>()) {
         getIt.unregister<ShopBloc>();
       }
@@ -184,43 +206,9 @@ class UserCubit extends HydratedCubit<UserState> {
       } else {
         emit(UpdateError(ServerFailure(error.toString())));
         if (currentUser != null) {
-          emit(UserLoaded(currentUser!));
+          emit(UserLoaded(currentUser!, totalDistance: _currentDistance));
         }
       }
-    }
-  }
-
-  Future<bool> updateQuestProgress(String? questId, double? progress) async {
-    emit(UserUpdating());
-    try {
-      await userRepo.updateQuestProgress(questId!, progress!);
-
-      currentUser = await userRepo.getUserData();
-
-      // Emit as loaded.
-      emit(UserLoaded(currentUser!));
-
-      if (getIt.isRegistered<UserModel>()) {
-        getIt.unregister<UserModel>();
-      }
-      getIt.registerSingleton<UserModel>(currentUser!);
-      
-      if (getIt.isRegistered<ShopBloc>()) {
-        getIt.unregister<ShopBloc>();
-      }
-      getIt.registerSingleton<ShopBloc>(ShopBloc(user: currentUser!));
-
-      return true;
-    } catch (error) {
-      if (error is DioException) {
-        emit(UpdateError(ServerFailure.fromDioError(error)));
-      } else {
-        emit(UpdateError(ServerFailure(error.toString())));
-        if (currentUser != null) {
-          emit(UserLoaded(currentUser!));
-        }
-      }
-      return false;
     }
   }
 
@@ -252,14 +240,17 @@ class UserCubit extends HydratedCubit<UserState> {
   @override
   UserState? fromJson(Map<String, dynamic> json) {
     try {
+      print("Hydrating state from: $json");
       if (json.containsKey('user')) {
         final user = UserModel.fromJson(json['user']);
         final totalDistance = json['totalDistance'] ?? 0.0;
+        print("Hydrated totalDistance: $totalDistance");
         currentUser = user;
         return UserLoaded(user, totalDistance: totalDistance);
       }
       return UserInitial();
-    } catch (_) {
+    } catch (e) {
+      print("Error in hydration: $e");
       return UserInitial();
     }
   }

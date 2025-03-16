@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_2/core/utils/get_it_constants.dart';
 import 'package:flutter_application_2/features/home/presentation/manager/user_cubit.dart';
 import 'package:flutter_application_2/features/home/presentation/manager/user_state.dart';
 import 'package:flutter_application_2/features/settings/presentation/views/widgets/label_box.dart';
@@ -145,7 +146,7 @@ class _AddQuestState extends State<AddQuest> {
                           CustomPrimaryButton(
                               onPressed: () {
                                 if (formKey.currentState!.validate()) {
-                                  context.read<UserCubit>().addCustomQuest(
+                                  getIt<UserCubit>().addCustomQuest(
                                       questNameController.text,
                                       questDifficultyLevel.toInt(),
                                       questType!);

@@ -11,11 +11,11 @@ void startCallback() {
 
 const geo.LocationSettings locationSettings = geo.LocationSettings(
   accuracy: geo.LocationAccuracy.best,
-  distanceFilter: 4,
+  distanceFilter: 1,
 );
 
 geo.Position? _lastPosition;
-double _totalDistance = 0.0;
+double _totalDistance = 0.0; // Will be updated with initial value from main app
 bool _isTracking = false;
 Activity? _currentActivity;
 
@@ -26,6 +26,16 @@ class MyTaskHandler extends TaskHandler {
   // Called when the task is started.
   @override
   Future<void> onStart(DateTime timestamp, TaskStarter starter) async {
+    // Check for initial distance data
+    final initialData =
+        await FlutterForegroundTask.getData(key: 'initialDistance');
+    if (initialData != null && initialData is double) {
+      _totalDistance = initialData;
+      print("Initial distance set to: $_totalDistance meters");
+    } else {
+      print("No initial distance data found.");
+    }
+
     _activitySubscription = FlutterActivityRecognition.instance.activityStream
         .handleError(_onError)
         .listen(_onActivity);
@@ -49,9 +59,6 @@ class MyTaskHandler extends TaskHandler {
           notificationText: 'Not tracking activity ${activity.toJson()}');
       print("Not tracking activity: ${activity.toJson()}");
     }
-
-    // Send complete data to main app
-    _sendCompleteDataToMain();
   }
 
   void _onDistance(geo.Position? position) {
@@ -117,6 +124,10 @@ class MyTaskHandler extends TaskHandler {
   @override
   void onReceiveData(Object data) {
     print('onReceiveData: $data');
+    if (data is Map<String, dynamic> && data.containsKey('initialDistance')) {
+      _totalDistance = data['initialDistance'] as double;
+      print("Updated initial distance from main app: $_totalDistance meters");
+    }
   }
 
   // Called when the notification button is pressed.

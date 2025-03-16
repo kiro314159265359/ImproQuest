@@ -7,6 +7,5 @@ abstract class UserRepo {
   Future<void> completeStreak();
   Future<void> addCustomQuest(
       String questName, int questXp, int questGold, String questType);
-  Future<void> updateQuestProgress(
-      String questId, double progress);
+
 }

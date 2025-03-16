@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_2/core/theme/background_theme.dart';
 import 'package:flutter_application_2/core/utils/app_icons.dart';
+import 'package:flutter_application_2/core/utils/get_it_constants.dart';
 import 'package:flutter_application_2/core/widget/appbar_stats.dart';
 import 'package:flutter_application_2/features/home/presentation/views/widgets/custom_quest_card.dart';
 import 'package:flutter_application_2/features/home/presentation/views/widgets/custom_rich_text.dart';
@@ -34,6 +35,7 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   // Static reference for callback access.
   static _HomeState? currentState;
+  bool _distanceSent = false; // To ensure we only send once
 
   // Local map to manage loading states for custom quests.
   final Map<String, bool> questLoadingState = {};
@@ -43,13 +45,23 @@ class _HomeState extends State<Home> {
     super.initState();
     // Assign the current instance for callback use.
     currentState = this;
-    // Only fetch new user data if the cubit's state is still initial.
-    if (context.read<UserCubit>().state is UserInitial) {
-      print("testing fetchUserData");
-      context.read<UserCubit>().fetchUserData();
-    }
+
+    getIt<UserCubit>().fetchUserData();
     // Register foreground task callback.
     FlutterForegroundTask.addTaskDataCallback(_onReceiveTaskData);
+  }
+
+  /// Sends the current total distance to the foreground service
+  void _sendCurrentDistanceToService(double distance) async {
+    final isRunning = await FlutterForegroundTask.isRunningService;
+    if (isRunning) {
+      FlutterForegroundTask.sendDataToTask({
+        'initialDistance': distance,
+      });
+      print("Sent initial distance to service: $distance");
+    } else {
+      print("Foreground service not running.");
+    }
   }
 
   @override
@@ -62,7 +74,7 @@ class _HomeState extends State<Home> {
   /// Handles background task data by delegating to the cubit's update method.
   void _handleTaskData(Map<String, dynamic> data) {
     final totalDistance = data['totalDistance'] ?? 0.0;
-    context.read<UserCubit>().updateDistanceAndCheckQuests(totalDistance);
+    getIt<UserCubit>().updateDistanceAndCheckQuests(totalDistance);
   }
 
   @override
@@ -79,6 +91,11 @@ class _HomeState extends State<Home> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text(state.failure.message)),
               );
+            }
+            if (state is UserLoaded && !_distanceSent) {
+              _distanceSent = true;
+              // Delay a bit if necessary, or send immediately.
+              _sendCurrentDistanceToService(state.totalDistance);
             }
           },
           builder: (context, state) {
@@ -124,11 +141,10 @@ class _HomeState extends State<Home> {
             ),
             SizedBox(height: screenHeight * 0.025),
             _buildDailyQuestCard(),
-            _buildQuestsList(user.quests),
+            _buildQuestsList(getIt<UserCubit>().quests),
             LabelBox(
               labelText: "Your Quests",
-              child: _buildCustomQuestsList(
-                  context.read<UserCubit>().customQuests),
+              child: _buildCustomQuestsList(getIt<UserCubit>().customQuests),
             ),
           ],
         ),
@@ -154,8 +170,7 @@ class _HomeState extends State<Home> {
                   textAlign: TextAlign.center,
                 ),
                 CustomRichText(
-                  text1:
-                      '${context.read<UserCubit>().completedQuestCount} Quest ',
+                  text1: '${getIt<UserCubit>().completedQuestCount} Quest ',
                   textStyle1: TextStyles.styleSemiBold(context,
                       fontSize: 18, color: ColorManager.lightGreen),
                   text2: 'completed',
@@ -169,7 +184,7 @@ class _HomeState extends State<Home> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   child: Text(
-                    "${context.read<UserCubit>().remainingQuestCount} Quests left",
+                    "${getIt<UserCubit>().remainingQuestCount} Quests left",
                     style: TextStyles.styleSemiBold(context,
                         fontSize: 18, color: ColorManager.whiteColor),
                     textAlign: TextAlign.center,
@@ -190,9 +205,9 @@ class _HomeState extends State<Home> {
               backgroundColor: ColorManager.containerBackGround,
               radius: 60,
               lineWidth: 10.0,
-              percent: context.read<UserCubit>().questCompletionPercent,
+              percent: getIt<UserCubit>().questCompletionPercent,
               center: Text(
-                "${(context.read<UserCubit>().questCompletionPercent * 100).toStringAsFixed(0)}%",
+                "${(getIt<UserCubit>().questCompletionPercent * 100).toStringAsFixed(0)}%",
                 style: TextStyles.styleSemiBold(context,
                     fontSize: 20, color: ColorManager.whiteColor),
                 textAlign: TextAlign.center,
@@ -227,7 +242,7 @@ class _HomeState extends State<Home> {
       );
     }
 
-    final state = context.read<UserCubit>().state;
+    final state = getIt<UserCubit>().state;
     final totalDistance = state is UserLoaded ? state.totalDistance : 0.0;
 
     return ListView.builder(
@@ -292,7 +307,7 @@ class _HomeState extends State<Home> {
               setState(() {
                 questLoadingState[questId] = true;
               });
-              await context.read<UserCubit>().completeQuest(quest);
+              await getIt<UserCubit>().completeQuest(quest);
               setState(() {
                 questLoadingState[questId] = false;
               });
