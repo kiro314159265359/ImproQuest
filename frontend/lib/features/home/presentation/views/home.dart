@@ -22,6 +22,7 @@ import '../manager/user_state.dart';
 void _onReceiveTaskData(Object data) {
   if (data is Map<String, dynamic> && _HomeState.currentState != null) {
     _HomeState.currentState!._handleTaskData(data);
+    print("Received data from service: $data");
   }
 }
 
@@ -46,9 +47,17 @@ class _HomeState extends State<Home> {
     // Assign the current instance for callback use.
     currentState = this;
 
-    getIt<UserCubit>().fetchUserData();
+    _initializeData();
     // Register foreground task callback.
     FlutterForegroundTask.addTaskDataCallback(_onReceiveTaskData);
+  }
+
+  Future<void> _initializeData() async {
+    // First, wait for user data to load (hydrated values)
+    await getIt<UserCubit>().fetchUserData();
+
+    // Then check the service distance and use the greater value
+    await _retrieveServiceDistance();
   }
 
   /// Sends the current total distance to the foreground service
@@ -59,6 +68,60 @@ class _HomeState extends State<Home> {
         'initialDistance': distance,
       });
       print("Sent initial distance to service: $distance");
+    } else {
+      print("Foreground service not running.");
+    }
+  }
+
+  // ...existing code...
+
+  Future<void> _retrieveServiceDistance() async {
+    print("Retrieving service distance...");
+    final isRunning = await FlutterForegroundTask.isRunningService;
+    if (isRunning) {
+      try {
+        // Get the simple distance value directly
+        final serviceDistance =
+            await FlutterForegroundTask.getData(key: 'totalDistance');
+        print("Raw service distance data: $serviceDistance");
+
+        if (serviceDistance != null) {
+          // Parse distance (depending on what type it's stored as)
+          double distance = 0.0;
+          if (serviceDistance is double) {
+            distance = serviceDistance;
+          } else if (serviceDistance is int) {
+            distance = serviceDistance.toDouble();
+          } else if (serviceDistance is String) {
+            distance = double.tryParse(serviceDistance) ?? 0.0;
+          }
+
+          print("Retrieved service distance: $distance meters");
+
+          // Get current hydrated distance
+          final currentState = getIt<UserCubit>().state;
+          final hydratedDistance =
+              currentState is UserLoaded ? currentState.totalDistance : 0.0;
+
+          // Use the larger value
+          if (distance > hydratedDistance) {
+            print(
+                "Using service distance ($distance) over hydrated distance ($hydratedDistance)");
+            getIt<UserCubit>().updateDistanceAndCheckQuests(distance);
+            _distanceSent = true; // Mark as synchronized
+          } else if (hydratedDistance > 0) {
+            print(
+                "Using hydrated distance ($hydratedDistance) as it's larger than service distance ($distance)");
+            // Ensure service has the higher value too
+            _sendCurrentDistanceToService(hydratedDistance);
+            _distanceSent = true;
+          }
+        } else {
+          print("No distance data found in service.");
+        }
+      } catch (e) {
+        print("Error retrieving service distance: $e");
+      }
     } else {
       print("Foreground service not running.");
     }
@@ -94,7 +157,6 @@ class _HomeState extends State<Home> {
             }
             if (state is UserLoaded && !_distanceSent) {
               _distanceSent = true;
-              // Delay a bit if necessary, or send immediately.
               _sendCurrentDistanceToService(state.totalDistance);
             }
           },

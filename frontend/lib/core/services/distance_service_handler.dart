@@ -77,6 +77,8 @@ class MyTaskHandler extends TaskHandler {
               'Total distance tracked : $_totalDistance, Segment distance: $segmentDistance',
         );
 
+        _saveDistance();
+
         // Send complete data to main app
         _sendCompleteDataToMain();
       } else {
@@ -90,8 +92,19 @@ class MyTaskHandler extends TaskHandler {
     }
   }
 
+  void _saveDistance() async {
+    try {
+      // Store as a simple value rather than a complex Map
+      await FlutterForegroundTask.saveData(
+          key: 'totalDistance', value: _totalDistance);
+      print("Saved distance: $_totalDistance");
+    } catch (e) {
+      print("Error saving distance: $e");
+    }
+  }
+
   // New method to send all data in a consistent format
-  void _sendCompleteDataToMain() {
+  void _sendCompleteDataToMain() async {
     Map<String, dynamic> completeData = {
       'activity': _currentActivity?.type.name ?? 'UNKNOWN',
       'confidence': _currentActivity?.confidence.name ?? 'UNKNOWN',
@@ -125,8 +138,15 @@ class MyTaskHandler extends TaskHandler {
   void onReceiveData(Object data) {
     print('onReceiveData: $data');
     if (data is Map<String, dynamic> && data.containsKey('initialDistance')) {
-      _totalDistance = data['initialDistance'] as double;
-      print("Updated initial distance from main app: $_totalDistance meters");
+      double newDistance = data['initialDistance'] as double;
+      // Only update if it's greater than our current value
+      if (newDistance > _totalDistance) {
+        _totalDistance = newDistance;
+        _saveDistance(); // Save the new value immediately
+        print("Updated distance to: $_totalDistance meters");
+      } else {
+        print("Kept existing distance ($_totalDistance) as it's greater than received value ($newDistance)");
+      }
     }
   }
 
