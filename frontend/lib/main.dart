@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_2/core/routes/app_routes.dart';
-import 'package:flutter_application_2/core/services/distance_service_handler.dart';
 import 'package:flutter_application_2/core/services/permission_manager.dart';
 import 'package:flutter_application_2/core/theme/app_theme.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -12,68 +11,25 @@ import 'core/utils/auth_helpers.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:path_provider/path_provider.dart';
 
-void _initService() {
-  FlutterForegroundTask.init(
-    androidNotificationOptions: AndroidNotificationOptions(
-      channelId: 'quest_tracking_service',
-      channelName: 'Quest Tracking Service',
-      channelDescription:
-          'This notification appears when the foreground service is running.',
-      onlyAlertOnce: true,
-    ),
-    iosNotificationOptions: const IOSNotificationOptions(
-      showNotification: false,
-      playSound: false,
-    ),
-    foregroundTaskOptions: ForegroundTaskOptions(
-      eventAction: ForegroundTaskEventAction.repeat(2000),
-      autoRunOnBoot: true,
-      autoRunOnMyPackageReplaced: true,
-      allowWakeLock: true,
-      allowWifiLock: true,
-    ),
-  );
-}
-
-Future<ServiceRequestResult> _startService() async {
-  if (await FlutterForegroundTask.isRunningService) {
-    return FlutterForegroundTask.restartService();
-  } else {
-    return FlutterForegroundTask.startService(
-      serviceId: 256,
-      notificationTitle: 'Quest Tracking Service',
-      notificationText: 'Tracking your activity progress',
-      notificationIcon: null,
-      notificationButtons: [
-        const NotificationButton(id: 'btn_stop', text: 'Stop'),
-      ],
-      notificationInitialRoute: '/',
-      callback: startCallback,
-    );
-  }
-}
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Use the documents directory to persist data between app restarts.
+  // Initialize hydrated storage so that the UserCubit is rehydrated.
   HydratedBloc.storage = await HydratedStorage.build(
     storageDirectory: HydratedStorageDirectory(
-        (await getApplicationDocumentsDirectory()).path),
+      (await getApplicationDocumentsDirectory()).path,
+    ),
   );
+
   await setupDependencies();
   FlutterForegroundTask.initCommunicationPort();
 
   bool permissionGranted = await requestPermissions();
-  if (permissionGranted) {
-    _initService();
-    await _startService();
-  } else {
+  if (!permissionGranted) {
     print('Necessary permission(s) declined.');
   }
 
   final initialRoute = await determineInitialRoute(getIt<LoginRepo>());
-
   runApp(MyApp(initialRoute: initialRoute));
 }
 

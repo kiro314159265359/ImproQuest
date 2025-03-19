@@ -134,6 +134,7 @@ class UserCubit extends HydratedCubit<UserState> {
         await FlutterForegroundTask.stopService();
         // Optionally, update the local state to reflect that totalDistance is now reset.
         emit(UserLoaded(currentUser!, totalDistance: 0.0));
+        FlutterForegroundTask.saveData(key: 'totalDistance', value: 0.0);
       }
     } catch (error) {
       if (error is DioException) {

@@ -16,6 +16,7 @@ import '../../../../core/theme/text_style.dart';
 import '../../data/model/user_model.dart';
 import '../manager/user_cubit.dart';
 import '../manager/user_state.dart';
+import 'package:flutter_application_2/core/services/service_manager.dart'; // Import the service manager
 
 /// Callback for handling foreground task data.
 /// Delegates distance updates and quest progress checking to the cubit.
@@ -60,7 +61,7 @@ class _HomeState extends State<Home> {
     await _retrieveServiceDistance();
   }
 
-  /// Sends the current total distance to the foreground service
+  /// Sends the current total distance to the foreground service.
   void _sendCurrentDistanceToService(double distance) async {
     final isRunning = await FlutterForegroundTask.isRunningService;
     if (isRunning) {
@@ -73,20 +74,16 @@ class _HomeState extends State<Home> {
     }
   }
 
-  // ...existing code...
-
   Future<void> _retrieveServiceDistance() async {
     print("Retrieving service distance...");
     final isRunning = await FlutterForegroundTask.isRunningService;
     if (isRunning) {
       try {
-        // Get the simple distance value directly
         final serviceDistance =
             await FlutterForegroundTask.getData(key: 'totalDistance');
         print("Raw service distance data: $serviceDistance");
 
         if (serviceDistance != null) {
-          // Parse distance (depending on what type it's stored as)
           double distance = 0.0;
           if (serviceDistance is double) {
             distance = serviceDistance;
@@ -98,21 +95,18 @@ class _HomeState extends State<Home> {
 
           print("Retrieved service distance: $distance meters");
 
-          // Get current hydrated distance
           final currentState = getIt<UserCubit>().state;
           final hydratedDistance =
               currentState is UserLoaded ? currentState.totalDistance : 0.0;
 
-          // Use the larger value
           if (distance > hydratedDistance) {
             print(
                 "Using service distance ($distance) over hydrated distance ($hydratedDistance)");
             getIt<UserCubit>().updateDistanceAndCheckQuests(distance);
-            _distanceSent = true; // Mark as synchronized
+            _distanceSent = true;
           } else if (hydratedDistance > 0) {
             print(
                 "Using hydrated distance ($hydratedDistance) as it's larger than service distance ($distance)");
-            // Ensure service has the higher value too
             _sendCurrentDistanceToService(hydratedDistance);
             _distanceSent = true;
           }
@@ -158,13 +152,16 @@ class _HomeState extends State<Home> {
             if (state is UserLoaded && !_distanceSent) {
               _distanceSent = true;
               _sendCurrentDistanceToService(state.totalDistance);
+
+              // Schedule service startup after the frame is built.
+
+              startForegroundServiceIfNeeded(state);
             }
           },
           builder: (context, state) {
             if (state is UserLoaded) {
               return _buildHomeContent(state.user, screenWidth, screenHeight);
             }
-            // While waiting for a loaded state (hydrated or freshly fetched)
             return const Center(child: CircularProgressIndicator());
           },
         ),
