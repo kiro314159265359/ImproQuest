@@ -29,9 +29,11 @@ class UserCubit extends HydratedCubit<UserState> {
     // Now emit loading without affecting the captured value.
     emit(UserLoading());
     try {
+      print("Fetching fresh user data from API...");
       final freshUser = await userRepo.getUserData();
       print("Fetched new user data. Preserving distance: $previousDistance");
       currentUser = freshUser;
+
       // Emit the new state with the preserved distance.
       emit(UserLoaded(currentUser!, totalDistance: previousDistance));
 
@@ -48,6 +50,14 @@ class UserCubit extends HydratedCubit<UserState> {
 
       return currentUser!;
     } catch (error) {
+      print("API error: ${error.toString()}");
+      // If we have cached data and there's a network error, fall back to it
+      if (currentUser != null) {
+        print("Falling back to cached user data");
+        emit(UserLoaded(currentUser!, totalDistance: previousDistance));
+        return currentUser!;
+      }
+
       if (error is DioException) {
         emit(UserError(ServerFailure.fromDioError(error)));
       } else {
@@ -229,9 +239,37 @@ class UserCubit extends HydratedCubit<UserState> {
           quest.isCompleted != true &&
           quest.goal != null &&
           distance >= quest.goal!);
-      if (questsToComplete != null) {
-        for (var quest in questsToComplete) {
-          await completeQuest(quest);
+
+      if (questsToComplete != null && questsToComplete.isNotEmpty) {
+        // If we have quests to complete, fetch fresh data first to avoid
+        // completing quests that might have been completed in another session
+        try {
+          print("Fetching fresh data before completing quests");
+          await fetchUserData();
+
+          // Re-evaluate quests with fresh data while preserving distance
+          if (state is UserLoaded) {
+            final updatedState = state as UserLoaded;
+            updateDistance(distance); // Restore our tracking distance
+
+            final updatedQuestsToComplete = updatedState.user.quests?.where(
+                (quest) =>
+                    quest.isCompleted != true &&
+                    quest.goal != null &&
+                    distance >= quest.goal!);
+
+            if (updatedQuestsToComplete != null) {
+              for (var quest in updatedQuestsToComplete) {
+                await completeQuest(quest);
+              }
+            }
+          }
+        } catch (e) {
+          print("Error refreshing data before completing quests: $e");
+          // Fall back to completing quests with current data
+          for (var quest in questsToComplete) {
+            await completeQuest(quest);
+          }
         }
       }
     }

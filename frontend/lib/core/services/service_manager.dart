@@ -26,7 +26,7 @@ void _initService() {
 
 Future<ServiceRequestResult> _startService() async {
   if (await FlutterForegroundTask.isRunningService) {
-    return FlutterForegroundTask.restartService();
+    return const ServiceRequestSuccess();
   } else {
     return FlutterForegroundTask.startService(
       serviceId: 256,

@@ -20,7 +20,6 @@ class EnemyBlindCard extends StatelessWidget {
     final enemyType = _getEnemyType();
     final stats = _calculateStats();
 
-    final bool isCompleted = blind < currentBlind;
     final bool isAvailable = blind == currentBlind;
 
     return Card(
