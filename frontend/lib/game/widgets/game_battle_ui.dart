@@ -5,6 +5,7 @@ import '../components/game_button.dart';
 import '../logic/game_bloc.dart';
 import '../logic/game_event.dart';
 import '../logic/game_state.dart';
+import '../services/audio_manager.dart';
 import '../turn_based_game.dart';
 import '../viewmodel/game_view_model.dart';
 
@@ -68,6 +69,8 @@ class GameBattleUI extends StatelessWidget {
           });
         }
 
+        // Always call onBattleEnd to set up pending transitions
+        // (the GamePage will handle whether to show UI immediately or wait)
         onBattleEnd(state);
       },
       child: Container(),
@@ -92,13 +95,21 @@ class GameBattleUI extends StatelessWidget {
               children: [
                 GameButton(
                   text: "Attack",
-                  onPressed: canAct ? viewModel.attack : null,
+                  onPressed: canAct
+                      ? () {
+                          viewModel.attack();
+                        }
+                      : null,
                   width: 140,
                   height: 50,
                 ),
                 GameButton(
                   text: "Defend",
-                  onPressed: canAct ? viewModel.defend : null,
+                  onPressed: canAct
+                      ? () {
+                          viewModel.defend();
+                        }
+                      : null,
                   width: 140,
                   height: 50,
                 ),
@@ -107,7 +118,11 @@ class GameBattleUI extends StatelessWidget {
             const SizedBox(height: 25),
             GameButton(
               text: "Inventory",
-              onPressed: canAct ? viewModel.openInventory : null,
+              onPressed: canAct
+                  ? () {
+                      viewModel.openInventory();
+                    }
+                  : null,
               width: 320,
               height: 50,
             ),
