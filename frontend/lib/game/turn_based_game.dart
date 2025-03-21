@@ -226,7 +226,7 @@ class TurnBasedGame extends FlameGame {
   // Add a completion callback for death animations
   Function? onDeathAnimationComplete;
   bool _deathAnimationPlaying = false;
-  
+
   // Add a public getter for the private field
   bool get isDeathAnimationPlaying => _deathAnimationPlaying;
 

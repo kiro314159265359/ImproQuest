@@ -40,7 +40,7 @@ class AudioManager {
 
       // Preload background music
       await FlameAudio.audioCache.load(_bgmPath);
-      
+
       // Load saved volume settings
       await _loadVolumeSettings();
 
@@ -77,7 +77,7 @@ class AudioManager {
   Future<void> setMusicVolume(double volume) async {
     volume = volume.clamp(0.0, 1.0);
     _musicVolume = volume;
-    
+
     // Update playing music if needed
     if (_backgroundMusicPlaying) {
       try {
@@ -89,7 +89,7 @@ class AudioManager {
         print('Error updating music volume: $e');
       }
     }
-    
+
     // Save the new setting
     await _saveVolumeSettings();
   }
@@ -98,7 +98,7 @@ class AudioManager {
   Future<void> setSfxVolume(double volume) async {
     volume = volume.clamp(0.0, 1.0);
     _sfxVolume = volume;
-    
+
     // No need to update currently playing sounds as they're one-shot
     // Just save the setting for future sounds
     await _saveVolumeSettings();

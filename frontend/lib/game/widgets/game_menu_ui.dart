@@ -23,7 +23,7 @@ class GameMenuUI extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final audioManager = AudioManager();
-    
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(8.0),
