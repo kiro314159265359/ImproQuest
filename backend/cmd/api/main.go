@@ -57,5 +57,6 @@ func main() {
 	routes.AchievementRoutes(router)
 	routes.InventoryRoutes(router)
 	routes.GearRoutes(router)
+	routes.LeaderboardRoutes(router)
 	router.Run(":" + port)
 }
