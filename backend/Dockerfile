@@ -7,4 +7,5 @@ RUN go mod download
 
 COPY . .
 
+EXPOSE 5000
 CMD ["go", "run", "cmd/api/main.go"]
