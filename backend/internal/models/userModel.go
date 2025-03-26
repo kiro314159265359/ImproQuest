@@ -32,7 +32,7 @@ type User struct {
 	Streak        Streak          `json:"streak" bson:"streak" validate:"required"`
 	InventoryID   bson.ObjectID   `json:"inventory_id" bson:"inventory_id" validate:"required"`      // Reference to Inventory
 	Achievements  []bson.ObjectID `json:"achievements" bson:"achievements" validate:"dive,required"` // Reference to Achievements
-	CurrentQuests []Quest         `json:"current_quests" bson:"quests" validate:"dive,required"`     // Embedded Quests
+	CurrentQuests []Quest         `json:"quests" bson:"quests" validate:"dive,required"`             // Embedded Quests
 	Stats         Stats           `json:"stats" bson:"stats" validate:"required"`
 	AccumDistance float64         `json:"accum_distance" bson:"accum_distance" validate:"gte=0"`
 	Rank          string          `json:"rank" bson:"rank" validate:"required,oneof=E D C B A S"`

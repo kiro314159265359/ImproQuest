@@ -2,13 +2,14 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_2/core/theme/background_theme.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_application_2/features/auth/domain/repo/login_repo.dart';
+import '../../../../core/utils/get_it_constants.dart';
 import '../../../../core/utils/validate_input.dart';
 import '../../../../core/widget/custom_primary_button.dart';
 import '../../../../core/routes/routes.dart';
 import '../../../../core/theme/color_manger.dart';
 import '../../../../core/theme/text_style.dart';
 import '../../../../core/widget/custom_text_form_field.dart';
-import '../../data/api/login_api.dart';
 import '../manager/login_cubit/login_cubit.dart';
 import '../manager/login_cubit/login_state.dart';
 
@@ -20,15 +21,20 @@ class Login extends StatefulWidget {
 }
 
 class _LoginState extends State<Login> {
-  bool rememberMe = false;
+  bool rememberMe = true;
   final formKey = GlobalKey<FormState>();
-  TextEditingController emailController = TextEditingController();
-  TextEditingController passController = TextEditingController();
+  TextEditingController emailController =
+      TextEditingController(text: "nigga@gmail.com");
+  TextEditingController passController =
+      TextEditingController(text: "nigga123");
 
   @override
   Widget build(BuildContext context) {
+    var w = MediaQuery.of(context).size.width;
+    var h = MediaQuery.of(context).size.height;
+
     return BlocProvider(
-        create: (context) => LoginCubit(LoginApi()),
+        create: (context) => LoginCubit(getIt<LoginRepo>()),
         child: BlocConsumer<LoginCubit, LoginState>(listener: (context, state) {
           if (state is LoginSuccessState) {
             Navigator.pushReplacementNamed(context, Routes.appLayoutPage);
@@ -46,37 +52,35 @@ class _LoginState extends State<Login> {
                     child: Center(
                       child: SingleChildScrollView(
                         child: Padding(
-                          padding: const EdgeInsets.all(16.0),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: w * 0.04, vertical: h * 0.02),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Padding(
-                                padding: const EdgeInsets.only(top: 18.0),
-                                child: Text(
-                                  'Login',
-                                  style: TextStyles.styleExtraBold(context,
-                                      fontSize: 32,
-                                      color: ColorManager.whiteColor),
-                                ),
+                              Text(
+                                'Login',
+                                style: TextStyles.styleExtraBold(context,
+                                    fontSize: 32,
+                                    color: ColorManager.whiteColor),
                               ),
-                              const SizedBox(
-                                height: 15,
+                              SizedBox(
+                                height: h * 0.02,
                               ),
                               CustomTextFormField(
                                 hintText: "Email",
                                 controller: emailController,
                                 validator: ValidateInput.email,
                               ),
-                              const SizedBox(
-                                height: 35,
+                              SizedBox(
+                                height: h * 0.02,
                               ),
                               CustomTextFormField(
                                   hintText: "Password",
                                   controller: passController,
                                   validator: ValidateInput.password,
                                   obscureText: true),
-                              const SizedBox(
-                                height: 10,
+                              SizedBox(
+                                height: h * 0.02,
                               ),
                               Row(
                                 mainAxisAlignment:
@@ -116,8 +120,8 @@ class _LoginState extends State<Login> {
                                   ),
                                 ],
                               ),
-                              const SizedBox(
-                                height: 20,
+                              SizedBox(
+                                height: h * 0.02,
                               ),
                               CustomPrimaryButton(
                                   onPressed: () {
@@ -131,8 +135,8 @@ class _LoginState extends State<Login> {
                                   buttonText: "Login",
                                   height: 45,
                                   isLoading: state is LoginLoadingState),
-                              const SizedBox(
-                                height: 20,
+                              SizedBox(
+                                height: h * 0.02,
                               ),
                               const Row(children: [
                                 Expanded(
@@ -155,18 +159,18 @@ class _LoginState extends State<Login> {
                                   endIndent: 14,
                                 )),
                               ]),
-                              const SizedBox(
-                                height: 30,
+                              SizedBox(
+                                height: h * 0.03,
                               ),
                               SizedBox(
-                                  width: 300,
+                                  width: w * 0.7,
                                   height: 47,
                                   child: ElevatedButton.icon(
                                     onPressed: () {},
                                     icon: Image.asset(
                                       "assets/images/google.png",
-                                      height: 24,
-                                      width: 24,
+                                      height: h * 0.06,
+                                      width: w * 0.06,
                                     ),
                                     label: const Text(
                                       "Sign in with Google",
@@ -188,18 +192,18 @@ class _LoginState extends State<Login> {
                                       ),
                                     ),
                                   )),
-                              const SizedBox(
-                                height: 30,
+                              SizedBox(
+                                height: h * 0.03,
                               ),
                               SizedBox(
-                                  width: 300,
+                                  width: w * 0.7,
                                   height: 47,
                                   child: ElevatedButton.icon(
                                     onPressed: () {},
                                     icon: Image.asset(
                                       "assets/images/facebook.png",
-                                      height: 24,
-                                      width: 24,
+                                      height: h * 0.06,
+                                      width: w * 0.06,
                                     ),
                                     label: const Text(
                                       "Sign in with Facebook",
@@ -221,18 +225,18 @@ class _LoginState extends State<Login> {
                                       ),
                                     ),
                                   )),
-                              const SizedBox(
-                                height: 30,
+                              SizedBox(
+                                height: h * 0.03,
                               ),
                               SizedBox(
-                                  width: 300,
+                                  width: w * 0.7,
                                   height: 47,
                                   child: ElevatedButton.icon(
                                     onPressed: () {},
                                     icon: Image.asset(
                                       "assets/images/Social_Icons.png",
-                                      height: 24,
-                                      width: 24,
+                                      height: h * 0.06,
+                                      width: w * 0.06,
                                     ),
                                     label: const Text(
                                       "Sign in with Apple",
@@ -254,8 +258,8 @@ class _LoginState extends State<Login> {
                                       ),
                                     ),
                                   )),
-                              const SizedBox(
-                                height: 30,
+                              SizedBox(
+                                height: h * 0.03,
                               ),
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,

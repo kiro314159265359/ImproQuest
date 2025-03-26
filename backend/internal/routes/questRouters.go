@@ -18,6 +18,6 @@ func QuestRoutes(incomingRoutes *gin.Engine) {
 	quests.DELETE("/:id", middleware.CheckUserType("Admin"), controllers.DeleteQuest())
 	quests.PATCH("/:id", middleware.CheckUserType("Admin"), controllers.UpdateQuest())
 	quests.PATCH("/IsCompleted/:questId", controllers.CompleteQuest())
-	quests.PATCH("/streak/", controllers.UpdateStreakHandler())
+	quests.PATCH("/streak", controllers.UpdateStreakHandler())
 
 }

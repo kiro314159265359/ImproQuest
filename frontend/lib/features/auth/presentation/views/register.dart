@@ -30,6 +30,8 @@ class _RegisterState extends State<Register> {
 
   @override
   Widget build(BuildContext context) {
+    var w = MediaQuery.of(context).size.width;
+    var h = MediaQuery.of(context).size.height;
     return BlocProvider(
         create: (context) => RegisterCubit(RegisterApi()),
         child: BlocConsumer<RegisterCubit, RegisterState>(
@@ -52,20 +54,15 @@ class _RegisterState extends State<Register> {
                   child: Center(
                     child: SingleChildScrollView(
                       child: Padding(
-                        padding: const EdgeInsets.all(16.0),
+                        padding: EdgeInsets.symmetric(
+                            horizontal: w * 0.04, vertical: h * 0.02),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  "Register",
-                                  style: TextStyles.styleExtraBold(context,
-                                      fontSize: 32,
-                                      color: ColorManager.whiteColor),
-                                ),
-                              ],
+                            Text(
+                              "Register",
+                              style: TextStyles.styleExtraBold(context,
+                                  fontSize: 32, color: ColorManager.whiteColor),
                             ),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -76,8 +73,8 @@ class _RegisterState extends State<Register> {
                                       fontSize: 18,
                                       color: ColorManager.whiteColor),
                                 ),
-                                const SizedBox(
-                                  width: 5,
+                                SizedBox(
+                                  width: w * 0.03,
                                 ),
                                 InkWell(
                                   onTap: () {
@@ -93,24 +90,24 @@ class _RegisterState extends State<Register> {
                                 )
                               ],
                             ),
-                            const SizedBox(
-                              height: 25,
+                            SizedBox(
+                              height: h * 0.03,
                             ),
                             CustomTextFormField(
                               hintText: "Email",
                               controller: cubit.emailController,
                               validator: ValidateInput.email,
                             ),
-                            const SizedBox(
-                              height: 35,
+                            SizedBox(
+                              height: h * 0.02,
                             ),
                             CustomTextFormField(
                                 hintText: "Password",
                                 controller: cubit.passController,
                                 validator: ValidateInput.password,
                                 obscureText: true),
-                            const SizedBox(
-                              height: 35,
+                            SizedBox(
+                              height: h * 0.02,
                             ),
                             CustomTextFormField(
                               hintText: "Confirm Password",
@@ -120,8 +117,8 @@ class _RegisterState extends State<Register> {
                                       value, cubit.passController.text),
                               obscureText: true,
                             ),
-                            const SizedBox(
-                              height: 35,
+                            SizedBox(
+                              height: h * 0.035,
                             ),
                             CustomPrimaryButton(
                               onPressed: () {

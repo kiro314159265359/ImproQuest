@@ -7,4 +7,8 @@ class Routes {
   static const String homepage = 'HomePage';
   static const String appLayoutPage = 'AppLayout';
   static const String personalInfoPage = 'PersonalInfo';
+  static const String gameScreen = 'GameScreen';
+  static const String shopScreen = 'ShopScreen';
+  static const String addQuestScreen = 'AddQuestScreen';
+
 }

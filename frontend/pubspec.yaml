@@ -31,7 +31,6 @@ dependencies:
   flutter:
     sdk: flutter
 
-
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
@@ -40,11 +39,21 @@ dependencies:
   bloc:
   flutter_bloc:
   percent_indicator:
-  shared_preferences:
-  dio:
+  shared_preferences: ^2.2.0
+  dio: ^5.8.0
   permission_handler: ^11.3.1
   flutter_secure_storage: ^9.2.4
   jwt_decoder: ^2.0.1
+  get_it: ^8.0.3
+  flutter_activity_recognition: ^4.0.0
+  geolocator: ^13.0.2
+  flame: ^1.24.0
+  flutter_foreground_task: ^8.17.0
+  device_info_plus: ^11.3.0
+  equatable: ^2.0.7
+  hydrated_bloc: ^10.0.0
+  path_provider: ^2.1.5
+  flame_audio: ^2.11.1
   # image_picker:
 dev_dependencies:
   flutter_test:
@@ -72,6 +81,12 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
+    - assets/images/sprites/backgrounds/nature_3/
+    - assets/images/sprites/character/Shinobi/
+    - assets/images/sprites/character/Fighter/
+    - assets/images/sprites/backgrounds/vertical/
+    - assets/audio/music/
+    - assets/audio/sfx/
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

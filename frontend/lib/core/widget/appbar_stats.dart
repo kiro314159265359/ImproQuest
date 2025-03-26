@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_2/core/utils/app_images.dart';
 import 'package:flutter_application_2/features/home/presentation/views/widgets/custom_rich_text.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
 
+import '../../features/home/data/model/user_model.dart';
+import '../../features/home/presentation/manager/user_cubit.dart';
+import '../../features/home/presentation/manager/user_state.dart';
 import '../theme/color_manger.dart';
 import '../theme/text_style.dart';
+import '../utils/app_icons.dart';
 
 class AppBarStats extends StatefulWidget {
   const AppBarStats({super.key});
@@ -16,6 +21,19 @@ class AppBarStats extends StatefulWidget {
 class _AppBarStatsState extends State<AppBarStats> {
   @override
   Widget build(BuildContext context) {
+    return BlocBuilder<UserCubit, UserState>(
+      builder: (context, state) {
+        if (state is UserLoaded) {
+          return _buildAppBatStats(context, state.user);
+        }
+        return const SizedBox.shrink();
+      },
+    );
+  }
+
+  Widget _buildAppBatStats(BuildContext context, UserModel user) {
+    var w = MediaQuery.of(context).size.width;
+    // var h = MediaQuery.of(context).size.height;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -25,11 +43,11 @@ class _AppBarStatsState extends State<AppBarStats> {
             Container(
               margin: const EdgeInsets.fromLTRB(46, 17, 0, 0),
               child: LinearPercentIndicator(
-                width: 125,
+                width: w * 0.3,
                 lineHeight: 25,
-                percent: 0.5,
+                percent: (user.xp! / 1959541954191981),
                 center: CustomRichText(
-                  text1: "120/240",
+                  text1: "${user.xp}/240",
                   textStyle1: TextStyles.styleMedium(context,
                       fontSize: 12, color: ColorManager.whiteColor),
                   text2: "XP",
@@ -57,8 +75,8 @@ class _AppBarStatsState extends State<AppBarStats> {
                         borderRadius:
                             const BorderRadius.all(Radius.circular(16))),
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                    child: Text("25",
+                        const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                    child: Text("${user.level}",
                         style: TextStyles.styleMedium(context,
                             fontSize: 8, color: ColorManager.whiteColor),
                         textAlign: TextAlign.center),
@@ -75,9 +93,9 @@ class _AppBarStatsState extends State<AppBarStats> {
                   color: ColorManager.containerBackGround,
                   borderRadius: BorderRadius.all(Radius.circular(4))),
               margin: const EdgeInsets.fromLTRB(50, 17, 0, 0),
-              width: 110,
+              width: w * 0.3,
               height: 25,
-              child: Text("1000",
+              child: Text("${user.gold}",
                   style: TextStyles.styleMedium(context,
                       fontSize: 16, color: ColorManager.whiteColor),
                   textAlign: TextAlign.center),
@@ -85,7 +103,7 @@ class _AppBarStatsState extends State<AppBarStats> {
             CircleAvatar(
               radius: 30,
               backgroundColor: ColorManager.gunmetal,
-              child: Image.asset('assets/icons/CoinsIcon.png',
+              child: Image.asset(AppIcons.coinsIcon,
                   width: 25, fit: BoxFit.contain),
             ),
           ],
