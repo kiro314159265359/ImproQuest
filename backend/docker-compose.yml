@@ -12,8 +12,6 @@ services:
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - ACCESS_SECRET_KEY=${ACCESS_SECRET_KEY}
       - REFRESH_SECRET_KEY=${REFRESH_SECRET_KEY}
-    volumes:
-      - .:/usr/src/app  # For development, mount the code for hot reloading
     networks:
       - impro-network
 
