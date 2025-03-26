@@ -4,6 +4,7 @@ import '../../game/logic/shop_bloc.dart';
 import '../../game/logic/shop_state.dart';
 import '../../game/viewmodel/shop_view_model.dart';
 import '../logic/shop_event.dart';
+import '../widgets/item_card.dart';
 
 class TemporaryShopPage extends StatelessWidget {
   const TemporaryShopPage({super.key});
@@ -37,7 +38,7 @@ class TemporaryShopPage extends StatelessWidget {
       ],
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Temporary Shop'),
+          backgroundColor: Colors.transparent,
           actions: [
             BlocBuilder<ShopBloc, ShopState>(
               builder: (context, state) {
@@ -76,24 +77,14 @@ class TemporaryShopPage extends StatelessWidget {
             } else if (state is ShopLoading) {
               return const Center(child: CircularProgressIndicator());
             } else if (state is ShopLoaded) {
-              final tempItems = state.items.where((item) => !item.permanent).toList();
+              final tempItems =
+                  state.items.where((item) => !item.permanent).toList();
               return ListView.builder(
                 itemCount: tempItems.length,
                 itemBuilder: (context, index) {
                   final item = tempItems[index];
                   final shopViewModel = ShopViewModel(context.read<ShopBloc>());
-                  return ListTile(
-                    title: Text(item.name),
-                    subtitle: Text('${item.description}\nPrice: ${item.price}'),
-                    trailing: ElevatedButton(
-                      onPressed: () {
-                        // Trigger the buy action.
-                        shopViewModel.buyItem(item);
-                        // Do not show snackbar here!
-                      },
-                      child: const Text('Buy'),
-                    ),
-                  );
+                  return ItemCard(item: item, viewModel: shopViewModel);
                 },
               );
             } else if (state is ShopPurchaseSuccess) {

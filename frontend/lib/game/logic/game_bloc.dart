@@ -1,20 +1,22 @@
-import 'dart:async';
-import 'dart:math';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/utils/get_it_constants.dart';
 import '../../features/home/data/model/user_model.dart';
+import '../services/combat_service.dart';
+import '../services/enemy_service.dart';
 import 'game_event.dart';
 import 'game_state.dart';
 import '../models/character.dart';
 
 class GameBloc extends Bloc<GameEvent, GameState> {
-  final Random _random = Random();
-  Timer? _timer;
+  final CombatService _combatService = CombatService();
+  final EnemyService _enemyService = EnemyService();
   static const double initiativeThreshold = 100.0;
-  static const double tickDelta = 0.1;
+
+  // Store calculated combat results for later use after animation
+  CombatResult? _pendingCombatResult;
 
   GameBloc() : super(GameState.initial(getIt<UserModel>())) {
-    on<TickEvent>(_onTickEvent);
+    // Remove TickEvent handler
     on<AttackEvent>(_onAttack);
     on<DefendEvent>(_onDefend);
     on<OpenInventoryEvent>(_onOpenInventory);
@@ -22,40 +24,29 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     on<UseInventoryItemEvent>(_onUseInventoryItem);
     on<NextFightEvent>(_onNextFight);
     on<SelectBlindEvent>(_onSelectBlind);
-
-    _timer = Timer.periodic(const Duration(milliseconds: 100), (_) {
-      add(TickEvent());
-    });
+    on<ClearAttackEvent>(_onClearAttack);
+    on<FinalizeAttackEvent>(_onFinalizeAttack);
   }
 
-  @override
-  Future<void> close() {
-    _timer?.cancel();
-    return super.close();
-  }
-
-  void _onTickEvent(TickEvent event, Emitter<GameState> emit) {
-    // Do not update if the game is over, a turn is active, or we are in the menu.
-    if (state.gameOver || state.currentTurn != Turn.none || state.inFightMenu)
+  // New method to be called from Flame's update loop
+  void updateInitiative(double dt) {
+    if (state.gameOver || state.currentTurn != Turn.none || state.inFightMenu) {
       return;
+    }
 
-    double newPlayerInit =
-        state.playerInitiative + state.player.agility * tickDelta;
-    double newEnemyInit =
-        state.enemyInitiative + state.enemy.agility * tickDelta;
-    Turn newTurn = Turn.none;
+    double newPlayerInit = state.playerInitiative + state.player.agility * dt;
+    double newEnemyInit = state.enemyInitiative + state.enemy.agility * dt;
+    Turn newTurn = _determineNextTurn(newPlayerInit, newEnemyInit);
 
-    if (newPlayerInit >= initiativeThreshold ||
-        newEnemyInit >= initiativeThreshold) {
-      if (newPlayerInit >= newEnemyInit) {
-        newTurn = Turn.player;
+    if (newTurn != Turn.none) {
+      if (newTurn == Turn.player) {
         newPlayerInit -= initiativeThreshold;
       } else {
-        newTurn = Turn.enemy;
         newEnemyInit -= initiativeThreshold;
       }
     }
 
+    // ignore: invalid_use_of_visible_for_testing_member
     emit(state.copyWith(
       playerInitiative: newPlayerInit,
       enemyInitiative: newEnemyInit,
@@ -63,54 +54,49 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     ));
 
     if (newTurn == Turn.enemy) {
-      Future.delayed(const Duration(milliseconds: 300), () {
-        add(EnemyTurnEvent());
-      });
+      _scheduleEnemyAction();
     }
+  }
+
+  Turn _determineNextTurn(double playerInit, double enemyInit) {
+    if (playerInit >= initiativeThreshold || enemyInit >= initiativeThreshold) {
+      return playerInit >= enemyInit ? Turn.player : Turn.enemy;
+    }
+    return Turn.none;
+  }
+
+  void _scheduleEnemyAction() {
+    Future.delayed(const Duration(milliseconds: 300), () {
+      add(EnemyTurnEvent());
+    });
   }
 
   void _onAttack(AttackEvent event, Emitter<GameState> emit) {
     if (state.gameOver || state.currentTurn != Turn.player) return;
 
-    int damage =
-        (state.player.strength - state.enemy.endurance + _random.nextInt(5))
-            .clamp(0, 999);
-    int newEnemyHp = state.enemy.currentHp - damage;
-    String msg = 'You attacked ${state.enemy.name} for $damage damage!';
-    bool enemyDefeated = newEnemyHp <= 0;
-    Character updatedEnemy =
-        state.enemy.copyWith(currentHp: enemyDefeated ? 0 : newEnemyHp);
-    GameState newState = state.copyWith(
-      enemy: updatedEnemy,
-      message: msg,
+    _pendingCombatResult = _combatService.prepareAttack(
+      attackerName: state.player.name,
+      attackerStrength: state.player.strength,
+      defenderEndurance: state.enemy.endurance,
+      defenderCurrentHp: state.enemy.currentHp,
     );
 
-    if (enemyDefeated) {
-      newState = newState.copyWith(
-        gameOver: true,
-        message: '$msg\nEnemy defeated! Press Next Fight to continue.',
-      );
-      emit(newState);
-    } else {
-      newState = newState.copyWith(
-        currentTurn: Turn.none,
-        playerInitiative: 0,
-      );
-      emit(newState);
-    }
+    // Trigger animation
+    emit(state.copyWith(lastAttackActor: "player"));
   }
 
   void _onDefend(DefendEvent event, Emitter<GameState> emit) {
     if (state.gameOver || state.currentTurn != Turn.player) return;
+
     Character updatedPlayer = state.player.copyWith(isDefending: true);
     String msg = 'You brace for the enemy attack!';
-    GameState newState = state.copyWith(
+
+    emit(state.copyWith(
       player: updatedPlayer,
       message: msg,
       currentTurn: Turn.none,
       playerInitiative: 0,
-    );
-    emit(newState);
+    ));
   }
 
   void _onOpenInventory(OpenInventoryEvent event, Emitter<GameState> emit) {
@@ -122,38 +108,16 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     if (state.gameOver || state.currentTurn != Turn.enemy) return;
     await Future.delayed(const Duration(milliseconds: 300));
 
-    int baseDamage =
-        state.enemy.strength - state.player.endurance + _random.nextInt(5);
-    int damage = baseDamage.clamp(0, 999);
-    if (state.player.isDefending) {
-      damage = (damage / 2).round();
-    }
-    int newPlayerHp = state.player.currentHp - damage;
-    String msg = '${state.enemy.name} attacked you for $damage damage!';
-    bool playerDefeated = newPlayerHp <= 0;
-    Character updatedPlayer = state.player.copyWith(
-      currentHp: playerDefeated ? 0 : newPlayerHp,
-      isDefending: false,
-    );
-    GameState newState = state.copyWith(
-      player: updatedPlayer,
-      message: msg,
+    _pendingCombatResult = _combatService.prepareAttack(
+      attackerName: state.enemy.name,
+      attackerStrength: state.enemy.strength,
+      defenderEndurance: state.player.endurance,
+      defenderCurrentHp: state.player.currentHp,
+      isDefending: state.player.isDefending,
     );
 
-    if (playerDefeated) {
-      newState = newState.copyWith(
-        gameOver: true,
-        message: '$msg\nYou have been defeated. Game Over.',
-      );
-      emit(newState);
-    } else {
-      newState = newState.copyWith(
-        currentTurn: Turn.none,
-        enemyInitiative: 0,
-        message: '$msg\nWaiting for turn...',
-      );
-      emit(newState);
-    }
+    // Trigger animation
+    emit(state.copyWith(lastAttackActor: "enemy"));
   }
 
   void _onUseInventoryItem(
@@ -169,10 +133,11 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     }
   }
 
-  // New event handler for when a blind is selected from the menu.
   void _onSelectBlind(SelectBlindEvent event, Emitter<GameState> emit) {
     if (!state.inFightMenu) return;
-    final newEnemy = generateEnemy(state.currentAnte, event.blind);
+
+    final newEnemy =
+        _enemyService.generateEnemy(state.currentAnte, event.blind);
     emit(state.copyWith(
       enemy: newEnemy,
       inFightMenu: false,
@@ -183,44 +148,17 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     ));
   }
 
-  // Advances the fight progression after winning a fight.
   void _onNextFight(NextFightEvent event, Emitter<GameState> emit) {
-    int newAnte = state.currentAnte;
-    int newBlind = state.currentBlind;
-    bool endlessMode = state.endlessMode;
-
-    if (state.enemy.currentHp <= 0) {
-      if (state.currentBlind < 3) {
-        newBlind = state.currentBlind + 1;
-      } else {
-        // Boss defeated
-        if (!state.endlessMode) {
-          if (state.currentAnte < 8) {
-            newAnte = state.currentAnte + 1;
-            newBlind = 1;
-          } else if (state.currentAnte == 8) {
-            endlessMode = true;
-            newAnte = state.currentAnte + 1;
-            newBlind = 1;
-          }
-        } else {
-          newAnte = state.currentAnte + 1;
-          newBlind = 1;
-        }
-      }
-    }
+    final nextFightState = _calculateNextFightState();
 
     final newPlayer = state.player.copyWith(currentHp: state.player.vitality);
-    String msg = 'Ante $newAnte, completed blinds: ';
-    for (int i = 1; i < newBlind; i++) {
-      msg += 'Blind $i, ';
-    }
-    msg += 'Select next blind to fight.';
+    String msg = _generateNextFightMessage(
+        nextFightState['ante']!, nextFightState['blind']!);
 
     emit(state.copyWith(
-      currentAnte: newAnte,
-      currentBlind: newBlind,
-      endlessMode: endlessMode,
+      currentAnte: nextFightState['ante']!,
+      currentBlind: nextFightState['blind']!,
+      endlessMode: nextFightState['endlessMode'] as bool, // Fix: cast to bool
       player: newPlayer,
       gameOver: false,
       currentTurn: Turn.none,
@@ -231,53 +169,115 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     ));
   }
 
-  // Generates an enemy based on the current ante and blind.
-  Character generateEnemy(int currentAnte, int currentBlind) {
-    bool isBoss = currentBlind == 3;
-    bool isBig = currentBlind == 2;
-    List<String> smallNames = ['Goblin', 'Skeleton', 'Bandit'];
-    List<String> bigNames = ['Orc', 'Troll', 'Warrior'];
-    List<String> bossNames = ['Dragon', 'Demon Lord', 'Giant', 'Lich King'];
-    String enemyName;
-    if (isBoss) {
-      enemyName = bossNames[_random.nextInt(bossNames.length)];
-    } else if (isBig) {
-      enemyName = bigNames[_random.nextInt(bigNames.length)];
-    } else {
-      enemyName = smallNames[_random.nextInt(smallNames.length)];
+  Map<String, dynamic> _calculateNextFightState() {
+    // Changed return type to Map<String, dynamic>
+    int newAnte = state.currentAnte;
+    int newBlind = state.currentBlind;
+    bool newEndlessMode = state.endlessMode;
+
+    if (state.enemy.currentHp <= 0) {
+      if (state.currentBlind < 3) {
+        newBlind++;
+      } else {
+        if (!state.endlessMode) {
+          if (state.currentAnte < 8) {
+            newAnte++;
+            newBlind = 1;
+          } else if (state.currentAnte == 8) {
+            newEndlessMode = true;
+            newAnte++;
+            newBlind = 1;
+          }
+        } else {
+          newAnte++;
+          newBlind = 1;
+        }
+      }
     }
 
-    int baseVitality, baseStrength, baseEndurance, baseAgility;
-    if (isBoss) {
-      baseVitality = 100;
-      baseStrength = 25;
-      baseEndurance = 10;
-      baseAgility = 10;
-    } else if (isBig) {
-      baseVitality = 80;
-      baseStrength = 20;
-      baseEndurance = 8;
-      baseAgility = 12;
+    return {
+      'ante': newAnte,
+      'blind': newBlind,
+      'endlessMode': newEndlessMode, // Return boolean directly
+    };
+  }
+
+  String _generateNextFightMessage(int ante, int blind) {
+    String msg = 'Ante $ante, completed blinds: ';
+    for (int i = 1; i < blind; i++) {
+      msg += 'Blind $i, ';
+    }
+    msg += 'Select next blind to fight.';
+    return msg;
+  }
+
+  void _onClearAttack(ClearAttackEvent event, Emitter<GameState> emit) {
+    emit(state.copyWith(lastAttackActor: null));
+  }
+
+  void _onFinalizeAttack(FinalizeAttackEvent event, Emitter<GameState> emit) {
+    if (_pendingCombatResult == null) return;
+
+    if (event.isPlayerAttack) {
+      _finalizePlayerAttack(emit);
     } else {
-      baseVitality = 60;
-      baseStrength = 15;
-      baseEndurance = 5;
-      baseAgility = 10;
+      _finalizeEnemyAttack(emit);
     }
 
-    int vitality = baseVitality * currentAnte;
-    int strength = baseStrength * currentAnte;
-    int endurance = baseEndurance * currentAnte;
-    int agility = baseAgility * currentAnte;
+    // Clear pending result after processing
+    _pendingCombatResult = null;
+  }
 
-    return Character(
-      name: enemyName,
-      strength: strength,
-      endurance: endurance,
-      agility: agility,
-      vitality: vitality,
-      currentHp: vitality,
-      isBoss: isBoss,
+  void _finalizePlayerAttack(Emitter<GameState> emit) {
+    int newEnemyHp = _pendingCombatResult!.targetDefeated
+        ? 0
+        : state.enemy.currentHp - _pendingCombatResult!.damage;
+
+    Character updatedEnemy = state.enemy.copyWith(currentHp: newEnemyHp);
+    String message = _pendingCombatResult!.message;
+
+    if (_pendingCombatResult!.targetDefeated) {
+      message = '$message\nEnemy defeated! Press Next Fight to continue.';
+    }
+
+    emit(state.copyWith(
+      enemy: updatedEnemy,
+      message: message,
+      gameOver: _pendingCombatResult!.targetDefeated,
+      currentTurn:
+          _pendingCombatResult!.targetDefeated ? state.currentTurn : Turn.none,
+      playerInitiative:
+          _pendingCombatResult!.targetDefeated ? state.playerInitiative : 0,
+      lastAttackActor: null,
+    ));
+  }
+
+  void _finalizeEnemyAttack(Emitter<GameState> emit) {
+    int newPlayerHp = _pendingCombatResult!.targetDefeated
+        ? 0
+        : state.player.currentHp - _pendingCombatResult!.damage;
+
+    Character updatedPlayer = state.player.copyWith(
+      currentHp: newPlayerHp,
+      isDefending: false,
     );
+
+    String message = _pendingCombatResult!.message;
+    if (_pendingCombatResult!.targetDefeated) {
+      message = '$message\nYou have been defeated. Game Over.';
+    } else {
+      message = '$message\nWaiting for turn...';
+    }
+
+    emit(state.copyWith(
+      player: updatedPlayer,
+      message: message,
+      gameOver: _pendingCombatResult!.targetDefeated,
+      currentTurn:
+          _pendingCombatResult!.targetDefeated ? state.currentTurn : Turn.none,
+      enemyInitiative:
+          _pendingCombatResult!.targetDefeated ? state.enemyInitiative : 0,
+      lastAttackActor: null,
+    ));
   }
 }

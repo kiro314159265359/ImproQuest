@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_2/core/theme/background_theme.dart';
+import 'package:flutter_application_2/core/utils/get_it_constants.dart';
 import 'package:flutter_application_2/core/utils/validate_input.dart';
 import 'package:flutter_application_2/core/widget/custom_text_form_field.dart';
 import 'package:flutter_application_2/features/settings/presentation/views/widgets/label_box.dart';
@@ -34,7 +35,7 @@ class _PersonalInfoState extends State<PersonalInfo> {
   @override
   void initState() {
     super.initState();
-    context.read<UserCubit>().fetchUserData();
+    getIt<UserCubit>().fetchUserData();
   }
 
   void _populateUserData(UserModel user) {
@@ -68,7 +69,7 @@ class _PersonalInfoState extends State<PersonalInfo> {
                 _currentUser!.height = int.tryParse(heightController.text);
                 _currentUser!.birthDate = birthDayController.text;
                 _currentUser!.gender = genderController.text;
-                context.read<UserCubit>().updateUserData(_currentUser!);
+                getIt<UserCubit>().updateUserData(_currentUser!);
               }
             },
           ),

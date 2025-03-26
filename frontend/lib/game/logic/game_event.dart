@@ -1,6 +1,6 @@
 abstract class GameEvent {}
 
-class TickEvent extends GameEvent {}
+// Remove TickEvent class
 
 class AttackEvent extends GameEvent {}
 
@@ -21,4 +21,13 @@ class NextFightEvent extends GameEvent {}
 class SelectBlindEvent extends GameEvent {
   final int blind;
   SelectBlindEvent(this.blind);
+}
+
+// New event for clearing the attack flag.
+class ClearAttackEvent extends GameEvent {}
+
+// New event for finalizing attack after animation completes
+class FinalizeAttackEvent extends GameEvent {
+  final bool isPlayerAttack;
+  FinalizeAttackEvent(this.isPlayerAttack);
 }

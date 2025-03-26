@@ -5,12 +5,15 @@ class Character {
   final int endurance; // Used as defense
   final int agility; // Speed—affects turn frequency
   final int vitality; // Maximum health
+  final int level;
+
   int currentHp;
   bool isDefending;
   final bool isBoss;
 
   Character({
     required this.name,
+    required this.level,
     required this.strength,
     required this.endurance,
     required this.agility,
@@ -22,6 +25,7 @@ class Character {
 
   Character copyWith({
     String? name,
+    int? level,
     int? strength,
     int? endurance,
     int? agility,
@@ -32,6 +36,7 @@ class Character {
   }) {
     return Character(
       name: name ?? this.name,
+      level: level ?? this.level,
       strength: strength ?? this.strength,
       endurance: endurance ?? this.endurance,
       agility: agility ?? this.agility,

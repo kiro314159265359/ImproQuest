@@ -12,6 +12,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 
 	"github.com/HarDizzeR/Project/backend/internal/database"
 	"github.com/HarDizzeR/Project/backend/internal/helpers"
@@ -24,9 +25,9 @@ var questCollection *mongo.Collection = database.Quests()
 type QuestRequest struct {
 	Name       *string  `json:"Name" validate:"required,min=3,max=100"`
 	XPReward   *float64 `json:"XPReward" validate:"required,gte=0"`
-	Goal       *float64 `json:"goal" bson:"goal"`
 	GoldReward *float64 `json:"GoldReward" validate:"required,gte=0"`
-	Difficulty *string  `json:"Difficulty" validate:"required,oneof=Easy Medium Hard"`
+	Goal       *float64 `json:"goal" bson:"goal"`
+	Type       *string  `json:"type" bson:"type" validate:"required,oneof=Running Mental Habit"`
 }
 
 // Create Quest
@@ -58,7 +59,7 @@ func CreateQuest() gin.HandlerFunc {
 			XPReward:   questReq.XPReward,
 			Goal:       questReq.Goal,
 			GoldReward: questReq.GoldReward,
-			Difficulty: questReq.Difficulty,
+			Type:       questReq.Type,
 		}
 
 		quest.ID = bson.NewObjectID()
@@ -269,10 +270,9 @@ func CompleteQuest() gin.HandlerFunc {
 		}
 
 		// 3. Update user to award XP/gold & mark quest as completed
+		// Using filtered positional operator to target the specific quest by ID
 		filter := bson.M{
-			"_id":                 userOID,
-			"quests._id":          questOID,
-			"quests.is_completed": false,
+			"_id": userOID,
 		}
 		update := bson.M{
 			"$inc": bson.M{
@@ -280,10 +280,17 @@ func CompleteQuest() gin.HandlerFunc {
 				"gold": *quest.GoldReward,
 			},
 			"$set": bson.M{
-				"quests.$.is_completed": true,
+				"quests.$[elem].is_completed": true,
 			},
 		}
-		result, err := collection.UpdateOne(ctx, filter, update)
+
+		// Define the array filter to match only the quest with the specified ID.
+		arrayFilters := []any{bson.M{"elem._id": questOID}}
+
+		// Use the UpdateOne options builder and pass arrayFilters directly.
+		opts := options.UpdateOne().SetArrayFilters(arrayFilters)
+
+		result, err := collection.UpdateOne(ctx, filter, update, opts)
 		if helpers.HandleError(c, err) {
 			return
 		}
@@ -298,11 +305,11 @@ func CompleteQuest() gin.HandlerFunc {
 			return
 		}
 
-		// 5. Level-up check
+		// 5. Level-up check and rank update
 		levelUps := 0
 		for {
 			threshold := helpers.XpThresholdForLevel(user.Level)
-			// Ensure threshold > 0 to avoid infinite loops if level == 0
+			// Ensure threshold > 0 to avoid infinite loops
 			if user.XP >= threshold && threshold > 0 {
 				user.XP -= threshold
 				user.Level++
@@ -312,14 +319,18 @@ func CompleteQuest() gin.HandlerFunc {
 			}
 		}
 
-		// 6. If user leveled up, update user doc with new XP and level
+		// Update rank if user leveled up
 		if levelUps > 0 {
+			newRank := helpers.GetRankForLevel(user.Level)
+			user.Rank = newRank
+
 			_, err := collection.UpdateOne(
 				ctx,
 				bson.M{"_id": userOID},
 				bson.M{"$set": bson.M{
 					"xp":    user.XP,
 					"level": user.Level,
+					"rank":  user.Rank,
 				}},
 			)
 			if helpers.HandleError(c, err) {
@@ -327,7 +338,7 @@ func CompleteQuest() gin.HandlerFunc {
 			}
 		}
 
-		// 7. Send response
+		// 6. Send response
 		c.JSON(http.StatusOK, gin.H{
 			"message":       "Quest completed!",
 			"xp_gained":     *quest.XPReward,
@@ -335,6 +346,7 @@ func CompleteQuest() gin.HandlerFunc {
 			"new_level":     user.Level,
 			"current_xp":    user.XP,
 			"levels_gained": levelUps,
+			"new_rank":      user.Rank,
 		})
 	}
 }
@@ -407,3 +419,4 @@ func UpdateStreakHandler() gin.HandlerFunc {
 		})
 	}
 }
+

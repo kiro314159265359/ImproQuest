@@ -1,9 +1,7 @@
 import 'package:flame/flame.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_2/game/logic/shop_event.dart';
-import 'package:flutter_application_2/game/shop_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flame/game.dart';
 import '../core/theme/color_manger.dart';
 import '../core/utils/get_it_constants.dart';
 import '../features/home/data/model/user_model.dart';
@@ -11,9 +9,12 @@ import 'logic/shop_bloc.dart';
 import 'turn_based_game.dart';
 import 'logic/game_bloc.dart';
 import 'logic/game_state.dart';
-import 'logic/game_event.dart';
 import 'viewmodel/game_view_model.dart';
 import '../../game/components/temp_shop_widget.dart';
+import 'widgets/game_battle_ui.dart';
+import 'widgets/game_menu_ui.dart';
+import 'constants/game_constants.dart';
+import 'services/audio_manager.dart';
 
 class GamePage extends StatefulWidget {
   const GamePage({super.key});
@@ -21,278 +22,168 @@ class GamePage extends StatefulWidget {
   GamePageState createState() => GamePageState();
 }
 
-class GamePageState extends State<GamePage> {
+class GamePageState extends State<GamePage> with WidgetsBindingObserver {
   final TurnBasedGame flameGame = TurnBasedGame();
   late GameViewModel viewModel;
   late ShopBloc temporaryShopBloc;
-  bool _temporaryShopOpened =
-      false; // Ensure reward is dispatched only once per battle
+  bool _temporaryShopOpened = false;
+  final AudioManager _audioManager = AudioManager();
+  bool _pendingTransition = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     temporaryShopBloc = ShopBloc(user: getIt<UserModel>());
+    _audioManager.initialize();
+
+    // Set up death animation completion handler
+    flameGame.onDeathAnimationComplete = _handleDeathAnimationComplete;
   }
 
   @override
   void dispose() {
-    // Dispose the ShopBloc when the game ends.
+    WidgetsBinding.instance.removeObserver(this);
+    _audioManager.stopBackgroundMusic();
     temporaryShopBloc.close();
     super.dispose();
   }
 
-  // Helper method to build enemy preview card for a blind.
-  Widget buildBlindCard(
-      GameBloc bloc, int blind, int currentAnte, int currentBlind) {
-    bool isBoss = blind == 3;
-    bool isBig = blind == 2;
-    String enemyType;
-    int baseVitality, baseStrength, baseEndurance, baseAgility;
-    if (isBoss) {
-      enemyType = 'Boss';
-      baseVitality = 100;
-      baseStrength = 25;
-      baseEndurance = 10;
-      baseAgility = 10;
-    } else if (isBig) {
-      enemyType = 'Big Enemy';
-      baseVitality = 80;
-      baseStrength = 20;
-      baseEndurance = 8;
-      baseAgility = 12;
-    } else {
-      enemyType = 'Small Enemy';
-      baseVitality = 60;
-      baseStrength = 15;
-      baseEndurance = 5;
-      baseAgility = 10;
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Handle app lifecycle to properly manage audio
+    if (state == AppLifecycleState.paused) {
+      _audioManager.pauseBackgroundMusic();
+    } else if (state == AppLifecycleState.resumed) {
+      _audioManager.resumeBackgroundMusic();
     }
-    int vitality = baseVitality * currentAnte;
-    int strength = baseStrength * currentAnte;
-    int endurance = baseEndurance * currentAnte;
-    int agility = baseAgility * currentAnte;
+  }
 
-    bool isCompleted = blind < currentBlind;
-    bool isAvailable = blind == currentBlind;
+  // New method to handle when death animations complete
+  void _handleDeathAnimationComplete() {
+    print(
+        'Death animation completion handler called, pending transition: $_pendingTransition');
+    if (_pendingTransition) {
+      setState(() {
+        _pendingTransition = false;
+      });
+      print('Showing shop screen after death animation');
+      // Add a small delay to ensure the state updates properly
+      Future.delayed(const Duration(milliseconds: 100), () {
+        _showShopScreen();
+      });
+    }
+  }
 
-    return Card(
-      color: isCompleted ? Colors.grey[300] : Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          children: [
-            Text('Blind $blind: $enemyType',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: isCompleted ? Colors.grey : Colors.black,
-                )),
-            Text(
-              'Vitality: $vitality, Strength: $strength, Endurance: $endurance, Agility: $agility',
-              style: const TextStyle(
-                color: Colors.red,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            ElevatedButton(
-              onPressed: isAvailable
-                  ? () {
-                      bloc.add(SelectBlindEvent(blind));
-                    }
-                  : null,
-              child: const Text('Fight'),
-            ),
-          ],
+  // Extracted method to show shop screen
+  void _showShopScreen() {
+    print('Navigating to shop screen');
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => BlocProvider<ShopBloc>.value(
+          value: temporaryShopBloc,
+          child: const TemporaryShopPage(),
         ),
       ),
-    );
+    ).then((_) {
+      print('Returned from shop, going to next fight');
+      viewModel.nextFight();
+    });
   }
 
-  Widget buildMenu(GameState state, GameBloc bloc) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text('Current Ante: ${state.currentAnte}',
-            style: const TextStyle(fontSize: 24)),
-        const SizedBox(height: 16),
-        Text(
-          'Player Stats:\nHP: ${state.player.currentHp}/${state.player.vitality}\nStrength: ${state.player.strength}  Endurance: ${state.player.endurance}  Agility: ${state.player.agility}',
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 16),
-        ),
-        const SizedBox(height: 24),
-        const Text('Select a Blind to Fight:', style: TextStyle(fontSize: 20)),
-        const SizedBox(height: 16),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            Expanded(
-                child: buildBlindCard(
-                    bloc, 1, state.currentAnte, state.currentBlind)),
-            Expanded(
-                child: buildBlindCard(
-                    bloc, 2, state.currentAnte, state.currentBlind)),
-            Expanded(
-                child: buildBlindCard(
-                    bloc, 3, state.currentAnte, state.currentBlind)),
-          ],
-        ),
-        const SizedBox(height: 24),
-        Text(state.message,
-            style: const TextStyle(fontSize: 16), textAlign: TextAlign.center),
-        ElevatedButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const ShopPage()),
-            );
-          },
-          child: const Text('Permanent Shop'),
-        ),
-      ],
-    );
-  }
+  void _handleBattleReward(GameState state) {
+    if (state.gameOver && state.player.currentHp > 0 && !_temporaryShopOpened) {
+      print(
+          'Battle ended, player won. Current animation state: ${flameGame.isDeathAnimationPlaying}');
+      _temporaryShopOpened = true;
+      temporaryShopBloc
+          .add(RewardTemporaryGoldEvent(GameConstants.battleRewardGold));
 
-  Widget buildFightUI(GameState state) {
-    return Column(
-      children: [
-        Expanded(child: GameWidget(game: flameGame)),
-        BlocListener<GameBloc, GameState>(
-          listenWhen: (previous, current) =>
-              previous.gameOver != current.gameOver ||
-              previous.player.currentHp != current.player.currentHp ||
-              previous.enemy.currentHp != current.enemy.currentHp ||
-              previous.playerInitiative != current.playerInitiative ||
-              previous.enemyInitiative != current.enemyInitiative,
-          listener: (context, state) {
-            flameGame.updateBars(state);
-            // When battle ends and player is alive, dispatch reward and open shop.
-            if (state.gameOver &&
-                state.player.currentHp > 0 &&
-                !_temporaryShopOpened) {
-              _temporaryShopOpened = true;
-              // Reward the battle.
-              temporaryShopBloc.add(RewardTemporaryGoldEvent(50));
-              Future.delayed(const Duration(milliseconds: 300), () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => BlocProvider<ShopBloc>.value(
-                      value: temporaryShopBloc,
-                      child: const TemporaryShopPage(),
-                    ),
-                  ),
-                ).then((_) {
-                  // Continue to the next fight without resetting the gold.
-                  viewModel.nextFight();
-                });
-              });
-            } else if (!state.gameOver) {
-              _temporaryShopOpened = false;
-            }
-          },
-          child: Container(),
-        ),
-        Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                state.message,
-                style: const TextStyle(fontSize: 18),
-                textAlign: TextAlign.center,
-              ),
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton(
-                  onPressed: state.currentTurn == Turn.player && !state.gameOver
-                      ? viewModel.attack
-                      : null,
-                  child: const Text('Attack'),
-                ),
-                ElevatedButton(
-                  onPressed: state.currentTurn == Turn.player && !state.gameOver
-                      ? viewModel.defend
-                      : null,
-                  child: const Text('Defend'),
-                ),
-                ElevatedButton(
-                  onPressed: state.currentTurn == Turn.player && !state.gameOver
-                      ? viewModel.openInventory
-                      : null,
-                  child: const Text('Inventory'),
-                ),
-              ],
-            ),
-            if (state.gameOver && state.player.currentHp == 0)
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => const GamePage()),
-                  );
-                },
-                child: const Text('Restart'),
-              ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                'Player HP: ${state.player.currentHp}/${state.player.vitality}  |  Enemy HP: ${state.enemy.currentHp}/${state.enemy.vitality}  |  Ante: ${state.currentAnte}, Blind: ${state.currentBlind}${state.endlessMode ? " (Endless)" : ""}',
-                style: const TextStyle(fontSize: 16),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
+      // Stop background music before navigating to shop
+      _audioManager.stopBackgroundMusic();
+
+      // If a death animation is playing, wait for it to finish
+      if (flameGame.isDeathAnimationPlaying) {
+        print('Death animation in progress, setting pending transition');
+        _pendingTransition = true;
+      } else {
+        print('No death animation in progress, proceeding to shop immediately');
+        // No death animation playing, proceed immediately
+        _showShopScreen();
+      }
+    } else if (!state.gameOver) {
+      _temporaryShopOpened = false;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        // Optionally, reset temporary shop state here if needed.
         temporaryShopBloc.add(ResetTemporaryGoldEvent());
         return true;
       },
       child: MultiBlocProvider(
         providers: [
-          // Provide the game bloc as usual.
-          BlocProvider<GameBloc>(
-            create: (_) => GameBloc(),
-          ),
-          // The temporary shop bloc is provided for this game session.
+          BlocProvider<GameBloc>(create: (_) {
+            final bloc = GameBloc();
+            // Connect the GameBloc to the Flame game
+            flameGame.setGameBloc(bloc);
+            return bloc;
+          }),
           BlocProvider<ShopBloc>.value(value: temporaryShopBloc),
         ],
         child: Scaffold(
-          appBar: AppBar(
-            leading: IconButton(
-              icon: const ImageIcon(
-                AssetImage('assets/icons/ExitIcon.png'),
-                color: ColorManager.whiteColor,
-                size: 35,
+          body: Stack(
+            children: [
+              IconButton(
+                icon: const ImageIcon(
+                  AssetImage('assets/icons/ExitIcon.png'),
+                  color: ColorManager.whiteColor,
+                  size: 35,
+                ),
+                onPressed: () {
+                  Flame.device.restoreFullscreen();
+                  Flame.device.setPortrait();
+                  Navigator.of(context).pop();
+                },
               ),
-              onPressed: () {
-                Flame.device.restoreFullscreen();
-                Flame.device.setPortrait();
-                Navigator.of(context).pop();
-              },
-            ),
-            title: const Text('Turn-Based Fight'),
-            centerTitle: true,
-          ),
-          body: BlocBuilder<GameBloc, GameState>(
-            builder: (context, state) {
-              viewModel = GameViewModel(context.read<GameBloc>());
-              final bloc = context.read<GameBloc>();
-              // Choose between the fight UI and the menu based on state.
-              return state.inFightMenu
-                  ? Center(child: buildMenu(state, bloc))
-                  : buildFightUI(state);
-            },
+              // Remove audio control buttons
+              BlocBuilder<GameBloc, GameState>(
+                builder: (context, state) {
+                  viewModel = GameViewModel(context.read<GameBloc>());
+
+                  // Control music based on game state
+                  if (!state.inFightMenu && !state.gameOver) {
+                    // In battle - make sure music is playing
+                    _audioManager.playBackgroundMusic();
+                  } else if (state.inFightMenu || state.gameOver) {
+                    // In menu or game over - stop music
+                    _audioManager.stopBackgroundMusic();
+                  }
+
+                  return state.inFightMenu
+                      ? GameMenuUI(
+                          state: state,
+                          bloc: context.read<GameBloc>(),
+                        )
+                      : GameBattleUI(
+                          state: state,
+                          flameGame: flameGame,
+                          viewModel: viewModel,
+                          onBattleEnd: _handleBattleReward,
+                          onRestart: () {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const GamePage()),
+                            );
+                          },
+                        );
+                },
+              ),
+            ],
           ),
         ),
       ),

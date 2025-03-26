@@ -9,6 +9,7 @@ import '../../features/home/presentation/manager/user_cubit.dart';
 import '../../features/home/presentation/manager/user_state.dart';
 import '../theme/color_manger.dart';
 import '../theme/text_style.dart';
+import '../utils/app_icons.dart';
 
 class AppBarStats extends StatefulWidget {
   const AppBarStats({super.key});
@@ -23,16 +24,16 @@ class _AppBarStatsState extends State<AppBarStats> {
     return BlocBuilder<UserCubit, UserState>(
       builder: (context, state) {
         if (state is UserLoaded) {
-          return _buildAppBatStats(state.user);
+          return _buildAppBatStats(context, state.user);
         }
         return const SizedBox.shrink();
       },
     );
   }
 
-  Widget _buildAppBatStats(UserModel user) {
+  Widget _buildAppBatStats(BuildContext context, UserModel user) {
     var w = MediaQuery.of(context).size.width;
-    var h = MediaQuery.of(context).size.height;
+    // var h = MediaQuery.of(context).size.height;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -44,7 +45,7 @@ class _AppBarStatsState extends State<AppBarStats> {
               child: LinearPercentIndicator(
                 width: w * 0.3,
                 lineHeight: 25,
-                percent: (user.xp! / 240),
+                percent: (user.xp! / 1959541954191981),
                 center: CustomRichText(
                   text1: "${user.xp}/240",
                   textStyle1: TextStyles.styleMedium(context,
@@ -102,7 +103,7 @@ class _AppBarStatsState extends State<AppBarStats> {
             CircleAvatar(
               radius: 30,
               backgroundColor: ColorManager.gunmetal,
-              child: Image.asset('assets/icons/CoinsIcon.png',
+              child: Image.asset(AppIcons.coinsIcon,
                   width: 25, fit: BoxFit.contain),
             ),
           ],

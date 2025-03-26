@@ -25,19 +25,14 @@ class SimpleProgressBar extends PositionComponent {
 
     // Draw background.
     final bgPaint = Paint()..color = backgroundColor;
-    canvas.drawRect(rect, bgPaint);
+    final bgRRect = RRect.fromRectAndRadius(rect, const Radius.circular(10));
+    canvas.drawRRect(bgRRect, bgPaint);
 
     // Draw foreground (filled portion).
     final filledWidth = size.x * progress.clamp(0, 1);
     final fgRect = Rect.fromLTWH(0, 0, filledWidth, size.y);
+    final fgRRect = RRect.fromRectAndRadius(fgRect, const Radius.circular(10));
     final fgPaint = Paint()..color = foregroundColor;
-    canvas.drawRect(fgRect, fgPaint);
-
-    // Draw border.
-    final borderPaint = Paint()
-      ..color = Colors.black
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = borderWidth;
-    canvas.drawRect(rect, borderPaint);
+    canvas.drawRRect(fgRRect, fgPaint);
   }
 }

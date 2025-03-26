@@ -3,6 +3,7 @@ import 'package:flutter_application_2/core/theme/background_theme.dart';
 import 'package:flutter_application_2/features/settings/presentation/views/widgets/custom_single_listtile.dart';
 import 'package:flutter_application_2/features/settings/presentation/views/widgets/divider_box.dart';
 import 'package:flutter_application_2/features/settings/presentation/views/widgets/label_box.dart';
+import 'package:flutter_application_2/game/services/audio_manager.dart';
 
 import '../../../../core/routes/routes.dart';
 import '../../../../core/service/cache_helper.dart';
@@ -21,6 +22,21 @@ class _SettingsState extends State<Settings> {
   bool emailNotificationBool = false;
   double master = 60;
   double sfx = 40;
+  final AudioManager _audioManager = AudioManager();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAudioSettings();
+  }
+
+  Future<void> _loadAudioSettings() async {
+    await _audioManager.initialize();
+    setState(() {
+      master = _audioManager.getMusicVolume();
+      sfx = _audioManager.getSfxVolume();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -96,8 +112,9 @@ class _SettingsState extends State<Settings> {
                                   children: [
                                     Row(
                                       children: [
-                                        const Icon(Icons.volume_mute, size: 30),
-                                        Text("Master",
+                                        const Icon(Icons.music_note, size: 30),
+                                        const SizedBox(width: 8),
+                                        Text("Music",
                                             style: TextStyles.styleSemiBold(
                                                 context,
                                                 fontSize: 18,
@@ -117,10 +134,12 @@ class _SettingsState extends State<Settings> {
                                           inactiveColor:
                                               const Color(0xff9B9B9B),
                                           max: 100,
-                                          label: 0.5.round().toString(),
+                                          label: master.round().toString(),
                                           onChanged: (double value) {
                                             setState(() {
                                               master = value;
+                                              _audioManager
+                                                  .setMusicVolume(value / 100);
                                             });
                                           },
                                         ),
@@ -136,11 +155,11 @@ class _SettingsState extends State<Settings> {
                                       MainAxisAlignment.spaceBetween,
                                   children: [
                                     Padding(
-                                      padding: const EdgeInsets.only(right: 27),
+                                      padding: const EdgeInsets.only(right: 8),
                                       child: Row(
                                         children: [
-                                          const Icon(Icons.volume_mute,
-                                              size: 30),
+                                          const Icon(Icons.volume_up, size: 30),
+                                          const SizedBox(width: 8),
                                           Text("SFX",
                                               style: TextStyles.styleSemiBold(
                                                   context,
@@ -162,10 +181,12 @@ class _SettingsState extends State<Settings> {
                                           inactiveColor:
                                               const Color(0xff9B9B9B),
                                           max: 100,
-                                          label: 0.5.round().toString(),
+                                          label: sfx.round().toString(),
                                           onChanged: (double value) {
                                             setState(() {
                                               sfx = value;
+                                              _audioManager
+                                                  .setSfxVolume(value / 100);
                                             });
                                           },
                                         ),
