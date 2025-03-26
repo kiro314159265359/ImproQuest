@@ -47,6 +47,9 @@ class HomeContent extends StatelessWidget {
                 if (state is UserLoaded) {
                   return _buildHomeContent(
                       context, state.user, screenWidth, screenHeight);
+                } else if (state is UserUpdated) {
+                  return _buildHomeContent(
+                      context, state.user, screenWidth, screenHeight);
                 }
 
                 // If UserCubit is loading but HomeBloc is ready, show empty content
@@ -100,10 +103,11 @@ class HomeContent extends StatelessWidget {
             ),
             SizedBox(height: screenHeight * 0.025),
             const DailyQuestCard(),
-            QuestsList(quests: getIt<UserCubit>().quests),
+            QuestsList(quests: context.read<UserCubit>().quests),
             LabelBox(
               labelText: "Your Quests",
-              child: CustomQuestsList(quests: getIt<UserCubit>().customQuests),
+              child: CustomQuestsList(
+                  quests: context.read<UserCubit>().customQuests),
             ),
           ],
         ),

@@ -33,7 +33,6 @@ class UserCubit extends HydratedCubit<UserState> {
       final freshUser = await userRepo.getUserData();
       print("Fetched new user data. Preserving distance: $previousDistance");
       currentUser = freshUser;
-
       // Emit the new state with the preserved distance.
       emit(UserLoaded(currentUser!, totalDistance: previousDistance));
 
@@ -201,6 +200,7 @@ class UserCubit extends HydratedCubit<UserState> {
 
       // Emit loaded state with preserved distance
       emit(UserLoaded(currentUser!, totalDistance: _currentDistance));
+      emit(UserUpdated(currentUser!));
 
       if (getIt.isRegistered<UserModel>()) {
         getIt.unregister<UserModel>();
@@ -218,6 +218,7 @@ class UserCubit extends HydratedCubit<UserState> {
         emit(UpdateError(ServerFailure(error.toString())));
         if (currentUser != null) {
           emit(UserLoaded(currentUser!, totalDistance: _currentDistance));
+          emit(UserUpdated(currentUser!));
         }
       }
     }

@@ -4,13 +4,28 @@ import 'package:flutter_application_2/core/theme/text_style.dart';
 import 'package:flutter_application_2/core/utils/get_it_constants.dart';
 import 'package:flutter_application_2/features/home/presentation/manager/user_cubit.dart';
 import 'package:flutter_application_2/features/home/presentation/views/widgets/custom_rich_text.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
+
+import '../../../data/model/user_model.dart';
+import '../../manager/user_state.dart';
 
 class DailyQuestCard extends StatelessWidget {
   const DailyQuestCard({super.key});
 
   @override
   Widget build(BuildContext context) {
+    return BlocBuilder<UserCubit, UserState>(
+      builder: (context, state) {
+        if (state is UserLoaded) {
+          return _buildDailyQuestCard(context, state.user);
+        }
+        return const SizedBox.shrink();
+      },
+    );
+  }
+
+  Widget _buildDailyQuestCard(BuildContext context, UserModel user) {
     return SizedBox(
       height: 150,
       child: Card(
