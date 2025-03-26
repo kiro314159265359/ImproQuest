@@ -32,6 +32,7 @@ class QuestsList extends StatelessWidget {
     final totalDistance = state is UserLoaded ? state.totalDistance : 0.0;
 
     return ListView.builder(
+      padding: EdgeInsets.zero,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: quests!.length,
