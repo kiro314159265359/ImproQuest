@@ -5,7 +5,6 @@ import '../theme/text_style.dart';
 class CustomPrimaryButton extends StatefulWidget {
   final String buttonText;
   final Color? fillColor;
-  final Color? cursorColor;
   final VoidCallback onPressed;
   final double? width;
   final double? height;
@@ -15,7 +14,6 @@ class CustomPrimaryButton extends StatefulWidget {
     super.key,
     required this.buttonText,
     this.fillColor,
-    this.cursorColor,
     this.width = double.infinity,
     this.height,
     required this.onPressed,

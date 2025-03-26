@@ -12,18 +12,21 @@ class Profile extends StatefulWidget {
 class _ProfileState extends State<Profile> {
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    var w = MediaQuery.of(context).size.width;
+    var h = MediaQuery.of(context).size.height;
+    return Scaffold(
       body: BackgroundTheme(
           child: SingleChildScrollView(
               child: Padding(
-                  padding: EdgeInsets.all(16.0),
+                  padding: EdgeInsets.symmetric(
+                      horizontal: w * 0.04, vertical: h * 0.02),
                   child: Column(
                       mainAxisAlignment: MainAxisAlignment.start,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        SizedBox(height: 25),
-                        AppBarStats(),
-                        SizedBox(height: 35),
+                        SizedBox(height: h * 0.025),
+                        const AppBarStats(),
+                        SizedBox(height: h * 0.025),
                       ])))),
     );
   }

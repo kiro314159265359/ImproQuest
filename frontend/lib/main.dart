@@ -1,25 +1,42 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_application_2/core/routes/app_routes.dart';
-import 'package:flutter_application_2/core/theme/color_manger.dart';
-
+import 'package:flutter_application_2/core/services/permission_manager.dart';
+import 'package:flutter_application_2/core/theme/app_theme.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_application_2/features/auth/domain/repo/login_repo.dart';
+import 'package:flutter_foreground_task/flutter_foreground_task.dart';
+import 'core/utils/get_it_constants.dart';
+import 'features/home/presentation/manager/user_cubit.dart';
 import 'core/utils/auth_helpers.dart';
-import 'features/auth/data/api/login_api.dart';
-import 'features/auth/domain/repo/login_repo.dart';
+import 'package:hydrated_bloc/hydrated_bloc.dart';
+import 'package:path_provider/path_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  DartPluginRegistrant.ensureInitialized();
 
-  // DevicePreview(
-  //   builder: (context) => const MyApp(), // Wrap your app
-  // ),
+  // Initialize hydrated storage so that the UserCubit is rehydrated.
+  HydratedBloc.storage = await HydratedStorage.build(
+    storageDirectory: HydratedStorageDirectory(
+      (await getApplicationDocumentsDirectory()).path,
+    ),
+  );
 
-  // Instantiate your login repository (API implementation)
-  final LoginRepo loginRepo = LoginApi();
-  // Determine the initial route based on token validation and refresh logic.
-  final initialRoute = await determineInitialRoute(loginRepo);
+  await setupDependencies(); // This now includes HomeBloc registration
 
-  runApp(MyApp(initialRoute: initialRoute));
+  FlutterForegroundTask.initCommunicationPort();
+
+  bool permissionGranted = await requestPermissions();
+  if (!permissionGranted) {
+    print('Necessary permission(s) declined.');
+  }
+
+  final initialRoute = await determineInitialRoute(getIt<LoginRepo>());
+  runApp(WithForegroundTask(child: MyApp(initialRoute: initialRoute)));
 }
+
 
 class MyApp extends StatelessWidget {
   final String initialRoute;
@@ -28,15 +45,18 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     AppRoutes appRoutes = AppRoutes();
-    return MaterialApp(
-      // locale: DevicePreview.locale(context),
-      // builder: DevicePreview.appBuilder,
-      debugShowCheckedModeBanner: false,
-      initialRoute: initialRoute,
-      onGenerateRoute: appRoutes.onGenerateRoute, themeMode: ThemeMode.dark,
-      darkTheme: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: ColorManager.deepBlue,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<UserCubit>.value(
+          value: getIt<UserCubit>(),
+        ),
+      ],
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        initialRoute: initialRoute,
+        onGenerateRoute: appRoutes.onGenerateRoute,
+        themeMode: ThemeMode.dark,
+        darkTheme: AppTheme.appTheme,
       ),
     );
   }

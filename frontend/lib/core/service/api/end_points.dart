@@ -1,5 +1,7 @@
 class EndPoints {
-  static const String baseUrl = "http://10.0.2.2:5000";
+  static const String baseUrl = "http://192.168.1.3:5000"; //  Asaad's IP
+  // static const String baseUrl = "http://192.168.1.5:5000"; // Hanna's IP
+  // static const String baseUrl = "http://10.0.2.2:5000"; // emu IP
 
   static const String login = "/users/login";
 
@@ -7,7 +9,16 @@ class EndPoints {
 
   static const String refreshToken = "/users/refresh";
 
-  static const String resetPassword = "/reset_password/";
+  static const String userData = "/users/mydata";
 
-  static const String profileData = "/profile/";
+  static const String quests = "/users/quests";
+
+  static const String customQuest = "/users/customQuest";
+
+  static const String streak = "/quests/streak";
+
+  static const String questProgress = "/users/updateQuestProgress";
+// static const String resetPassword = "/reset_password/";
+  //
+  // static const String profileData = "/profile/";
 }

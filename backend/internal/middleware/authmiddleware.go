@@ -31,7 +31,7 @@ func Authenticate() gin.HandlerFunc {
 		claims, err := helpers.ValidateAccessToken(tokenString)
 		if err != nil {
 			logger.Errorf("Token validation error: %v", err)
-			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error(), "message": " TOKEN_EXPIRED "})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error(), "message": "TOKEN_EXPIRED"})
 			c.Abort()
 			return
 		}

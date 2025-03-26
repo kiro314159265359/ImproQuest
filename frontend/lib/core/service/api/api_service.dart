@@ -5,15 +5,16 @@ import '../../../core/network/dio_interceptor.dart';
 class ApiService {
   final Dio dio;
 
-  ApiService() : dio = Dio(
-    BaseOptions(
-        baseUrl: EndPoints.baseUrl,
-        connectTimeout: const Duration(seconds: 30),
-        receiveTimeout: const Duration(seconds: 30),
-        sendTimeout: const Duration(seconds: 30)),
-  ) {
-    dio.interceptors.add(TokenInterceptor(dio: dio));
-  }
+  // Accept an optional interceptor for DI.
+  ApiService({TokenInterceptor? tokenInterceptor})
+      : dio = Dio(
+          BaseOptions(
+            baseUrl: EndPoints.baseUrl,
+            connectTimeout: const Duration(seconds: 30),
+            receiveTimeout: const Duration(seconds: 30),
+            sendTimeout: const Duration(seconds: 30),
+          ),
+        );
 
   Future get(String url, {Map<String, dynamic>? headers, queryParameters}) {
     final response = dio.get(url,
