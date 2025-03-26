@@ -19,6 +19,10 @@ class EndPoints {
   static const String streak = "/quests/streak";
 
   static const String questProgress = "/users/updateQuestProgress";
+
+  static const String leaderboardByStreak = "/leaderboard/streak";
+  static const String leaderboardByLevel = "/leaderboard/level";
+
 // static const String resetPassword = "/reset_password/";
   //
   // static const String profileData = "/profile/";

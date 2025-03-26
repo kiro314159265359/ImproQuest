@@ -12,7 +12,6 @@ class UserApi extends UserRepo {
   Future<UserModel> getUserData() async {
     await apiService.put(EndPoints.quests);
     var response = await apiService.get(EndPoints.userData);
-    print(response);
     return UserModel.fromJson(jsonDecode(response.toString()));
   }
 
@@ -42,6 +41,4 @@ class UserApi extends UserRepo {
       'type': questType,
     });
   }
-  
-
 }
