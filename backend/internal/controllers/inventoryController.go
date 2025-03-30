@@ -26,7 +26,7 @@ func AddInventory(c *gin.Context) {
 		return
 	}
 
-	// Get user document to access InventoryID
+	// Get user document
 	usersCollection := database.Users()
 	var user models.User
 	err = usersCollection.FindOne(c, bson.M{"_id": userObjID}).Decode(&user)
@@ -39,28 +39,65 @@ func AddInventory(c *gin.Context) {
 		return
 	}
 
-	// Validate user has InventoryID
-	if user.InventoryID.IsZero() {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "User has no inventory ID assigned"})
-		return
-	}
-
-	// Check if inventory already exists with this ID
+	// Check if user already has an inventory
 	inventoryCollection := database.Inventories()
+
+	// Try to find an inventory by user ID first
 	var existingInventory models.Inventory
-	err = inventoryCollection.FindOne(c, bson.M{"_id": user.InventoryID}).Decode(&existingInventory)
+	err = inventoryCollection.FindOne(c, bson.M{"user_id": userObjID}).Decode(&existingInventory)
 	if err == nil {
-		c.JSON(http.StatusConflict, gin.H{"error": "Inventory already exists for this user"})
+		// Inventory already exists for this user, return it
+		c.JSON(http.StatusOK, gin.H{
+			"message":   "User already has an inventory",
+			"inventory": existingInventory,
+		})
 		return
 	} else if err != mongo.ErrNoDocuments {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+		// Database error
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error when checking existing inventory"})
 		return
 	}
 
-	// Create new inventory with user's InventoryID as _id
+	// No existing inventory found by user ID, check if user has InventoryID
+	if !user.InventoryID.IsZero() {
+		// Check if inventory exists with this ID
+		err = inventoryCollection.FindOne(c, bson.M{"_id": user.InventoryID}).Decode(&existingInventory)
+		if err == nil {
+			// Inventory exists with this ID but wasn't linked properly to user
+			// Update the inventory's user_id field to match
+			_, updateErr := inventoryCollection.UpdateOne(
+				c,
+				bson.M{"_id": user.InventoryID},
+				bson.M{"$set": bson.M{"user_id": userObjID}},
+			)
+			if updateErr != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update inventory with correct user ID"})
+				return
+			}
+
+			c.JSON(http.StatusOK, gin.H{
+				"message":   "Linked existing inventory to user",
+				"inventory": existingInventory,
+			})
+			return
+		} else if err != mongo.ErrNoDocuments {
+			// Database error
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error when checking inventory by ID"})
+			return
+		}
+		// If we get here, user has an InventoryID but no inventory exists with that ID
+	}
+
+	// Create a new inventory ID if user doesn't have one or has an invalid one
+	inventoryID := user.InventoryID
+	if inventoryID.IsZero() {
+		inventoryID = bson.NewObjectID()
+	}
+
+	// Create new inventory
 	newInventory := models.Inventory{
-		ID:     user.InventoryID, // Use the InventoryID from user model
-		UserID: userObjID,        // Reference to user
+		ID:     inventoryID,
+		UserID: userObjID,
 		Items:  []bson.ObjectID{},
 		Gear:   []bson.ObjectID{},
 		Size:   0,
@@ -79,7 +116,22 @@ func AddInventory(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, newInventory)
+	// Update user with the inventory ID if needed
+	if user.InventoryID.IsZero() || user.InventoryID != inventoryID {
+		update := bson.M{"$set": bson.M{"inventory_id": inventoryID}}
+		_, err = usersCollection.UpdateOne(c, bson.M{"_id": userObjID}, update)
+		if err != nil {
+			// Attempt to delete the created inventory if user update fails
+			inventoryCollection.DeleteOne(c, bson.M{"_id": inventoryID})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user with inventory ID"})
+			return
+		}
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"message":   "Inventory created successfully",
+		"inventory": newInventory,
+	})
 }
 
 func GetAllInventories(c *gin.Context) {

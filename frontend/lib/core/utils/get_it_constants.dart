@@ -3,6 +3,7 @@ import 'package:flutter_application_2/core/services/distance_tracking_service.da
 import 'package:flutter_application_2/features/auth/data/api/login_api.dart';
 import 'package:flutter_application_2/features/auth/domain/repo/login_repo.dart';
 import 'package:flutter_application_2/features/home/data/api/user_api.dart';
+import 'package:flutter_application_2/features/home/data/model/user_model.dart';
 import 'package:flutter_application_2/features/home/presentation/manager/home_bloc.dart';
 import 'package:flutter_application_2/features/home/presentation/manager/user_cubit.dart';
 import 'package:flutter_application_2/core/network/dio_interceptor.dart';
@@ -23,6 +24,8 @@ Future<void> setupDependencies() async {
   final tokenInterceptor =
       TokenInterceptor(dio: apiService.dio, loginRepo: loginRepo);
   apiService.dio.interceptors.add(tokenInterceptor);
+
+  getIt.registerSingleton<UserModel>(UserModel());
 
   // Register your single instances.
   getIt.registerSingleton<ApiService>(apiService);
