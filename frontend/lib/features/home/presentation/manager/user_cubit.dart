@@ -147,9 +147,9 @@ class UserCubit extends HydratedCubit<UserState> {
       }
     } catch (error) {
       if (error is DioException) {
-        emit(UpdateError(ServerFailure.fromDioError(error)));
+        emit(UserError(ServerFailure.fromDioError(error)));
       } else {
-        emit(UpdateError(ServerFailure(error.toString())));
+        emit(UserError(ServerFailure(error.toString())));
         if (currentUser != null) {
           emit(UserLoaded(currentUser!, totalDistance: _currentDistance));
         }

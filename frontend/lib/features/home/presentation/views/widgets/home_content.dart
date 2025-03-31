@@ -68,7 +68,7 @@ class HomeContent extends StatelessWidget {
           },
         ),
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.small(
         heroTag: "addQuest",
         backgroundColor: ColorManager.primaryColor,
         tooltip: "Add Custom Quest",
@@ -102,9 +102,11 @@ class HomeContent extends StatelessWidget {
             ),
             SizedBox(height: screenHeight * 0.025),
             const DailyQuestCard(),
-            QuestsList(quests: context.read<UserCubit>().quests),
             LabelBox(
-              labelText: "Your Quests",
+                labelText: "Daily Quest",
+                child: QuestsList(quests: context.read<UserCubit>().quests)),
+            LabelBox(
+              labelText: "My Quests",
               child: CustomQuestsList(
                   quests: context.read<UserCubit>().customQuests),
             ),
