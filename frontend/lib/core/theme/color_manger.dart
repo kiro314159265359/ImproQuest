@@ -2,6 +2,7 @@ import 'dart:ui';
 
 class ColorManager {
   static const Color primaryColor = Color(0xFF8766EB); // A soft purple tone.
+  static const Color secondaryColor = Color(0xFF4D5BCE); // A soft blue tone.
   static const Color darkColor = Color(0xFF222222); // A deep black color.
   static const Color darkGreyColor = Color(0xFF999999);
   static const Color whiteColor = Color(0xFFFFFFFF); // A pure white color.

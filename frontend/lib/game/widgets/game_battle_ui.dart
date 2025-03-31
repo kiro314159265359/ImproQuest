@@ -7,6 +7,7 @@ import '../logic/game_event.dart';
 import '../logic/game_state.dart';
 import '../turn_based_game.dart';
 import '../viewmodel/game_view_model.dart';
+import 'inventory_ui.dart'; // Ensure this import is present
 
 class GameBattleUI extends StatelessWidget {
   final GameState state;
@@ -32,7 +33,32 @@ class GameBattleUI extends StatelessWidget {
           child: GameWidget(game: flameGame),
         ),
         _buildBattleListener(context),
-        _buildActionButtons(),
+        
+        // Show message about current action
+        Positioned(
+          top: 60,
+          left: 20,
+          right: 20,
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.black54,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              state.message,
+              style: const TextStyle(color: Colors.white, fontSize: 16),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+        
+        // Show action buttons when inventory is closed
+        if (!state.inventoryOpen) _buildActionButtons(),
+        
+        // Show inventory UI when inventory is open
+        if (state.inventoryOpen) InventoryUI(viewModel: viewModel),
+        
         if (state.gameOver && state.player.currentHp == 0)
           Center(
             child: GameButton(
@@ -54,8 +80,19 @@ class GameBattleUI extends StatelessWidget {
           previous.enemy.currentHp != current.enemy.currentHp ||
           previous.playerInitiative != current.playerInitiative ||
           previous.enemyInitiative != current.enemyInitiative ||
-          previous.lastAttackActor != current.lastAttackActor,
+          previous.lastAttackActor != current.lastAttackActor ||
+          // Add this condition to detect enemy changes between stages
+          previous.enemy.name != current.enemy.name ||
+          previous.currentAnte != current.currentAnte ||
+          previous.currentBlind != current.currentBlind,
       listener: (context, state) {
+        // Update the enemy sprite when state changes (especially between stages)
+        if (!state.inFightMenu && !state.gameOver) {
+          print(
+              'Battle UI detected new enemy: ${state.enemy.name}, Ante: ${state.currentAnte}, Blind: ${state.currentBlind}');
+          flameGame.updateEnemy(state.enemy);
+        }
+
         flameGame.updateBars(state);
 
         if (state.lastAttackActor == "player") {
@@ -69,7 +106,6 @@ class GameBattleUI extends StatelessWidget {
         }
 
         // Always call onBattleEnd to set up pending transitions
-        // (the GamePage will handle whether to show UI immediately or wait)
         onBattleEnd(state);
       },
       child: Container(),

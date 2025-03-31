@@ -6,7 +6,6 @@ import '../../core/utils/app_icons.dart';
 import '../logic/game_bloc.dart';
 import '../logic/game_event.dart';
 import '../logic/game_state.dart';
-import '../services/audio_manager.dart';
 import 'enemy_blind_card.dart';
 import 'menu_button.dart';
 
@@ -22,8 +21,6 @@ class GameMenuUI extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final audioManager = AudioManager();
-
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(8.0),
@@ -41,7 +38,6 @@ class GameMenuUI extends StatelessWidget {
                 fillColor: ColorManager.primaryColor,
                 buttonText: "Start Fight",
                 onPressed: () {
-                  audioManager.playSfx('button_click');
                   bloc.add(SelectBlindEvent(state.currentBlind));
                 },
                 buttonIcon: AppIcons.fightIcon),
@@ -50,7 +46,6 @@ class GameMenuUI extends StatelessWidget {
                 borderColor: ColorManager.lightGrey,
                 buttonText: "Permanent Shop",
                 onPressed: () {
-                  audioManager.playSfx('button_click');
                   Navigator.pushNamed(context, Routes.shopScreen);
                 },
                 buttonIcon: AppIcons.fightIcon),

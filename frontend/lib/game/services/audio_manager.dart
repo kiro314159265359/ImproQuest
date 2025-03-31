@@ -23,9 +23,6 @@ class AudioManager {
   // Dictionary mapping animation types to sound effects
   final Map<String, String> _soundEffects = {
     'Attack_1': 'sfx/sword_hit.mp3',
-    'player_death': 'sfx/player_death.mp3',
-    'enemy_death': 'sfx/enemy_death.mp3',
-    'button_click': 'sfx/button_click.mp3',
   };
 
   /// Initialize audio resources

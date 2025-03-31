@@ -3,6 +3,7 @@ import '../../core/utils/get_it_constants.dart';
 import '../../features/home/data/model/user_model.dart';
 import '../services/combat_service.dart';
 import '../services/enemy_service.dart';
+import '../services/item_service.dart';
 import 'game_event.dart';
 import 'game_state.dart';
 import '../models/character.dart';
@@ -10,22 +11,24 @@ import '../models/character.dart';
 class GameBloc extends Bloc<GameEvent, GameState> {
   final CombatService _combatService = CombatService();
   final EnemyService _enemyService = EnemyService();
+  final ItemService _itemService = ItemService();
   static const double initiativeThreshold = 100.0;
 
   // Store calculated combat results for later use after animation
   CombatResult? _pendingCombatResult;
 
   GameBloc() : super(GameState.initial(getIt<UserModel>())) {
-    // Remove TickEvent handler
     on<AttackEvent>(_onAttack);
     on<DefendEvent>(_onDefend);
     on<OpenInventoryEvent>(_onOpenInventory);
+    on<CloseInventoryEvent>(_onCloseInventory);
     on<EnemyTurnEvent>(_onEnemyTurn);
     on<UseInventoryItemEvent>(_onUseInventoryItem);
     on<NextFightEvent>(_onNextFight);
     on<SelectBlindEvent>(_onSelectBlind);
     on<ClearAttackEvent>(_onClearAttack);
     on<FinalizeAttackEvent>(_onFinalizeAttack);
+    on<ShowFightMenuEvent>(_onShowFightMenu);
   }
 
   // New method to be called from Flame's update loop
@@ -66,7 +69,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
   }
 
   void _scheduleEnemyAction() {
-    Future.delayed(const Duration(milliseconds: 300), () {
+    Future.delayed(const Duration(milliseconds: 100), () {
       add(EnemyTurnEvent());
     });
   }
@@ -100,8 +103,26 @@ class GameBloc extends Bloc<GameEvent, GameState> {
   }
 
   void _onOpenInventory(OpenInventoryEvent event, Emitter<GameState> emit) {
-    String msg = 'Inventory opened. (Inventory logic not implemented)';
-    emit(state.copyWith(message: msg));
+    // Only allow opening inventory during player's turn
+    if (state.gameOver || state.currentTurn != Turn.player) {
+      print(
+          'Cannot open inventory: gameOver=${state.gameOver}, currentTurn=${state.currentTurn}');
+      return;
+    }
+
+    print('Opening inventory');
+    emit(state.copyWith(
+      inventoryOpen: true,
+      message: 'Select an item to use',
+    ));
+  }
+
+  void _onCloseInventory(CloseInventoryEvent event, Emitter<GameState> emit) {
+    print('Closing inventory');
+    emit(state.copyWith(
+      inventoryOpen: false,
+      message: 'Inventory closed',
+    ));
   }
 
   void _onEnemyTurn(EnemyTurnEvent event, Emitter<GameState> emit) async {
@@ -122,14 +143,40 @@ class GameBloc extends Bloc<GameEvent, GameState> {
 
   void _onUseInventoryItem(
       UseInventoryItemEvent event, Emitter<GameState> emit) {
-    if (event.itemName == 'Healing Potion') {
-      int healAmount = 20;
-      int newHp =
-          (state.player.currentHp + healAmount).clamp(0, state.player.vitality);
-      String msg =
-          'Used Healing Potion. Recovered ${newHp - state.player.currentHp} HP.';
-      Character updatedPlayer = state.player.copyWith(currentHp: newHp);
-      emit(state.copyWith(player: updatedPlayer, message: msg));
+    print(
+        'GameBloc: UseInventoryItemEvent received for item ${event.item.name}');
+    if (state.gameOver || state.currentTurn != Turn.player) {
+      print('GameBloc: Cannot use item - game over or not player turn');
+      return;
+    }
+
+    final item = event.item;
+    print(
+        'GameBloc: Applying item effect for ${item.name} with effects: ${item.effects}');
+
+    // Apply item effect using ItemService
+    final result = _itemService.applyItemEffect(state.player, item);
+
+    if (result.success) {
+      print('GameBloc: Item effect applied successfully: ${result.message}');
+      print(
+          'GameBloc: Player HP before: ${state.player.currentHp} -> after: ${result.updatedCharacter.currentHp}');
+
+      // Update player with new stats after item use
+      emit(state.copyWith(
+        player: result.updatedCharacter,
+        message: 'Used ${item.name}. ${result.message}',
+        currentTurn: Turn.none, // End player's turn after using item
+        playerInitiative: 0,
+        inventoryOpen: false, // Close inventory after using item
+      ));
+    } else {
+      print('GameBloc: Item effect failed: ${result.message}');
+      // If item failed to apply (e.g., already at max health)
+      emit(state.copyWith(
+        message: result.message,
+        inventoryOpen: false, // Close inventory even if failed
+      ));
     }
   }
 
@@ -278,6 +325,16 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       enemyInitiative:
           _pendingCombatResult!.targetDefeated ? state.enemyInitiative : 0,
       lastAttackActor: null,
+    ));
+  }
+
+  // Add this new handler
+  void _onShowFightMenu(ShowFightMenuEvent event, Emitter<GameState> emit) {
+    // Set inFightMenu to true immediately to show the menu UI
+    emit(state.copyWith(
+      inFightMenu: true,
+      message: 'Select next blind to fight.',
+      gameOver: false,
     ));
   }
 }
