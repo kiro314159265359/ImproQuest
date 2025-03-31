@@ -51,12 +51,11 @@ func main() {
 	routes.AuthRoutes(router)
 	routes.UserRoutes(router)
 	routes.QuestRoutes(router)
-	routes.ItemRoutes(router)
 	routes.StageRoutes(router)
 	routes.EnemiesRoutes(router)
 	routes.AchievementRoutes(router)
 	routes.InventoryRoutes(router)
-	routes.GearRoutes(router)
 	routes.LeaderboardRoutes(router)
+	routes.ShopRoutes(router)
 	router.Run(":" + port)
 }

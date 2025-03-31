@@ -143,10 +143,15 @@ class HomeBloc extends HydratedBloc<HomeEvent, HomeState> {
           orElse: () => throw Exception("Quest not found"),
         );
 
+        // Complete the quest and await the result
         await userCubit.completeQuest(quest);
+
+        // Ensure we're still emitting a HomeReady state even if there was an error
+        newLoadingStates[event.questId] = false;
+        emit(currentState.copyWith(questLoadingStates: newLoadingStates));
       } catch (e) {
         print("Error completing quest: $e");
-      } finally {
+        // Always update loading state to false
         newLoadingStates[event.questId] = false;
         emit(currentState.copyWith(questLoadingStates: newLoadingStates));
       }

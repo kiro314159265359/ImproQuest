@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'package:flutter_application_2/features/home/data/model/leaderboard_level_model.dart';
+import 'package:flutter_application_2/features/home/data/model/leaderboard_streak_model.dart';
 import 'package:flutter_application_2/features/home/data/model/user_model.dart';
 import 'package:flutter_application_2/features/home/domain/repo/user_repo.dart';
 import '../../../../core/service/api/api_service.dart';
@@ -41,6 +43,16 @@ class UserApi extends UserRepo {
       'type': questType,
     });
   }
-  
 
+  @override
+  Future<LeaderboardLevelListModel> getLeaderboardByLevelList() async {
+    var response = await apiService.get(EndPoints.leaderboardByLevel);
+    return LeaderboardLevelListModel.fromJson(jsonDecode(response.toString()));
+  }
+
+  @override
+  Future<LeaderboardStreakListModel> getLeaderboardByStreakList() async {
+    var response = await apiService.get(EndPoints.leaderboardByStreak);
+    return LeaderboardStreakListModel.fromJson(jsonDecode(response.toString()));
+  }
 }

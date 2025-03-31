@@ -58,9 +58,9 @@ class EnemyService {
       level = 3;
     } else {
       baseVitality = 60;
-      baseStrength = 1;
+      baseStrength = 50;
       baseEndurance = 5;
-      baseAgility = 100;
+      baseAgility = 50;
       level = 2;
     }
 

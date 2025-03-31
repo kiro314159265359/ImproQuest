@@ -43,6 +43,10 @@ class AssetManager {
     int deathFrames = characterType == "Shinobi" ? 4 : 3;
     await _loadAnimation('sprites/character/$characterType/Dead.png',
         frames: deathFrames, stepTime: 0.1, loop: false);
+
+    // Log that we've preloaded the death animation
+    print(
+        'Preloaded death animation for $characterType: sprites/character/$characterType/Dead.png');
   }
 
   Future<SpriteAnimation> _loadAnimation(
@@ -97,6 +101,15 @@ class AssetManager {
     if (!_animationCache.containsKey(cacheKey)) {
       print('Animation cache miss: $cacheKey');
       print('Available animations: ${_animationCache.keys.join(', ')}');
+
+      // Attempt to load the animation on-demand if not already cached
+      try {
+        // This will return the future, not the actual animation
+        // For synchronous code, we should pre-cache all animations
+        _loadAnimation(path, frames: frames, stepTime: stepTime, loop: loop);
+      } catch (e) {
+        print('Failed to load animation on-demand: $e');
+      }
     }
 
     return _animationCache[cacheKey]!;

@@ -35,6 +35,7 @@ class CustomQuestsList extends StatelessWidget {
             state is HomeReady ? state.questLoadingStates : {};
 
         return ListView.builder(
+          padding: EdgeInsets.zero,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: quests!.length,

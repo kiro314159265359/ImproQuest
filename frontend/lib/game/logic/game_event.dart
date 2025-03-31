@@ -1,3 +1,5 @@
+import '../models/shop_item.dart';
+
 abstract class GameEvent {}
 
 // Remove TickEvent class
@@ -8,11 +10,13 @@ class DefendEvent extends GameEvent {}
 
 class OpenInventoryEvent extends GameEvent {}
 
+class CloseInventoryEvent extends GameEvent {}
+
 class EnemyTurnEvent extends GameEvent {}
 
 class UseInventoryItemEvent extends GameEvent {
-  final String itemName;
-  UseInventoryItemEvent(this.itemName);
+  final ShopItem item;
+  UseInventoryItemEvent(this.item);
 }
 
 class NextFightEvent extends GameEvent {}
@@ -31,3 +35,6 @@ class FinalizeAttackEvent extends GameEvent {
   final bool isPlayerAttack;
   FinalizeAttackEvent(this.isPlayerAttack);
 }
+
+// Add this new event class
+class ShowFightMenuEvent extends GameEvent {}

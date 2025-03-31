@@ -16,6 +16,7 @@ class GameState {
   final double playerInitiative;
   final double enemyInitiative;
   final String? lastAttackActor; // "player", "enemy", or null
+  final bool inventoryOpen; // Track if inventory is open
 
   GameState({
     required this.player,
@@ -30,6 +31,7 @@ class GameState {
     this.playerInitiative = 0,
     this.enemyInitiative = 0,
     this.lastAttackActor,
+    this.inventoryOpen = false,
   });
 
   GameState copyWith({
@@ -45,6 +47,7 @@ class GameState {
     double? playerInitiative,
     double? enemyInitiative,
     String? lastAttackActor,
+    bool? inventoryOpen,
   }) {
     return GameState(
       player: player ?? this.player,
@@ -59,6 +62,7 @@ class GameState {
       playerInitiative: playerInitiative ?? this.playerInitiative,
       enemyInitiative: enemyInitiative ?? this.enemyInitiative,
       lastAttackActor: lastAttackActor, // override even with null
+      inventoryOpen: inventoryOpen ?? this.inventoryOpen,
     );
   }
 
@@ -100,6 +104,7 @@ class GameState {
       playerInitiative: 0,
       enemyInitiative: 0,
       lastAttackActor: null,
+      inventoryOpen: false,
     );
   }
 }

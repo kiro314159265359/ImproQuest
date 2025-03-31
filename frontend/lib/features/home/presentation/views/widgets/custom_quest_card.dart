@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../../core/theme/color_manger.dart';
 import '../../../../../core/theme/text_style.dart';
-import '../../../../../core/widget/custom_primary_button.dart';
 
 class CustomQuestCard extends StatefulWidget {
   final String questName;
@@ -31,55 +30,37 @@ class _CustomQuestCardState extends State<CustomQuestCard> {
     return Card(
       color: ColorManager.gunmetal,
       child: ListTile(
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ImageIcon(
-                    AssetImage(widget.questImageIcon),
-                    color: ColorManager.whiteColor,
-                    size: 25,
-                  ),
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.questName,
-                        style: TextStyles.styleSemiBold(context,
-                            fontSize: 16, color: ColorManager.whiteColor),
-                      ),
-                      Text(
-                        widget.questDesc,
-                        style: TextStyles.styleSemiBold(context,
-                            fontSize: 12, color: ColorManager.whiteColor),
-                      )
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            Text(
-              (widget.progress) ? "[ COMPLETED ]" : "[ UNCOMPLETED ]",
-              style: TextStyles.styleSemiBold(context,
-                  fontSize: 12, color: ColorManager.whiteColor),
-            ),
-          ],
+        leading: ImageIcon(
+          AssetImage(widget.questImageIcon),
+          color: ColorManager.whiteColor,
+          size: 25,
         ),
-        // subtitle: ElevatedButton(
-        //   onPressed:  widget.onCompleteQuest,
-        //   child:  Text("Done",style: TextStyles.styleSemiBold(context,
-        //       fontSize: 16, color: ColorManager.whiteColor)),
-        // ),
-        subtitle: CustomPrimaryButton(
-            onPressed: widget.onCompleteQuest,
-            buttonText: "Done",
-            height: 45,
-            isLoading: widget.isLoading),
+        title: Text(
+          widget.questName,
+          style: TextStyles.styleSemiBold(context,
+              fontSize: 16, color: ColorManager.whiteColor),
+        ),
+        subtitle: Text(
+          widget.questDesc,
+          style: TextStyles.styleSemiBold(context,
+              fontSize: 12, color: ColorManager.whiteColor),
+        ),
+        trailing: widget.isLoading
+            ? const CircularProgressIndicator(
+                color: ColorManager.whiteColor,
+                strokeWidth: 2,
+              )
+            : Checkbox(
+                shape: const CircleBorder(),
+                activeColor: ColorManager.primaryColor,
+                tristate: false,
+                value: widget.progress,
+                onChanged: (bool? value) {
+                  if (!widget.progress) {
+                    widget.onCompleteQuest();
+                  }
+                },
+              ),
       ),
     );
   }
