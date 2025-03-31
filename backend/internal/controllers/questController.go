@@ -259,9 +259,11 @@ func CompleteQuest() gin.HandlerFunc {
 			return
 		}
 
-		if time.Now().After(quest.GivenAt.Add(24 * time.Hour)) {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "quest expired; complete within 24 hours"})
-			return
+		if !quest.IsCustom {
+			if time.Now().After(quest.GivenAt.Add(24 * time.Hour)) {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "quest expired; complete within 24 hours"})
+				return
+			}
 		}
 
 		if quest.XPReward == nil || quest.GoldReward == nil {
@@ -419,4 +421,3 @@ func UpdateStreakHandler() gin.HandlerFunc {
 		})
 	}
 }
-
