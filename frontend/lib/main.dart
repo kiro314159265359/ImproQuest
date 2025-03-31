@@ -13,6 +13,8 @@ import 'core/utils/auth_helpers.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:path_provider/path_provider.dart';
 
+import 'features/rankings/presentation/manager/leaderboard_cubit.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   DartPluginRegistrant.ensureInitialized();
@@ -37,7 +39,6 @@ Future<void> main() async {
   runApp(WithForegroundTask(child: MyApp(initialRoute: initialRoute)));
 }
 
-
 class MyApp extends StatelessWidget {
   final String initialRoute;
   const MyApp({super.key, required this.initialRoute});
@@ -49,6 +50,9 @@ class MyApp extends StatelessWidget {
       providers: [
         BlocProvider<UserCubit>.value(
           value: getIt<UserCubit>(),
+        ),
+        BlocProvider<LeaderboardCubit>.value(
+          value: getIt<LeaderboardCubit>(),
         ),
       ],
       child: MaterialApp(

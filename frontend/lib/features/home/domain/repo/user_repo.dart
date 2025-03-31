@@ -1,3 +1,5 @@
+import 'package:flutter_application_2/features/home/data/model/leaderboard_streak_model.dart';
+import '../../data/model/leaderboard_level_model.dart';
 import '../../data/model/user_model.dart';
 
 abstract class UserRepo {
@@ -7,5 +9,6 @@ abstract class UserRepo {
   Future<void> completeStreak();
   Future<void> addCustomQuest(
       String questName, int questXp, int questGold, String questType);
-
+  Future<LeaderboardStreakListModel> getLeaderboardByStreakList();
+  Future<LeaderboardLevelListModel> getLeaderboardByLevelList();
 }
