@@ -58,10 +58,10 @@ class GameViewModel {
     _isPerformingAction = true;
 
     print('ViewModel: Using item ${item.name} with effects: ${item.effects}');
-    
+
     // Send event to GameBloc to apply item effect
     gameBloc.add(UseInventoryItemEvent(item));
-    
+
     // Send event to ShopBloc to decrement item quantity
     if (shopBloc != null) {
       print('ViewModel: Sending event to remove item from inventory');

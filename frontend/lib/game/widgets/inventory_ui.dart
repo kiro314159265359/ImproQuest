@@ -73,13 +73,15 @@ class InventoryUI extends StatelessWidget {
     return BlocBuilder<ShopBloc, ShopState>(
       builder: (context, state) {
         // Access temporary inventory from ShopBloc
-        final List<InventoryItem> inventoryItems = context.read<ShopBloc>().temporaryInventory;
-        
+        final List<InventoryItem> inventoryItems =
+            context.read<ShopBloc>().temporaryInventory;
+
         print('Inventory UI found ${inventoryItems.length} items in inventory');
         for (var item in inventoryItems) {
-          print('Inventory item: ${item.name}, Quantity: ${item.quantity}, Type: ${item.type}, Effects: ${item.effects}');
+          print(
+              'Inventory item: ${item.name}, Quantity: ${item.quantity}, Type: ${item.type}, Effects: ${item.effects}');
         }
-        
+
         if (inventoryItems.isEmpty) {
           return const Center(
             child: Text(
@@ -88,12 +90,12 @@ class InventoryUI extends StatelessWidget {
             ),
           );
         }
-        
+
         // Filter for consumable items only
         final consumables = inventoryItems
             .where((item) => item.type == ItemType.consumable)
             .toList();
-            
+
         if (consumables.isEmpty) {
           return const Center(
             child: Text(
@@ -109,7 +111,7 @@ class InventoryUI extends StatelessWidget {
           itemBuilder: (context, index) {
             final inventoryItem = consumables[index];
             final item = inventoryItem.item;
-            
+
             return Card(
               margin: const EdgeInsets.only(bottom: 8),
               color: Colors.grey.shade800,
@@ -223,7 +225,7 @@ class InventoryUI extends StatelessWidget {
   // Helper to format effect names for display
   String _formatEffectName(String effect) {
     final String effectLower = effect.toLowerCase();
-    
+
     switch (effectLower) {
       case 'vitality':
         return 'Health';
@@ -238,8 +240,12 @@ class InventoryUI extends StatelessWidget {
       case 'agility':
         return 'Agility';
       default:
-        return effect.split('_').map((word) => 
-          word.isNotEmpty ? '${word[0].toUpperCase()}${word.substring(1)}' : '').join(' ');
+        return effect
+            .split('_')
+            .map((word) => word.isNotEmpty
+                ? '${word[0].toUpperCase()}${word.substring(1)}'
+                : '')
+            .join(' ');
     }
   }
 }

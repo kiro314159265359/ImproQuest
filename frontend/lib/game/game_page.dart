@@ -212,7 +212,8 @@ class GamePageState extends State<GamePage> with WidgetsBindingObserver {
               BlocBuilder<GameBloc, GameState>(
                 builder: (context, state) {
                   // Pass the ShopBloc to the GameViewModel
-                  viewModel = GameViewModel(gameBloc, shopBloc: temporaryShopBloc);
+                  viewModel =
+                      GameViewModel(gameBloc, shopBloc: temporaryShopBloc);
 
                   // Control music based on game state
                   if (!state.inFightMenu && !state.gameOver) {

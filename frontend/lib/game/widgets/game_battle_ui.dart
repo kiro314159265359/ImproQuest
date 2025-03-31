@@ -33,7 +33,7 @@ class GameBattleUI extends StatelessWidget {
           child: GameWidget(game: flameGame),
         ),
         _buildBattleListener(context),
-        
+
         // Show message about current action
         Positioned(
           top: 60,
@@ -52,13 +52,13 @@ class GameBattleUI extends StatelessWidget {
             ),
           ),
         ),
-        
+
         // Show action buttons when inventory is closed
         if (!state.inventoryOpen) _buildActionButtons(),
-        
+
         // Show inventory UI when inventory is open
         if (state.inventoryOpen) InventoryUI(viewModel: viewModel),
-        
+
         if (state.gameOver && state.player.currentHp == 0)
           Center(
             child: GameButton(

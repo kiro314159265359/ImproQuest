@@ -86,11 +86,11 @@ class ShopBloc extends Bloc<ShopEvent, ShopState> {
         // Update user model by fetching latest data (handled elsewhere)
         // For now, just update the local cache
         permanentCurrency -= event.price;
-        
+
         // Check if item already exists in inventory
-        final existingIndex = permanentInventory.indexWhere(
-            (inventoryItem) => inventoryItem.id == event.item.id);
-        
+        final existingIndex = permanentInventory
+            .indexWhere((inventoryItem) => inventoryItem.id == event.item.id);
+
         if (existingIndex != -1) {
           // If item exists, increment quantity
           permanentInventory[existingIndex].incrementQuantity();
@@ -135,17 +135,18 @@ class ShopBloc extends Bloc<ShopEvent, ShopState> {
 
     // Process temporary item purchase locally
     temporaryCurrency -= event.item.price;
-    
+
     // Check if item already exists in inventory
-    final existingIndex = temporaryInventory.indexWhere(
-        (inventoryItem) => inventoryItem.id == event.item.id);
-    
+    final existingIndex = temporaryInventory
+        .indexWhere((inventoryItem) => inventoryItem.id == event.item.id);
+
     print('Buying item ${event.item.name}, existing index: $existingIndex');
-    
+
     if (existingIndex != -1) {
       // If item exists, increment quantity
       temporaryInventory[existingIndex].incrementQuantity();
-      print('Incremented quantity of ${event.item.name} to ${temporaryInventory[existingIndex].quantity}');
+      print(
+          'Incremented quantity of ${event.item.name} to ${temporaryInventory[existingIndex].quantity}');
     } else {
       // Otherwise, add new item with quantity 1
       temporaryInventory.add(InventoryItem(item: event.item));
@@ -204,28 +205,31 @@ class ShopBloc extends Bloc<ShopEvent, ShopState> {
   }
 
   Future<void> _onRemoveTemporaryItem(
-      RemoveTemporaryItemFromInventoryEvent event, Emitter<ShopState> emit) async {
+      RemoveTemporaryItemFromInventoryEvent event,
+      Emitter<ShopState> emit) async {
     print('ShopBloc: Using item ${event.item.name} from inventory');
-    
+
     // Find the item in inventory
-    final existingIndex = temporaryInventory.indexWhere(
-        (inventoryItem) => inventoryItem.id == event.item.id);
-    
+    final existingIndex = temporaryInventory
+        .indexWhere((inventoryItem) => inventoryItem.id == event.item.id);
+
     if (existingIndex != -1) {
-      print('ShopBloc: Found item at index $existingIndex with quantity ${temporaryInventory[existingIndex].quantity}');
-      
+      print(
+          'ShopBloc: Found item at index $existingIndex with quantity ${temporaryInventory[existingIndex].quantity}');
+
       // Decrement quantity
       final decremented = temporaryInventory[existingIndex].decrementQuantity();
-      
+
       if (decremented) {
-        print('ShopBloc: Decremented quantity to ${temporaryInventory[existingIndex].quantity}');
-        
+        print(
+            'ShopBloc: Decremented quantity to ${temporaryInventory[existingIndex].quantity}');
+
         // If quantity is zero, remove the item from inventory
         if (temporaryInventory[existingIndex].quantity <= 0) {
           print('ShopBloc: Removing item from inventory as quantity is zero');
           temporaryInventory.removeAt(existingIndex);
         }
-        
+
         // Re-emit current state to refresh UI
         if (state is TemporaryShopLoaded) {
           emit(TemporaryShopLoaded(

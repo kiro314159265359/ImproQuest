@@ -74,11 +74,11 @@ class ShopApi extends ShopRepo {
       // For development, return some test items if API fails
       return _getTestConsumableItems();
     }
-    
+
     // If all else fails, return test items
     return _getTestConsumableItems();
   }
-  
+
   // Helper method to create test consumable items
   List<ShopItem> _getTestConsumableItems() {
     print('Returning test consumable items');
