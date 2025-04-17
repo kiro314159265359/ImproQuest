@@ -37,6 +37,7 @@ type User struct {
 	EquippedItems map[string]bson.ObjectID `json:"equipped_items,omitempty" bson:"equipped_items,omitempty"`
 	AccumDistance float64                  `json:"accum_distance" bson:"accum_distance" validate:"gte=0"`
 	Rank          string                   `json:"rank" bson:"rank" validate:"required,oneof=E D C B A S"`
+	SkillPoints   int                      `json:"skill_points" bson:"skill_points" validate:"gte=0"`
 	Created_at    time.Time                `json:"created_at" bson:"Created_at" validate:"required"`
 	Updated_at    time.Time                `json:"updated_at" bson:"Updated_at" validate:"required,gtefield=Created_at"`
 }

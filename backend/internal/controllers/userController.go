@@ -2,8 +2,10 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -909,6 +911,95 @@ func UnequipItem() gin.HandlerFunc {
 			"item_id": itemID,
 			"slot":    req.Slot,
 			"stats":   user.Stats,
+		})
+	}
+}
+
+func AddStatsWithSkillPoints() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// 1. Retrieve the authenticated user ID from the context.
+		userID := c.GetString("id")
+		if userID == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "user ID not found in context"})
+			return
+		}
+
+		// 2. Get the 'stat' and 'points' parameters from the URL.
+		stat := c.Param("stat")
+		pointsStr := c.Param("points")
+		if stat == "" || pointsStr == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "both stat and points parameters are required"})
+			return
+		}
+
+		// 3. Normalize and validate the stat parameter.
+		stat = strings.ToLower(stat)
+		switch stat {
+		case "vitality", "strength", "endurance", "agility":
+			// valid stat; continue processing
+		default:
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid stat. Must be one of: vitality, strength, endurance, agility"})
+			return
+		}
+
+		// 4. Convert the points parameter to an integer.
+		points, err := strconv.Atoi(pointsStr)
+		if err != nil || points <= 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "points must be a positive integer"})
+			return
+		}
+
+		// 5. Convert the userID string to a BSON ObjectID.
+		userOID, err := bson.ObjectIDFromHex(userID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID"})
+			return
+		}
+
+		// 6. Get the database collection and prepare a context.
+		collection := database.Users()
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		// 7. Fetch the user document.
+		var user models.User
+		err = collection.FindOne(ctx, bson.M{"_id": userOID}).Decode(&user)
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+			return
+		}
+
+		// 8. Verify that the user has enough skill points.
+		if user.SkillPoints < points {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error":     "insufficient skill points",
+				"available": user.SkillPoints,
+			})
+			return
+		}
+
+		// 9. Prepare the update: add points to the chosen stat and subtract those points from available skill points.
+		update := bson.M{
+			"$inc": bson.M{
+				"stats." + stat: points,
+				"skill_points":  -points,
+			},
+		}
+
+		// 10. Execute the update.
+		result, err := collection.UpdateOne(ctx, bson.M{"_id": userOID}, update)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update stats", "details": err.Error()})
+			return
+		}
+		if result.ModifiedCount == 0 {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "no changes were made; please check the request"})
+			return
+		}
+
+		// 11. Return a success response.
+		c.JSON(http.StatusOK, gin.H{
+			"message": fmt.Sprintf("Successfully added %d point(s) to %s", points, stat),
 		})
 	}
 }

@@ -119,6 +119,10 @@ func Signup() gin.HandlerFunc {
 		}
 
 		inventoryID := bson.NewObjectID()
+		defaultVitality := 0
+		defaultStrength := 0
+		defaultEndurance := 0
+		defaultAgility := 0
 
 		user := models.User{
 			Email:       &req.Email,
@@ -134,6 +138,13 @@ func Signup() gin.HandlerFunc {
 			Updated_at:  time.Now(),
 			Level:       1,
 			ID:          bson.NewObjectID(),
+			Stats: models.Stats{
+				Vitality:  &defaultVitality,
+				Strength:  &defaultStrength,
+				Endurance: &defaultEndurance,
+				Agility:   &defaultAgility,
+			},
+			SkillPoints: 0,
 		}
 		access, refresh, err := helpers.GenerateAllTokens(user.ID.Hex(), *user.UserType)
 		if err != nil {
