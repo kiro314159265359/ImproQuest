@@ -15,4 +15,5 @@ class ColorManager {
       const Color(0xFF202A44).withValues(alpha: .6); // A muted dark blue.
   static const Color lightGrey = Color(0xFFC5C6D0); // A soft gray tone.
   static const Color lightGreen = Color(0xFFA4FF72);
+  static const Color neonBlue = Color(0xFF7380D8);
 }

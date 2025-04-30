@@ -177,54 +177,86 @@ func UpdateUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID := c.Param("id")
 
+		// Ensure user is authorized to update this ID
 		if err := helpers.MatchUserToid(c, userID); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
 			return
 		}
-		var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
-		defer cancel()
 
-		var user models.User
-
-		id, err := bson.ObjectIDFromHex(userID)
+		oid, err := bson.ObjectIDFromHex(userID)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid format"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
 			return
 		}
 
-		err = userCollection.FindOne(ctx, bson.M{"_id": id}).Decode(&user)
-
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
+		// Bind only the updatable fields
+		var payload struct {
+			Username  *string    `json:"username"`
+			Email     *string    `json:"email"`
+			Height    *float64   `json:"height"`
+			BirthDate *time.Time `json:"birth_date"`
+			Weight    *float64   `json:"weight"`
+			Gender    *string    `json:"gender"`
 		}
-
-		if err := c.ShouldBindJSON(&user); err != nil {
+		if err := c.ShouldBindJSON(&payload); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		var hashedPassword string
-		if user.Password != nil {
-			hashedPassword, err = helpers.HashPassword(*user.Password)
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-				return
-			}
+
+		// Build $set document
+		set := bson.M{}
+		if payload.Username != nil {
+			set["username"] = payload.Username
+		}
+		if payload.Email != nil {
+			set["email"] = payload.Email
+		}
+		if payload.Height != nil {
+			set["height"] = payload.Height
+		}
+		if payload.BirthDate != nil && !payload.BirthDate.IsZero() {
+			set["birth_date"] = payload.BirthDate
+		}
+		if payload.Weight != nil {
+			set["weight"] = payload.Weight
+		}
+		if payload.Gender != nil {
+			set["gender"] = payload.Gender
 		}
 
-		user.Password = &hashedPassword
-		user.Updated_at = time.Now()
+		// Always bump updated_at
+		set["updated_at"] = time.Now()
 
-		_, err = userCollection.ReplaceOne(ctx, bson.M{"_id": id}, user)
+		ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
+		defer cancel()
+
+		res, err := userCollection.UpdateOne(
+			ctx,
+			bson.M{"_id": oid},
+			bson.M{"$set": set},
+		)
 		if err != nil {
 			logger.Errorf("Failed to update user %s: %v", userID, err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		logger.Infof("User updated successfully: %s", userID)
-		c.JSON(http.StatusOK, gin.H{"message": "User was updated successfully", "user": user})
-	}
+		if res.MatchedCount == 0 {
+			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+			return
+		}
 
+		// Fetch updated document
+		var updatedUser models.User
+		if err := userCollection.FindOne(ctx, bson.M{"_id": oid}).Decode(&updatedUser); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not fetch updated user"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"message": "User was updated successfully",
+			"user":    updatedUser,
+		})
+	}
 }
 
 // controllers/user.go

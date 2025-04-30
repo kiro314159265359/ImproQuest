@@ -1,10 +1,13 @@
 import 'package:flame/flame.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_2/core/utils/app_icons.dart';
+import 'package:flutter_application_2/core/widget/dialogs.dart';
 import 'package:flutter_application_2/game/logic/game_event.dart';
 import 'package:flutter_application_2/game/logic/shop_event.dart';
+import 'package:flutter_application_2/game/widgets/menu_button.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../core/theme/color_manger.dart';
+import '../core/theme/text_style.dart';
 import '../core/utils/get_it_constants.dart';
 import '../features/home/data/model/user_model.dart';
 import 'logic/shop_bloc.dart';
@@ -131,50 +134,47 @@ class GamePageState extends State<GamePage> with WidgetsBindingObserver {
       // Mark shop as opened to prevent multiple transitions
       _temporaryShopOpened = true;
 
-      // Show reward notification first
-      showDialog(
+      Dialogs.noticeDialog(
         context: context,
-        barrierDismissible: false,
-        builder: (context) => AlertDialog(
-          title: const Text('Victory!'),
-          content: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text('You earned '),
-              Image.asset(AppIcons.coinsIcon, width: 20, height: 20),
-              const Text(' ${GameConstants.battleRewardGold}',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-
-                // Add reward after dialog is closed
-                temporaryShopBloc.add(
-                    RewardTemporaryGoldEvent(GameConstants.battleRewardGold));
-
-                // Ensure the reward is processed before showing shop
-                Future.delayed(const Duration(milliseconds: 200), () {
-                  // Stop background music before navigating to shop
-                  _audioManager.stopBackgroundMusic();
-
-                  if (flameGame.isDeathAnimationPlaying) {
-                    print(
-                        'Death animation in progress, setting pending transition');
-                    _pendingTransition = true;
-                  } else {
-                    print(
-                        'No death animation in progress, proceeding to shop immediately');
-                    _showShopScreen();
-                  }
-                });
-              },
-              child: const Text('Continue to Shop'),
+        title: 'Victory!',
+        content: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'You earned ',
+              style: TextStyles.styleBold(context,
+                  fontSize: 16, color: ColorManager.whiteColor),
+            ),
+            Image.asset(AppIcons.coinsIcon, width: 20, height: 20),
+            Text(
+              ' ${GameConstants.battleRewardGold}',
+              style: TextStyles.styleBold(context,
+                  fontSize: 16, color: ColorManager.whiteColor),
             ),
           ],
         ),
+        onPressed: () {
+          Navigator.of(context).pop();
+
+          // Add reward after dialog is closed
+          temporaryShopBloc
+              .add(RewardTemporaryGoldEvent(GameConstants.battleRewardGold));
+
+          // Ensure the reward is processed before showing shop
+          Future.delayed(const Duration(milliseconds: 200), () {
+            // Stop background music before navigating to shop
+            _audioManager.stopBackgroundMusic();
+
+            if (flameGame.isDeathAnimationPlaying) {
+              print('Death animation in progress, setting pending transition');
+              _pendingTransition = true;
+            } else {
+              print(
+                  'No death animation in progress, proceeding to shop immediately');
+              _showShopScreen();
+            }
+          });
+        },
       );
     } else if (!state.gameOver) {
       _temporaryShopOpened = false;

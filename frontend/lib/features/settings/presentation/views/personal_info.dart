@@ -5,6 +5,7 @@ import 'package:flutter_application_2/core/utils/validate_input.dart';
 import 'package:flutter_application_2/core/widget/custom_text_form_field.dart';
 import 'package:flutter_application_2/features/settings/presentation/views/widgets/label_box.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../core/theme/color_manger.dart';
 import '../../../../core/theme/text_style.dart';
@@ -63,13 +64,28 @@ class _PersonalInfoState extends State<PersonalInfo> {
             icon: const Icon(Icons.save),
             onPressed: () {
               if (formKey.currentState!.validate()) {
+                final raw = birthDayController.text;
+                String isoDate;
+                try {
+                  final dt = DateFormat('MM/dd/yyyy').parseStrict(raw);
+                  isoDate = dt.toUtc().toIso8601String();
+                } catch (_) {
+                  isoDate = raw;
+                }
+                getIt<UserCubit>().updateUserData(
+                    updatedUser: _currentUser!,
+                    username: userNameController.text,
+                    email: emailController.text,
+                    height: int.tryParse(heightController.text)!,
+                    weight: int.tryParse(weightController.text)!,
+                    gender: genderController.text,
+                    birthDate: isoDate);
                 _currentUser!.username = userNameController.text;
                 _currentUser!.email = emailController.text;
                 _currentUser!.weight = int.tryParse(weightController.text);
                 _currentUser!.height = int.tryParse(heightController.text);
                 _currentUser!.birthDate = birthDayController.text;
                 _currentUser!.gender = genderController.text;
-                getIt<UserCubit>().updateUserData(_currentUser!);
               }
             },
           ),

@@ -55,13 +55,6 @@ class ShopPage extends StatelessWidget {
         ),
         body: Column(
           children: [
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 10),
-              child: Text(
-                "Permanent Items Shop",
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-            ),
             Expanded(
               child: BlocListener<ShopBloc, ShopState>(
                 listener: (context, state) {

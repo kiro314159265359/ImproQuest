@@ -1,5 +1,6 @@
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_application_2/game/widgets/temporary_inventory_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../components/game_button.dart';
 import '../logic/game_bloc.dart';
@@ -7,7 +8,6 @@ import '../logic/game_event.dart';
 import '../logic/game_state.dart';
 import '../turn_based_game.dart';
 import '../viewmodel/game_view_model.dart';
-import 'inventory_ui.dart'; // Ensure this import is present
 
 class GameBattleUI extends StatelessWidget {
   final GameState state;
@@ -57,7 +57,7 @@ class GameBattleUI extends StatelessWidget {
         if (!state.inventoryOpen) _buildActionButtons(),
 
         // Show inventory UI when inventory is open
-        if (state.inventoryOpen) InventoryUI(viewModel: viewModel),
+        if (state.inventoryOpen) TemporaryInventoryUi(viewModel: viewModel),
 
         if (state.gameOver && state.player.currentHp == 0)
           Center(
