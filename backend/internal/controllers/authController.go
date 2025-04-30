@@ -118,26 +118,30 @@ func Signup() gin.HandlerFunc {
 			return
 		}
 
-		inventoryID := bson.NewObjectID()
 		defaultVitality := 0
 		defaultStrength := 0
 		defaultEndurance := 0
 		defaultAgility := 0
 
+		// Create user with a new ID
+		userID := bson.NewObjectID()
+		// Create a new inventory ID
+		inventoryID := bson.NewObjectID()
+
 		user := models.User{
+			ID:          userID,
 			Email:       &req.Email,
 			Password:    &hashedPassword,
 			Username:    req.Username,
 			BirthDate:   birthDate,
 			UserType:    req.UserType,
-			InventoryID: inventoryID,
+			InventoryID: inventoryID, // Set the inventory ID here
 			Height:      req.Height,
 			Weight:      req.Weight,
 			Gender:      req.Gender,
 			Created_at:  time.Now(),
 			Updated_at:  time.Now(),
 			Level:       1,
-			ID:          bson.NewObjectID(),
 			Stats: models.Stats{
 				Vitality:  &defaultVitality,
 				Strength:  &defaultStrength,
@@ -146,6 +150,7 @@ func Signup() gin.HandlerFunc {
 			},
 			SkillPoints: 0,
 		}
+
 		access, refresh, err := helpers.GenerateAllTokens(user.ID.Hex(), *user.UserType)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate tokens"})
@@ -155,13 +160,39 @@ func Signup() gin.HandlerFunc {
 		user.Token = &access
 		user.Refresh_token = &refresh
 
-		if _, err := userCollection.InsertOne(ctx, user); err != nil {
+		// Insert the user
+		_, err = userCollection.InsertOne(ctx, user)
+		if err != nil {
 			logger.Errorf("User creation failed: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
 			return
 		}
 
+		// Create inventory with the pre-generated ID
+		inventory := models.Inventory{
+			ID:     inventoryID,
+			UserID: userID,
+			Items:  []bson.ObjectID{},
+			Gear:   []bson.ObjectID{},
+			Size:   0,
+		}
+
+		// Insert the inventory
+		inventoryCollection := database.Inventories()
+		_, err = inventoryCollection.InsertOne(ctx, inventory)
+		if err != nil {
+			logger.Errorf("Inventory creation failed: %v", err)
+			// Try to clean up the user since inventory creation failed
+			_, deleteErr := userCollection.DeleteOne(ctx, bson.M{"_id": userID})
+			if deleteErr != nil {
+				logger.Errorf("Failed to clean up user after inventory creation failure: %v", deleteErr)
+			}
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create inventory"})
+			return
+		}
+
 		helpers.SetAuthCookies(c, access, refresh)
+
 		c.JSON(http.StatusCreated, UserResponse{
 			ID:            user.ID,
 			Email:         *user.Email,
@@ -173,7 +204,6 @@ func Signup() gin.HandlerFunc {
 		})
 	}
 }
-
 func Login() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
