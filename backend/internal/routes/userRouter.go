@@ -31,6 +31,7 @@ func UserRoutes(incomingRoutes *gin.Engine) {
 
 	users.POST("/equip", controllers.EquipItem())
 	users.POST("/unequip", controllers.UnequipItem())
+	users.GET("/inventory/items", controllers.GetUserInventoryItems()) // New route
 
 	users.POST("/stats/:stat/:points", controllers.AddStatsWithSkillPoints())
 

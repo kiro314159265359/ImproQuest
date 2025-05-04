@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_2/features/rankings/presentation/manager/leaderboard_cubit.dart';
 import 'package:flutter_application_2/features/rankings/presentation/views/widgets/leaderboards_list.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/background_theme.dart';
 import '../../../../core/theme/color_manger.dart';
 import '../../../../core/theme/text_style.dart';
-import '../../../../core/utils/get_it_constants.dart';
 
 class Rankings extends StatefulWidget {
   const Rankings({super.key});
