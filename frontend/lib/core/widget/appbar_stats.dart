@@ -22,8 +22,15 @@ class _AppBarStatsState extends State<AppBarStats> {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<UserCubit, UserState>(
+      buildWhen: (previous, current) =>
+          current is UserLoaded ||
+          current is UserUpdated ||
+          current is UserError,
       builder: (context, state) {
         if (state is UserLoaded) {
+          return _buildAppBatStats(context, state.user);
+        }
+        if (state is UserUpdated) {
           return _buildAppBatStats(context, state.user);
         }
         return const SizedBox.shrink();

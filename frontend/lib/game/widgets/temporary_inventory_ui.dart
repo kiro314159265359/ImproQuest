@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_2/core/theme/text_style.dart';
 import 'package:flutter_application_2/game/logic/shop_state.dart';
+import 'package:flutter_application_2/game/widgets/menu_button.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/theme/color_manger.dart';
 import '../logic/game_bloc.dart';
@@ -9,10 +11,10 @@ import '../models/inventory_item.dart';
 import '../models/shop_item.dart';
 import '../viewmodel/game_view_model.dart';
 
-class InventoryUI extends StatelessWidget {
+class TemporaryInventoryUi extends StatelessWidget {
   final GameViewModel viewModel;
 
-  const InventoryUI({
+  const TemporaryInventoryUi({
     super.key,
     required this.viewModel,
   });
@@ -26,9 +28,9 @@ class InventoryUI extends StatelessWidget {
           width: MediaQuery.of(context).size.width * 0.8,
           height: MediaQuery.of(context).size.height * 0.6,
           decoration: BoxDecoration(
-            color: ColorManager.containerBackGround,
+            color: ColorManager.gunmetal,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: ColorManager.primaryColor, width: 2),
+            border: Border.all(color: ColorManager.neonBlue, width: 2),
           ),
           child: Column(
             children: [
@@ -36,7 +38,16 @@ class InventoryUI extends StatelessWidget {
               Expanded(
                 child: _buildConsumableList(context),
               ),
-              _buildCloseButton(context),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: MenuButton(
+                  fillColor: ColorManager.primaryColor,
+                  buttonText: "Close Inventory",
+                  onPressed: () {
+                    context.read<GameBloc>().add(CloseInventoryEvent());
+                  },
+                ),
+              ),
             ],
           ),
         ),
@@ -46,25 +57,18 @@ class InventoryUI extends StatelessWidget {
 
   Widget _buildHeader(BuildContext context) {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: const BoxDecoration(
         border: Border(
-          bottom: BorderSide(color: ColorManager.primaryColor, width: 1),
+          bottom: BorderSide(color: ColorManager.neonBlue, width: 2),
         ),
       ),
-      child: const Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          SizedBox(width: 8),
-          Text(
-            'Temporary Consumables',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
+      child: Text(
+        'Temporary Consumables',
+        style: TextStyles.styleBold(context,
+            fontSize: 18, color: ColorManager.whiteColor),
+        textAlign: TextAlign.center,
       ),
     );
   }
@@ -83,10 +87,11 @@ class InventoryUI extends StatelessWidget {
         }
 
         if (inventoryItems.isEmpty) {
-          return const Center(
+          return Center(
             child: Text(
               'No consumable items in inventory',
-              style: TextStyle(color: Colors.white),
+              style: TextStyles.styleRegular(context,
+                  fontSize: 12, color: ColorManager.whiteColor),
             ),
           );
         }
@@ -97,10 +102,11 @@ class InventoryUI extends StatelessWidget {
             .toList();
 
         if (consumables.isEmpty) {
-          return const Center(
+          return Center(
             child: Text(
               'No consumable items in inventory',
-              style: TextStyle(color: Colors.white),
+              style: TextStyles.styleRegular(context,
+                  fontSize: 12, color: ColorManager.whiteColor),
             ),
           );
         }
@@ -143,11 +149,8 @@ class InventoryUI extends StatelessWidget {
                           ),
                           child: Text(
                             'x${inventoryItem.quantity}',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: TextStyles.styleBold(context,
+                                fontSize: 10, color: ColorManager.whiteColor),
                           ),
                         ),
                       ),
@@ -155,59 +158,43 @@ class InventoryUI extends StatelessWidget {
                 ),
                 title: Text(
                   item.name,
-                  style: TextStyle(
-                    color: _getTierColor(item.tier),
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyles.styleBold(context,
+                      fontSize: 12, color: _getTierColor(item.tier)),
                 ),
                 subtitle: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       item.description,
-                      style: const TextStyle(color: Colors.white70),
+                      style: TextStyles.styleRegular(context,
+                          fontSize: 12, color: ColorManager.lightGrey),
                     ),
                     const SizedBox(height: 4),
                     if (item.effects.isNotEmpty)
                       ...item.effects.entries.map((e) => Text(
                             '• ${_formatEffectName(e.key)}: +${e.value}',
-                            style: const TextStyle(color: Colors.amber),
+                            style: TextStyles.styleRegular(context,
+                                fontSize: 12, color: Colors.amber),
                           )),
                   ],
                 ),
-                trailing: ElevatedButton(
-                  onPressed: () {
-                    // Use the item
-                    viewModel.useItem(item);
-                    // Close inventory after using item
-                    context.read<GameBloc>().add(CloseInventoryEvent());
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: ColorManager.primaryColor,
-                  ),
-                  child: const Text('Use'),
-                ),
+                trailing: MenuButton(
+                    fontSize: 12,
+                    width: null,
+                    height: null,
+                    fillColor: ColorManager.primaryColor,
+                    buttonText: "Use",
+                    onPressed: () {
+                      //Use the item
+                      viewModel.useItem(item);
+                      // Close inventory after using item
+                      context.read<GameBloc>().add(CloseInventoryEvent());
+                    }),
               ),
             );
           },
         );
       },
-    );
-  }
-
-  Widget _buildCloseButton(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: ElevatedButton(
-        onPressed: () {
-          context.read<GameBloc>().add(CloseInventoryEvent());
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: ColorManager.secondaryColor,
-          minimumSize: const Size(double.infinity, 50),
-        ),
-        child: const Text('Close Inventory'),
-      ),
     );
   }
 

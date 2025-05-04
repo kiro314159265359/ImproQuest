@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_application_2/game/models/shop_item.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:flutter_application_2/features/home/presentation/manager/user_state.dart';
@@ -11,7 +12,7 @@ import '../../domain/repo/user_repo.dart';
 class UserCubit extends HydratedCubit<UserState> {
   final UserRepo userRepo;
   UserModel? currentUser;
-
+  List<ShopItem>? itemsList;
   UserCubit(this.userRepo) : super(UserInitial());
 
   /// Helper method to get current distance from state
@@ -66,13 +67,27 @@ class UserCubit extends HydratedCubit<UserState> {
     }
   }
 
-  Future<void> updateUserData(UserModel updatedUser) async {
+  Future<void> updateUserData(
+      {required UserModel updatedUser,
+      required String username,
+      required String email,
+      required int height,
+      required int weight,
+      required String gender,
+      required String birthDate}) async {
     emit(UserUpdating());
     try {
-      currentUser = await userRepo.updateUserData(updatedUser);
+      currentUser = await userRepo.updateUserData(
+          user: updatedUser,
+          username: username,
+          email: email,
+          height: height,
+          weight: weight,
+          gender: gender,
+          birthDate: birthDate);
 
-      // Emit as loaded so that state persists with the current distance
       emit(UserLoaded(currentUser!, totalDistance: _currentDistance));
+      emit(UserUpdated(currentUser!));
 
       if (getIt.isRegistered<UserModel>()) {
         getIt.unregister<UserModel>();
@@ -90,6 +105,7 @@ class UserCubit extends HydratedCubit<UserState> {
         emit(UpdateError(ServerFailure(error.toString())));
         if (currentUser != null) {
           emit(UserLoaded(currentUser!, totalDistance: _currentDistance));
+          emit(UserUpdated(currentUser!));
         }
       }
     }
@@ -199,6 +215,58 @@ class UserCubit extends HydratedCubit<UserState> {
       currentUser = await userRepo.getUserData();
 
       // Emit loaded state with preserved distance
+      emit(UserLoaded(currentUser!, totalDistance: _currentDistance));
+      emit(UserUpdated(currentUser!));
+
+      if (getIt.isRegistered<UserModel>()) {
+        getIt.unregister<UserModel>();
+      }
+      getIt.registerSingleton<UserModel>(currentUser!);
+
+      if (getIt.isRegistered<ShopBloc>()) {
+        getIt.unregister<ShopBloc>();
+      }
+      getIt.registerSingleton<ShopBloc>(ShopBloc(user: currentUser!));
+    } catch (error) {
+      if (error is DioException) {
+        emit(UpdateError(ServerFailure.fromDioError(error)));
+      } else {
+        emit(UpdateError(ServerFailure(error.toString())));
+        if (currentUser != null) {
+          emit(UserLoaded(currentUser!, totalDistance: _currentDistance));
+          emit(UserUpdated(currentUser!));
+        }
+      }
+    }
+  }
+
+  Future<void> getUserItems(String? slot) async {
+    emit(InventoryLoading());
+    try {
+      await userRepo.getUserItems();
+      final invModel = await userRepo.getUserItems();
+      itemsList = invModel.items?.where((inv) => inv.slot == slot).toList();
+
+      emit(InventoryLoaded(itemsList!));
+    } catch (error) {
+      if (error is DioException) {
+        emit(UserError(ServerFailure.fromDioError(error)));
+      } else {
+        emit(UserError(ServerFailure(error.toString())));
+        if (currentUser != null) {
+          emit(InventoryLoaded(itemsList!));
+        }
+      }
+    }
+  }
+
+  Future<void> equipItem(String? itemId, String? slot) async {
+    emit(UserUpdating());
+    try {
+      await userRepo.equipItem(itemId, slot);
+
+      currentUser = await userRepo.getUserData();
+
       emit(UserLoaded(currentUser!, totalDistance: _currentDistance));
       emit(UserUpdated(currentUser!));
 
