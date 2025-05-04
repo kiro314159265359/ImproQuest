@@ -1035,3 +1035,84 @@ func AddStatsWithSkillPoints() gin.HandlerFunc {
 		})
 	}
 }
+
+// GetUserInventoryItems retrieves the items present in the logged-in user's inventory
+func GetUserInventoryItems() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Get user ID from context
+		userIDStr := c.GetString("id")
+		if userIDStr == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "user ID not found in context"})
+			return
+		}
+
+		userOID, err := bson.ObjectIDFromHex(userIDStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID format"})
+			return
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		// Get user to find their inventory ID
+		userCollection := database.Users()
+		var user models.User
+		err = userCollection.FindOne(ctx, bson.M{"_id": userOID}).Decode(&user)
+		if err != nil {
+			if err == mongo.ErrNoDocuments {
+				c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+			} else {
+				logger.Errorf("Database error retrieving user: %v", err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to retrieve user"})
+			}
+			return
+		}
+
+		// Check if user has an inventory ID
+		if user.InventoryID.IsZero() {
+			c.JSON(http.StatusNotFound, gin.H{"error": "user does not have an inventory assigned"})
+			return
+		}
+
+		// Get the inventory using the InventoryID
+		inventoryCollection := database.Inventories()
+		var inventory models.Inventory
+		err = inventoryCollection.FindOne(ctx, bson.M{"_id": user.InventoryID}).Decode(&inventory)
+		if err != nil {
+			if err == mongo.ErrNoDocuments {
+				c.JSON(http.StatusNotFound, gin.H{"error": "inventory not found"})
+			} else {
+				logger.Errorf("Database error retrieving inventory: %v", err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to retrieve inventory"})
+			}
+			return
+		}
+
+		// Check if the inventory has any items
+		if len(inventory.Items) == 0 {
+			c.JSON(http.StatusOK, gin.H{"items": []models.Item{}}) // Return empty list
+			return
+		}
+
+		// Fetch the details of the items in the inventory
+		itemsCollection := database.Items()
+		filter := bson.M{"_id": bson.M{"$in": inventory.Items}}
+		cursor, err := itemsCollection.Find(ctx, filter)
+		if err != nil {
+			logger.Errorf("Database error retrieving inventory items: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to retrieve inventory items"})
+			return
+		}
+		defer cursor.Close(ctx)
+
+		var items []models.Item
+		if err = cursor.All(ctx, &items); err != nil {
+			logger.Errorf("Failed to decode inventory items: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to process inventory items"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"items": items})
+	}
+}
