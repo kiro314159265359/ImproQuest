@@ -36,13 +36,11 @@ class _StatsListTileState extends State<StatsListTile> {
         children: [
           Text(
             widget.statName,
-            style: TextStyles.styleMedium(context,
-                fontSize: 16, color: ColorManager.whiteColor),
+            style: TextStyles.medium16White,
           ),
           Text(
             widget.statNum,
-            style: TextStyles.styleMedium(context,
-                fontSize: 16, color: ColorManager.whiteColor),
+            style: TextStyles.medium16White,
           ),
         ],
       ),
@@ -51,13 +49,11 @@ class _StatsListTileState extends State<StatsListTile> {
         children: [
           Text(
             widget.statSubName,
-            style: TextStyles.styleMedium(context,
-                fontSize: 12, color: ColorManager.whiteColor),
+            style: TextStyles.medium12White,
           ),
           Text(
             widget.statSubNum,
-            style: TextStyles.styleMedium(context,
-                fontSize: 12, color: ColorManager.whiteColor),
+            style: TextStyles.medium12White,
           ),
         ],
       ),

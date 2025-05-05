@@ -81,6 +81,19 @@ class UserApi extends UserRepo {
   }
 
   @override
+  Future<void> unequipItem(String? itemId, String? slot) async {
+    await apiService.post(EndPoints.unequipItems, body: {
+      'item_id': itemId,
+      'slot': slot,
+    });
+  }
+
+  @override
+  Future<void> deleteAccount(UserModel user) async {
+    await apiService.delete('/users/${user.sId}');
+  }
+
+  @override
   Future<InventoryModel> getUserItems() async {
     var response = await apiService.get(EndPoints.userItems);
     return InventoryModel.fromJson(jsonDecode(response.toString()));

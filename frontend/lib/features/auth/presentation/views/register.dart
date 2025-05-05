@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_2/core/theme/background_theme.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/routes/routes.dart';
-import '../../../../core/theme/color_manger.dart';
 import '../../../../core/theme/text_style.dart';
 import '../../../../core/utils/validate_input.dart';
 import '../../../../core/widget/custom_primary_button.dart';
@@ -61,17 +60,14 @@ class _RegisterState extends State<Register> {
                           children: [
                             Text(
                               "Register",
-                              style: TextStyles.styleExtraBold(context,
-                                  fontSize: 32, color: ColorManager.whiteColor),
+                              style: TextStyles.extraBold32White,
                             ),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
                                   "Already a player?",
-                                  style: TextStyles.styleSemiBold(context,
-                                      fontSize: 18,
-                                      color: ColorManager.whiteColor),
+                                  style: TextStyles.semiBold18White,
                                 ),
                                 SizedBox(
                                   width: w * 0.03,
@@ -83,9 +79,7 @@ class _RegisterState extends State<Register> {
                                   },
                                   child: Text(
                                     "login",
-                                    style: TextStyles.styleSemiBold(context,
-                                        fontSize: 18,
-                                        color: ColorManager.primaryColor),
+                                    style: TextStyles.semiBold18Primary,
                                   ),
                                 )
                               ],

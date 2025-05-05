@@ -27,16 +27,9 @@ class _AchievementsListState extends State<AchievementsList> {
                       ? AppIcons.trophyLockedIcon
                       : AppIcons.trophyUnlockedIcon,
                   width: 65),
-              title: Text(
-                "ACHIEVEMENT",
-                style: TextStyles.styleBold(context,
-                    fontSize: 20, color: ColorManager.whiteColor),
-              ),
-              subtitle: Text(
-                "BLABLABLABLABLABLABLABLABLABLABLABLA",
-                style: TextStyles.styleRegular(context,
-                    fontSize: 12, color: ColorManager.whiteColor),
-              ),
+              title: Text("ACHIEVEMENT", style: TextStyles.bold20White),
+              subtitle: Text("BLABLABLABLABLABLABLABLABLABLABLABLA",
+                  style: TextStyles.regular12White),
             ),
           );
         });

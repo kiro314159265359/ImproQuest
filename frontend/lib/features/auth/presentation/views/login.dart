@@ -1,6 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_2/core/theme/background_theme.dart';
+import 'package:flutter_application_2/core/utils/app_images.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_application_2/features/auth/domain/repo/login_repo.dart';
 import '../../../../core/utils/get_it_constants.dart';
@@ -59,9 +60,7 @@ class _LoginState extends State<Login> {
                             children: [
                               Text(
                                 'Login',
-                                style: TextStyles.styleExtraBold(context,
-                                    fontSize: 32,
-                                    color: ColorManager.whiteColor),
+                                style: TextStyles.extraBold32White,
                               ),
                               SizedBox(
                                 height: h * 0.02,
@@ -97,24 +96,14 @@ class _LoginState extends State<Login> {
                                           });
                                         },
                                       ),
-                                      const Text(
-                                        "Remember me",
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color: ColorManager.whiteColor,
-                                        ),
-                                      ),
+                                      Text("Remember me",
+                                          style: TextStyles.bold16White),
                                     ],
                                   ),
                                   RichText(
                                     text: TextSpan(
                                         text: 'Forgot password?',
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color: Color(0xFF8766EB),
-                                        ),
+                                        style: TextStyles.bold16Primary,
                                         recognizer: TapGestureRecognizer()
                                           ..onTap = () {}),
                                   ),
@@ -138,8 +127,8 @@ class _LoginState extends State<Login> {
                               SizedBox(
                                 height: h * 0.02,
                               ),
-                              const Row(children: [
-                                Expanded(
+                              Row(children: [
+                                const Expanded(
                                     child: Divider(
                                   thickness: 2,
                                   indent: 10,
@@ -147,12 +136,9 @@ class _LoginState extends State<Login> {
                                 )),
                                 Text(
                                   "OR",
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.white,
-                                  ),
+                                  style: TextStyles.regular14White,
                                 ),
-                                Expanded(
+                                const Expanded(
                                     child: Divider(
                                   thickness: 2,
                                   indent: 10,
@@ -168,16 +154,13 @@ class _LoginState extends State<Login> {
                                   child: ElevatedButton.icon(
                                     onPressed: () {},
                                     icon: Image.asset(
-                                      "assets/images/google.png",
+                                      AppImages.googleLogo,
                                       height: h * 0.06,
                                       width: w * 0.06,
                                     ),
-                                    label: const Text(
+                                    label: Text(
                                       "Sign in with Google",
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.white,
-                                      ),
+                                      style: TextStyles.regular12White,
                                     ),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.transparent,
@@ -187,8 +170,8 @@ class _LoginState extends State<Login> {
                                           borderRadius:
                                               BorderRadius.circular(10)),
                                       side: const BorderSide(
-                                        color: Colors.grey,
-                                        width: 1, // Border width
+                                        color: ColorManager.greyColor,
+                                        width: 1,
                                       ),
                                     ),
                                   )),
@@ -201,16 +184,13 @@ class _LoginState extends State<Login> {
                                   child: ElevatedButton.icon(
                                     onPressed: () {},
                                     icon: Image.asset(
-                                      "assets/images/facebook.png",
+                                      AppImages.facebookLogo,
                                       height: h * 0.06,
                                       width: w * 0.06,
                                     ),
-                                    label: const Text(
+                                    label: Text(
                                       "Sign in with Facebook",
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.white,
-                                      ),
+                                      style: TextStyles.regular12White,
                                     ),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.transparent,
@@ -220,8 +200,8 @@ class _LoginState extends State<Login> {
                                           borderRadius:
                                               BorderRadius.circular(10)),
                                       side: const BorderSide(
-                                        color: Colors.grey,
-                                        width: 1, // Border width
+                                        color: ColorManager.greyColor,
+                                        width: 1,
                                       ),
                                     ),
                                   )),
@@ -234,16 +214,13 @@ class _LoginState extends State<Login> {
                                   child: ElevatedButton.icon(
                                     onPressed: () {},
                                     icon: Image.asset(
-                                      "assets/images/Social_Icons.png",
+                                      AppImages.appleLogo,
                                       height: h * 0.06,
                                       width: w * 0.06,
                                     ),
-                                    label: const Text(
+                                    label: Text(
                                       "Sign in with Apple",
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.white,
-                                      ),
+                                      style: TextStyles.regular12White,
                                     ),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.transparent,
@@ -253,8 +230,8 @@ class _LoginState extends State<Login> {
                                           borderRadius:
                                               BorderRadius.circular(10)),
                                       side: const BorderSide(
-                                        color: Colors.grey,
-                                        width: 1, // Border width
+                                        color: ColorManager.greyColor,
+                                        width: 1,
                                       ),
                                     ),
                                   )),
@@ -264,22 +241,14 @@ class _LoginState extends State<Login> {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const Text(
+                                  Text(
                                     "Not a player yet?",
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.grey,
-                                    ),
+                                    style: TextStyles.bold16Grey,
                                   ),
                                   RichText(
                                     text: TextSpan(
                                       text: 'Register',
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFF8766EB),
-                                      ),
+                                      style: TextStyles.bold16Primary,
                                       recognizer: TapGestureRecognizer()
                                         ..onTap = () {
                                           Navigator.pushReplacementNamed(

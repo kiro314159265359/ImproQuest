@@ -57,7 +57,7 @@ class HomeContent extends StatelessWidget {
                   return const Center(
                     child: Text(
                       "Loading user data...",
-                      style: TextStyle(color: Colors.white),
+                      style: TextStyle(color: ColorManager.whiteColor),
                     ),
                   );
                 }
@@ -77,6 +77,7 @@ class HomeContent extends StatelessWidget {
         },
         child: const Icon(Icons.add),
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
     );
   }
 
@@ -94,11 +95,9 @@ class HomeContent extends StatelessWidget {
             SizedBox(height: screenHeight * 0.025),
             CustomRichText(
               text1: 'Welcome, ',
-              textStyle1: TextStyles.styleExtraBold(context,
-                  fontSize: 30, color: ColorManager.whiteColor),
+              textStyle1: TextStyles.extraBold30White,
               text2: user.username?.trim().split(' ').first ?? 'Player',
-              textStyle2: TextStyles.styleExtraBold(context,
-                  fontSize: 30, color: ColorManager.primaryColor),
+              textStyle2: TextStyles.extraBold30Primary,
             ),
             SizedBox(height: screenHeight * 0.025),
             const DailyQuestCard(),

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_2/core/theme/text_style.dart';
+import 'package:flutter_application_2/core/widget/custom_button.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/theme/color_manger.dart';
 import '../../core/utils/app_icons.dart';
@@ -59,7 +61,7 @@ class _TemporaryShopPageState extends State<TemporaryShopPage> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(state.message),
-                  backgroundColor: Colors.orange,
+                  backgroundColor: ColorManager.errorColor,
                 ),
               );
             }
@@ -70,6 +72,7 @@ class _TemporaryShopPageState extends State<TemporaryShopPage> {
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           title: const Text("Temporary Shop"),
+          centerTitle: true,
           actions: [
             BlocBuilder<ShopBloc, ShopState>(
               builder: (context, state) {
@@ -83,22 +86,15 @@ class _TemporaryShopPageState extends State<TemporaryShopPage> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: Colors.amber.withOpacity(0.2),
+                      color: ColorManager.lightGoldColor,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.amber),
+                      border: Border.all(color: ColorManager.goldColor),
                     ),
                     child: Row(
                       children: [
                         Image.asset(AppIcons.coinsIcon, width: 24, height: 24),
                         const SizedBox(width: 4),
-                        Text(
-                          '$gold',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.amber,
-                          ),
-                        ),
+                        Text('$gold', style: TextStyles.bold18Gold),
                       ],
                     ),
                   ),
@@ -111,13 +107,8 @@ class _TemporaryShopPageState extends State<TemporaryShopPage> {
           children: [
             Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Text(
-                "These items will be reset after your run ends",
-                style: TextStyle(
-                  color: Colors.amber[700],
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
+              child: Text("These items will be reset after your run ends",
+                  style: TextStyles.regularItalic14darkGold),
             ),
             Expanded(
               child: BlocBuilder<ShopBloc, ShopState>(
@@ -156,13 +147,17 @@ class _TemporaryShopPageState extends State<TemporaryShopPage> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  ElevatedButton(
+                  CustomButton(
+                    width: null,
+                    height: null,
+                    borderColor: ColorManager.lightGrey,
+                    fillColor: Colors.transparent,
+                    buttonText: "Refresh Items",
                     onPressed: () {
                       context
                           .read<ShopBloc>()
                           .add(ResetTemporaryShopItemsEvent());
                     },
-                    child: const Text("Refresh Items"),
                   ),
                   ElevatedButton(
                     onPressed: () {
@@ -213,28 +208,19 @@ class TemporaryItemCard extends StatelessWidget {
               children: [
                 Text(
                   item.name,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: _getTierColor(item.tier),
-                  ),
+                  style: TextStyles.styleBold(context,
+                      fontSize: 18, color: _getTierColor(item.tier)),
                 ),
                 if (ownedQuantity > 0)
                   Container(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Colors.green.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.green),
+                      border: Border.all(color: ColorManager.greenColor),
                     ),
-                    child: Text(
-                      'Owned: $ownedQuantity',
-                      style: const TextStyle(
-                        color: Colors.green,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    child: Text('Owned: $ownedQuantity',
+                        style: TextStyles.bold12Green),
                   ),
               ],
             ),
@@ -244,8 +230,7 @@ class TemporaryItemCard extends StatelessWidget {
             // Show temporary effects
             if (item.effects.isNotEmpty) ...[
               const SizedBox(height: 8),
-              const Text("Temporary Effects:",
-                  style: TextStyle(fontWeight: FontWeight.bold)),
+              Text("Temporary Effects:", style: TextStyles.bold12White),
               ...item.effects.entries.map((entry) =>
                   Text("• ${_formatStatName(entry.key)}: +${entry.value}")),
             ],
@@ -258,22 +243,15 @@ class TemporaryItemCard extends StatelessWidget {
                   children: [
                     Image.asset(AppIcons.coinsIcon, width: 20, height: 20),
                     const SizedBox(width: 4),
-                    Text(
-                      "${item.price}",
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    Text("${item.price}", style: TextStyles.bold16White),
                   ],
                 ),
-                ElevatedButton(
-                  onPressed: () => viewModel.buyTemporaryItem(item),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: ColorManager.secondaryColor,
-                  ),
-                  child: const Text("Buy"),
-                ),
+                CustomButton(
+                    width: null,
+                    height: null,
+                    fillColor: ColorManager.primaryColor,
+                    buttonText: "Buy",
+                    onPressed: () => viewModel.buyTemporaryItem(item)),
               ],
             ),
           ],
@@ -285,11 +263,11 @@ class TemporaryItemCard extends StatelessWidget {
   Color _getTierColor(ShopTier tier) {
     switch (tier) {
       case ShopTier.basic:
-        return Colors.white;
+        return ColorManager.whiteColor;
       case ShopTier.meta:
-        return Colors.blue;
+        return ColorManager.blueColor;
       case ShopTier.prestige:
-        return Colors.purple;
+        return ColorManager.prupleColor;
     }
   }
 

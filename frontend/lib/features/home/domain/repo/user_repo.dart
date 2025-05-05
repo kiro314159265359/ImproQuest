@@ -21,4 +21,6 @@ abstract class UserRepo {
   Future<LeaderboardLevelListModel> getLeaderboardByLevelList();
   Future<InventoryModel> getUserItems();
   Future<void> equipItem(String? itemId, String? slot);
+  Future<void> unequipItem(String? itemId, String? slot);
+  Future<void> deleteAccount(UserModel user);
 }

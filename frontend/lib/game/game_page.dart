@@ -4,7 +4,6 @@ import 'package:flutter_application_2/core/utils/app_icons.dart';
 import 'package:flutter_application_2/core/widget/dialogs.dart';
 import 'package:flutter_application_2/game/logic/game_event.dart';
 import 'package:flutter_application_2/game/logic/shop_event.dart';
-import 'package:flutter_application_2/game/widgets/menu_button.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../core/theme/color_manger.dart';
 import '../core/theme/text_style.dart';
@@ -140,17 +139,10 @@ class GamePageState extends State<GamePage> with WidgetsBindingObserver {
         content: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              'You earned ',
-              style: TextStyles.styleBold(context,
-                  fontSize: 16, color: ColorManager.whiteColor),
-            ),
+            Text('You earned ', style: TextStyles.bold16White),
             Image.asset(AppIcons.coinsIcon, width: 20, height: 20),
-            Text(
-              ' ${GameConstants.battleRewardGold}',
-              style: TextStyles.styleBold(context,
-                  fontSize: 16, color: ColorManager.whiteColor),
-            ),
+            Text(' ${GameConstants.battleRewardGold}',
+                style: TextStyles.bold16White),
           ],
         ),
         onPressed: () {
@@ -204,9 +196,18 @@ class GamePageState extends State<GamePage> with WidgetsBindingObserver {
                   size: 35,
                 ),
                 onPressed: () {
-                  Flame.device.restoreFullscreen();
-                  Flame.device.setPortrait();
-                  Navigator.of(context).pop();
+                  Dialogs.confirmDialog(
+                      context: context,
+                      title: 'Exit Game',
+                      content: 'Are you sure you want to exit the game?',
+                      onPressed: () {
+                        _audioManager.stopBackgroundMusic();
+                        temporaryShopBloc.add(ResetTemporaryGoldEvent());
+                        Flame.device.restoreFullscreen();
+                        Flame.device.setPortrait();
+                        Navigator.of(context).pop();
+                        Navigator.of(context).pop();
+                      });
                 },
               ),
               BlocBuilder<GameBloc, GameState>(

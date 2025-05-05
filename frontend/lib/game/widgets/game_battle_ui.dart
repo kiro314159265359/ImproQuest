@@ -1,5 +1,7 @@
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_application_2/core/theme/color_manger.dart';
+import 'package:flutter_application_2/core/theme/text_style.dart';
 import 'package:flutter_application_2/game/widgets/temporary_inventory_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../components/game_button.dart';
@@ -42,12 +44,12 @@ class GameBattleUI extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.black54,
+              color: ColorManager.blackColor,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
               state.message,
-              style: const TextStyle(color: Colors.white, fontSize: 16),
+              style: TextStyles.regular16White,
               textAlign: TextAlign.center,
             ),
           ),

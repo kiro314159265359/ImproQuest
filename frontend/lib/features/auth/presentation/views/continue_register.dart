@@ -62,8 +62,7 @@ class _ContinueRegisterState extends State<ContinueRegister> {
                           children: [
                             Text(
                               "Getting Started",
-                              style: TextStyles.styleExtraBold(context,
-                                  fontSize: 32, color: ColorManager.whiteColor),
+                              style: TextStyles.extraBold32White,
                             ),
                             SizedBox(
                               height: h * 0.03,
@@ -107,13 +106,9 @@ class _ContinueRegisterState extends State<ContinueRegister> {
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  const Text(
+                                  Text(
                                     "Gender",
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFFC5C6D0),
-                                    ),
+                                    style: TextStyles.bold16lightGrey,
                                   ),
                                   ToggleButtons(
                                     isSelected: isSelected,
@@ -128,9 +123,9 @@ class _ContinueRegisterState extends State<ContinueRegister> {
                                     },
                                     // borderRadius: BorderRadius.circular(8),
                                     selectedBorderColor:
-                                        const Color(0xFF8766EB),
-                                    selectedColor: Colors.white,
-                                    color: Colors.white54,
+                                        ColorManager.primaryColor,
+                                    selectedColor: ColorManager.whiteColor,
+                                    color: ColorManager.darkGreyColor,
                                     constraints: const BoxConstraints(
                                         minHeight: 40, minWidth: 100),
                                     children: [
@@ -140,8 +135,8 @@ class _ContinueRegisterState extends State<ContinueRegister> {
                                         children: [
                                           Icon(Icons.male,
                                               color: isSelected[0]
-                                                  ? Colors.white
-                                                  : Colors.white54),
+                                                  ? ColorManager.whiteColor
+                                                  : ColorManager.darkGreyColor),
                                           SizedBox(width: w * 0.02),
                                           const Text('Male'),
                                         ],
@@ -152,8 +147,8 @@ class _ContinueRegisterState extends State<ContinueRegister> {
                                         children: [
                                           Icon(Icons.female,
                                               color: isSelected[1]
-                                                  ? Colors.white
-                                                  : Colors.white54),
+                                                  ? ColorManager.whiteColor
+                                                  : ColorManager.darkGreyColor),
                                           SizedBox(width: w * 0.02),
                                           const Text('Female'),
                                         ],

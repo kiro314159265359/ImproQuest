@@ -45,13 +45,11 @@ class _QuestCardState extends State<QuestCard> {
                       children: [
                         Text(
                           "${widget.questName} ${widget.goal}m",
-                          style: TextStyles.styleSemiBold(context,
-                              fontSize: 16, color: ColorManager.whiteColor),
+                          style: TextStyles.semiBold16White,
                         ),
                         Text(
                           widget.questDesc,
-                          style: TextStyles.styleSemiBold(context,
-                              fontSize: 12, color: ColorManager.whiteColor),
+                          style: TextStyles.semiBold12White,
                         )
                       ],
                     ),
@@ -60,8 +58,7 @@ class _QuestCardState extends State<QuestCard> {
               ),
               Text(
                 "[${(widget.goal * widget.progress).toInt()}/${widget.goal}]",
-                style: TextStyles.styleSemiBold(context,
-                    fontSize: 12, color: ColorManager.whiteColor),
+                style: TextStyles.semiBold12White,
               ),
             ],
           ),
@@ -88,8 +85,7 @@ class _QuestCardState extends State<QuestCard> {
                   (widget.goal * widget.progress).toInt() < widget.goal
                       ? "[ UNCOMPLETED ]"
                       : "[ COMPLETED ]",
-                  style: TextStyles.styleSemiBold(context,
-                      fontSize: 12, color: ColorManager.whiteColor),
+                  style: TextStyles.semiBold12White,
                 ),
               )
             ],

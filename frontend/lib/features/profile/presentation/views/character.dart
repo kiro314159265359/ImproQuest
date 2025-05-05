@@ -66,9 +66,7 @@ class _CharacterState extends State<Character> {
                     onPressed: () {
                       showDialog(
                         context: context,
-                        builder: (_) => const InventoryUI(
-                          title: 'Helmet',
-                        ),
+                        builder: (_) => const InventoryUI(title: 'Helmet'),
                       );
                     },
                   ),
@@ -80,9 +78,7 @@ class _CharacterState extends State<Character> {
                     onPressed: () {
                       showDialog(
                         context: context,
-                        builder: (_) => const InventoryUI(
-                          title: 'Armor',
-                        ),
+                        builder: (_) => const InventoryUI(title: 'Armor'),
                       );
                     },
                   )
@@ -106,9 +102,7 @@ class _CharacterState extends State<Character> {
                     onPressed: () {
                       showDialog(
                         context: context,
-                        builder: (_) => const InventoryUI(
-                          title: 'Weapon',
-                        ),
+                        builder: (_) => const InventoryUI(title: 'Weapon'),
                       );
                     },
                   )
@@ -123,9 +117,7 @@ class _CharacterState extends State<Character> {
                     onPressed: () async {
                       showDialog(
                         context: context,
-                        builder: (_) => const InventoryUI(
-                          title: 'Gloves',
-                        ),
+                        builder: (_) => const InventoryUI(title: 'Gloves'),
                       );
                     },
                   ),
@@ -137,9 +129,7 @@ class _CharacterState extends State<Character> {
                     onPressed: () async {
                       showDialog(
                         context: context,
-                        builder: (_) => const InventoryUI(
-                          title: 'Boots',
-                        ),
+                        builder: (_) => const InventoryUI(title: 'Boots'),
                       );
                     },
                   )
@@ -151,16 +141,8 @@ class _CharacterState extends State<Character> {
             title: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  "FATIGUE",
-                  style: TextStyles.styleSemiBold(context,
-                      fontSize: 12, color: ColorManager.whiteColor),
-                ),
-                Text(
-                  "24/100",
-                  style: TextStyles.styleSemiBold(context,
-                      fontSize: 8, color: ColorManager.whiteColor),
-                ),
+                Text("FATIGUE", style: TextStyles.semiBold12White),
+                Text("24/100", style: TextStyles.semiBold8White),
               ],
             ),
             subtitle: const SizedBox(
@@ -180,8 +162,7 @@ class _CharacterState extends State<Character> {
               children: [
                 Text(
                   "SKILL POINTS : 1",
-                  style: TextStyles.styleBold(context,
-                      fontSize: 18, color: ColorManager.whiteColor),
+                  style: TextStyles.bold18White,
                 ),
                 StatsListTile(
                     statName: "STRENGTH",

@@ -63,8 +63,7 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
       height: widget.height,
       alignment: Alignment.center,
       child: TextFormField(
-        style: TextStyles.styleSemiBold(context,
-            fontSize: 18, color: ColorManager.whiteColor),
+        style: TextStyles.semiBold18White,
         cursorColor: ColorManager.primaryColor,
         controller: widget.controller,
         obscureText: widget.obscureText ? isSecure : false,
@@ -74,7 +73,7 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
               ? IconButton(
                   icon: Icon(
                     Icons.calendar_today,
-                    color: ColorManager.lightGrey.withValues(alpha: .5),
+                    color: ColorManager.fadedlightGrey,
                     size: 30,
                   ),
                   onPressed: () {
@@ -85,9 +84,7 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
                   ? IconButton(
                       icon: isSecure
                           ? Icon(Icons.visibility_off_outlined,
-                              color:
-                                  ColorManager.lightGrey.withValues(alpha: .5),
-                              size: 30)
+                              color: ColorManager.fadedlightGrey, size: 30)
                           : const Icon(Icons.visibility_outlined,
                               color: ColorManager.primaryColor, size: 30),
                       onPressed: () {
@@ -98,8 +95,7 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
                     )
                   : null,
           filled: true,
-          fillColor:
-              widget.fillColor ?? ColorManager.gunmetal.withValues(alpha: .6),
+          fillColor: widget.fillColor ?? ColorManager.fadedNavy,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
             borderSide: BorderSide.none,
@@ -112,20 +108,15 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
           errorBorder: const OutlineInputBorder(
               borderRadius: BorderRadius.all(Radius.circular(16)),
               borderSide: BorderSide(
-                color: Colors.red,
+                color: ColorManager.redColor,
               )),
-          errorStyle: TextStyles.styleSemiBold(context,
-              fontSize: 12, color: Colors.red),
+          errorStyle: TextStyles.semiBold12Red,
           hintText: widget.hintText,
-          hintStyle: widget.hintStyle ??
-              TextStyles.styleSemiBold(context,
-                  fontSize: 18,
-                  color: ColorManager.lightGrey.withValues(alpha: .5)),
+          hintStyle: widget.hintStyle ?? TextStyles.semiBold18fadedlightGrey,
           contentPadding:
               const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
         ),
         validator: widget.validator,
-        autovalidateMode: AutovalidateMode.onUserInteraction,
       ),
     );
   }

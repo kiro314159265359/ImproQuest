@@ -54,14 +54,10 @@ class _PersonalInfoState extends State<PersonalInfo> {
       appBar: AppBar(
         backgroundColor: ColorManager.navyColor,
         centerTitle: true,
-        title: Text(
-          'Personal Info',
-          style: TextStyles.styleExtraBold(context,
-              fontSize: 38, color: ColorManager.whiteColor),
-        ),
+        title: Text('Personal Info', style: TextStyles.extraBold38White),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.save),
+          TextButton(
+            child: Text('Save', style: TextStyles.semiBold20White),
             onPressed: () {
               if (formKey.currentState!.validate()) {
                 final raw = birthDayController.text;
@@ -155,7 +151,7 @@ class _PersonalInfoState extends State<PersonalInfo> {
                           // showPictureDialog();
                         },
                         icon: const Icon(Icons.camera_alt_outlined),
-                        color: Colors.white,
+                        color: ColorManager.whiteColor,
                       ),
                     ),
                   ),

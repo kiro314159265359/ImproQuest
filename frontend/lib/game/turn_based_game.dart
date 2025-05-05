@@ -1,6 +1,6 @@
 import 'package:flame/game.dart';
 import 'package:flame/components.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter_application_2/core/theme/text_style.dart';
 import '../core/theme/color_manger.dart';
 import 'components/simple_progress_bar.dart';
 import 'components/status_container.dart';
@@ -69,53 +69,40 @@ class GameCharacter extends SpriteAnimationComponent with HasGameRef {
       size: Vector2(200, 100),
       nameText: TextComponent(
         text: 'SUNG JINWOO',
-        textRenderer: TextPaint(
-          style:
-              const TextStyle(color: ColorManager.primaryColor, fontSize: 14),
-        ),
+        textRenderer: TextPaint(style: TextStyles.regular14primary),
       ),
       levelText: TextComponent(
         text: 'LEVEL 25',
-        textRenderer: TextPaint(
-          style: const TextStyle(color: Colors.white, fontSize: 12),
-        ),
+        textRenderer: TextPaint(style: TextStyles.regular12White),
       ),
       hpLabelText: TextComponent(
         text: 'HP',
-        textRenderer: TextPaint(
-          style: const TextStyle(color: Colors.white, fontSize: 12),
-        ),
+        textRenderer: TextPaint(style: TextStyles.regular12White),
       ),
       hpValueText: TextComponent(
         text: '100/100',
-        textRenderer: TextPaint(
-          style: const TextStyle(color: Colors.white, fontSize: 12),
-        ),
+        textRenderer: TextPaint(style: TextStyles.regular12White),
       ),
       hpBar: SimpleProgressBar(
         progress: 1.0,
         size: Vector2(180, 8),
         position: Vector2(10, 25),
-        foregroundColor: Colors.green,
-        backgroundColor: Colors.red,
+        foregroundColor: ColorManager.greenColor,
+        backgroundColor: ColorManager.redColor,
       ),
       initLabelText: TextComponent(
         text: 'INIT',
-        textRenderer: TextPaint(
-          style: const TextStyle(color: Colors.white, fontSize: 12),
-        ),
+        textRenderer: TextPaint(style: TextStyles.regular12White),
       ),
       initValueText: TextComponent(
         text: '0/100',
-        textRenderer: TextPaint(
-          style: const TextStyle(color: Colors.white, fontSize: 12),
-        ),
+        textRenderer: TextPaint(style: TextStyles.regular12White),
       ),
       initBar: SimpleProgressBar(
         progress: 0.0,
         size: Vector2(180, 8),
-        foregroundColor: Colors.blue,
-        backgroundColor: Colors.grey,
+        foregroundColor: ColorManager.blueColor,
+        backgroundColor: ColorManager.greyColor,
       ),
     );
   }

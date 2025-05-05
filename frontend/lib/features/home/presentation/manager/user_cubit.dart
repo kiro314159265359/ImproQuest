@@ -292,6 +292,38 @@ class UserCubit extends HydratedCubit<UserState> {
     }
   }
 
+  Future<void> unequipItem(String? itemId, String? slot) async {
+    emit(UserUpdating());
+    try {
+      await userRepo.unequipItem(itemId, slot);
+
+      currentUser = await userRepo.getUserData();
+
+      emit(UserLoaded(currentUser!, totalDistance: _currentDistance));
+      emit(UserUpdated(currentUser!));
+
+      if (getIt.isRegistered<UserModel>()) {
+        getIt.unregister<UserModel>();
+      }
+      getIt.registerSingleton<UserModel>(currentUser!);
+
+      if (getIt.isRegistered<ShopBloc>()) {
+        getIt.unregister<ShopBloc>();
+      }
+      getIt.registerSingleton<ShopBloc>(ShopBloc(user: currentUser!));
+    } catch (error) {
+      if (error is DioException) {
+        emit(UpdateError(ServerFailure.fromDioError(error)));
+      } else {
+        emit(UpdateError(ServerFailure(error.toString())));
+        if (currentUser != null) {
+          emit(UserLoaded(currentUser!, totalDistance: _currentDistance));
+          emit(UserUpdated(currentUser!));
+        }
+      }
+    }
+  }
+
   void updateDistance(double distance) {
     if (state is UserLoaded) {
       final currentState = state as UserLoaded;
@@ -340,6 +372,31 @@ class UserCubit extends HydratedCubit<UserState> {
             await completeQuest(quest);
           }
         }
+      }
+    }
+  }
+
+  Future<void> deleteAccount() async {
+    emit(UserUpdating());
+    try {
+      await userRepo.deleteAccount(currentUser!);
+
+      currentUser = null;
+      emit(UserDeleted());
+      await clear();
+
+      if (getIt.isRegistered<UserModel>()) {
+        getIt.unregister<UserModel>();
+      }
+
+      if (getIt.isRegistered<ShopBloc>()) {
+        getIt.unregister<ShopBloc>();
+      }
+    } catch (error) {
+      if (error is DioException) {
+        emit(UpdateError(ServerFailure.fromDioError(error)));
+      } else {
+        emit(UpdateError(ServerFailure(error.toString())));
       }
     }
   }

@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
+import '../theme/color_manger.dart';
+import '../theme/text_style.dart';
 
-import '../../core/theme/color_manger.dart';
-import '../../core/theme/text_style.dart';
-
-class MenuButton extends StatefulWidget {
+class CustomButton extends StatefulWidget {
   final String buttonText;
   final String? buttonIcon;
   final Color? fillColor;
@@ -15,7 +14,7 @@ class MenuButton extends StatefulWidget {
   final double? fontSize;
   final bool isLoading;
 
-  const MenuButton({
+  const CustomButton({
     super.key,
     required this.buttonText,
     this.buttonIcon,
@@ -23,17 +22,17 @@ class MenuButton extends StatefulWidget {
     this.borderColor = Colors.transparent,
     this.iconColor = ColorManager.whiteColor,
     this.width = double.infinity,
-    this.fontSize = 18,
+    this.fontSize = 16,
     this.height,
     required this.onPressed,
     this.isLoading = false,
   });
 
   @override
-  State<MenuButton> createState() => _MenuButtonState();
+  State<CustomButton> createState() => _CustomButtonState();
 }
 
-class _MenuButtonState extends State<MenuButton> {
+class _CustomButtonState extends State<CustomButton> {
   @override
   Widget build(BuildContext context) {
     return SizedBox(

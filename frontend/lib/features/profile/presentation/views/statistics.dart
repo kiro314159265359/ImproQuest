@@ -17,7 +17,6 @@ class Statistics extends StatefulWidget {
 }
 
 class _StatisticsState extends State<Statistics> {
-  // Map of weekdays with their checked status
   final Map<String, dynamic> weekStatus = {
     'Su': true,
     'M': false,
@@ -30,7 +29,6 @@ class _StatisticsState extends State<Statistics> {
 
   @override
   Widget build(BuildContext context) {
-    // Get the week days in order
     final weekDays = weekStatus.keys.toList();
 
     return Column(
@@ -44,16 +42,9 @@ class _StatisticsState extends State<Statistics> {
               ListTile(
                 leading: Image.asset(AppIcons.flameIcon,
                     width: 25, fit: BoxFit.contain),
-                title: Text(
-                  "${widget.user.streak?.current}",
-                  style: TextStyles.styleBold(context,
-                      fontSize: 20, color: ColorManager.primaryColor),
-                ),
-                subtitle: Text(
-                  "day streak",
-                  style: TextStyles.styleBold(context,
-                      fontSize: 8, color: ColorManager.primaryColor),
-                ),
+                title: Text("${widget.user.streak?.current}",
+                    style: TextStyles.bold20Primary),
+                subtitle: Text("day streak", style: TextStyles.bold8Primary),
               ),
               SizedBox(
                 height: 70,
@@ -75,11 +66,7 @@ class _StatisticsState extends State<Statistics> {
                               value: isChecked,
                               onChanged: (bool? value) {},
                             ),
-                            Text(
-                              day,
-                              style: TextStyles.styleSemiBold(context,
-                                  fontSize: 12, color: ColorManager.lightGrey),
-                            ),
+                            Text(day, style: TextStyles.semiBold12lightGrey),
                           ],
                         ),
                       );
