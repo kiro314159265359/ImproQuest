@@ -20,6 +20,8 @@ class UserError extends UserState {
   UserError(this.failure);
 }
 
+class UserDeleting extends UserState {}
+
 class UserDeleted extends UserState {}
 
 class UserUpdating extends UserState {}

@@ -24,10 +24,6 @@ class Login extends StatefulWidget {
 class _LoginState extends State<Login> {
   bool rememberMe = true;
   final formKey = GlobalKey<FormState>();
-  TextEditingController emailController =
-      TextEditingController(text: "nigga@gmail.com");
-  TextEditingController passController =
-      TextEditingController(text: "nigga123");
 
   @override
   Widget build(BuildContext context) {
@@ -46,6 +42,8 @@ class _LoginState extends State<Login> {
             );
           }
         }, builder: (context, state) {
+          var cubit = context.read<LoginCubit>();
+
           return Scaffold(
               body: Form(
                   key: formKey,
@@ -67,7 +65,7 @@ class _LoginState extends State<Login> {
                               ),
                               CustomTextFormField(
                                 hintText: "Email",
-                                controller: emailController,
+                                controller: cubit.emailController,
                                 validator: ValidateInput.email,
                               ),
                               SizedBox(
@@ -75,7 +73,7 @@ class _LoginState extends State<Login> {
                               ),
                               CustomTextFormField(
                                   hintText: "Password",
-                                  controller: passController,
+                                  controller: cubit.passController,
                                   validator: ValidateInput.password,
                                   obscureText: true),
                               SizedBox(
@@ -115,10 +113,9 @@ class _LoginState extends State<Login> {
                               CustomPrimaryButton(
                                   onPressed: () {
                                     if (formKey.currentState!.validate()) {
-                                      context.read<LoginCubit>().loginUser(
-                                          emailController.text,
-                                          passController.text,
-                                          rememberMe);
+                                      context
+                                          .read<LoginCubit>()
+                                          .loginUser(rememberMe);
                                     }
                                   },
                                   buttonText: "Login",

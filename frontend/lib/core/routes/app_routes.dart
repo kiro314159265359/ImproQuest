@@ -26,10 +26,7 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => const ShopPage());
 
       case Routes.continueRegisterScreen:
-        final args = settings.arguments as RegisterArguments?;
-        return MaterialPageRoute(
-          builder: (_) => ContinueRegister(arguments: args),
-        );
+        return MaterialPageRoute(builder: (_) => const ContinueRegister());
       case Routes.loginScreen:
         return MaterialPageRoute(builder: (_) => const Login());
       case Routes.appLayoutPage:

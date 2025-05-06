@@ -10,6 +10,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/theme/color_manger.dart';
 import '../../../../core/theme/text_style.dart';
 import '../../../../core/utils/app_images.dart';
+import '../../../../core/widget/dialogs.dart';
 import '../../../home/data/model/user_model.dart';
 import '../../../home/presentation/manager/user_cubit.dart';
 import '../../../home/presentation/manager/user_state.dart';
@@ -23,15 +24,8 @@ class PersonalInfo extends StatefulWidget {
 
 class _PersonalInfoState extends State<PersonalInfo> {
   final formKey = GlobalKey<FormState>();
-  TextEditingController userNameController = TextEditingController();
-  TextEditingController emailController = TextEditingController();
-  TextEditingController passController = TextEditingController();
-  TextEditingController weightController = TextEditingController();
-  TextEditingController heightController = TextEditingController();
-  TextEditingController birthDayController = TextEditingController();
-  TextEditingController genderController = TextEditingController();
 
-  UserModel? _currentUser;
+  var cubit = getIt<UserCubit>();
 
   @override
   void initState() {
@@ -39,14 +33,14 @@ class _PersonalInfoState extends State<PersonalInfo> {
     getIt<UserCubit>().fetchUserData();
   }
 
-  void _populateUserData(UserModel user) {
-    userNameController.text = user.username ?? '';
-    emailController.text = user.email ?? '';
-    weightController.text = user.weight?.toString() ?? '';
-    heightController.text = user.height?.toString() ?? '';
-    birthDayController.text = user.birthDate ?? '';
-    genderController.text = user.gender ?? '';
-  }
+  // void _populateUserData(UserModel user) {
+  //   userNameController.text = user.username ?? '';
+  //   emailController.text = user.email ?? '';
+  //   weightController.text = user.weight?.toString() ?? '';
+  //   heightController.text = user.height?.toString() ?? '';
+  //   birthDayController.text = user.birthDate ?? '';
+  //   genderController.text = user.gender ?? '';
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -60,28 +54,14 @@ class _PersonalInfoState extends State<PersonalInfo> {
             child: Text('Save', style: TextStyles.semiBold20White),
             onPressed: () {
               if (formKey.currentState!.validate()) {
-                final raw = birthDayController.text;
-                String isoDate;
-                try {
-                  final dt = DateFormat('MM/dd/yyyy').parseStrict(raw);
-                  isoDate = dt.toUtc().toIso8601String();
-                } catch (_) {
-                  isoDate = raw;
-                }
                 getIt<UserCubit>().updateUserData(
-                    updatedUser: _currentUser!,
-                    username: userNameController.text,
-                    email: emailController.text,
-                    height: int.tryParse(heightController.text)!,
-                    weight: int.tryParse(weightController.text)!,
-                    gender: genderController.text,
-                    birthDate: isoDate);
-                _currentUser!.username = userNameController.text;
-                _currentUser!.email = emailController.text;
-                _currentUser!.weight = int.tryParse(weightController.text);
-                _currentUser!.height = int.tryParse(heightController.text);
-                _currentUser!.birthDate = birthDayController.text;
-                _currentUser!.gender = genderController.text;
+                    // username: userNameController.text,
+                    // email: emailController.text,
+                    // height: int.tryParse(heightController.text)!,
+                    // weight: int.tryParse(weightController.text)!,
+                    // gender: genderController.text,
+                    // birthDate: isoDate
+                    );
               }
             },
           ),
@@ -91,14 +71,22 @@ class _PersonalInfoState extends State<PersonalInfo> {
         listener: (context, state) {
           if (state is UserLoaded) {
             setState(() {
-              _currentUser = state.user;
+              cubit.userNameController.text = state.user.username ?? '';
+              cubit.emailController.text = state.user.email ?? '';
+              cubit.weightController.text = state.user.weight?.toString() ?? '';
+              cubit.heightController.text = state.user.height?.toString() ?? '';
+              cubit.birthDayController.text = state.user.birthDate ?? '';
+              cubit.genderController.text = state.user.gender ?? '';
             });
-            _populateUserData(state.user);
           }
           if (state is UserUpdated) {
+            Navigator.pop(context);
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Profile updated successfully')),
             );
+          }
+          if (state is UserUpdating) {
+            Dialogs.loadingDialog(context: context);
           }
           if (state is UserError) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -112,7 +100,7 @@ class _PersonalInfoState extends State<PersonalInfo> {
           }
         },
         builder: (context, state) {
-          if (_currentUser == null) {
+          if (state is UserLoading) {
             return const Scaffold(
                 backgroundColor: ColorManager.navyColor,
                 body: Center(child: CircularProgressIndicator()));
@@ -162,7 +150,7 @@ class _PersonalInfoState extends State<PersonalInfo> {
                     labelText: "Username",
                     child: CustomTextFormField(
                         hintText: "",
-                        controller: userNameController,
+                        controller: cubit.userNameController,
                         validator: ValidateInput.username)),
                 SizedBox(height: h * 0.025),
                 LabelBox(
@@ -170,7 +158,7 @@ class _PersonalInfoState extends State<PersonalInfo> {
                     labelText: "Email",
                     child: CustomTextFormField(
                         hintText: "",
-                        controller: emailController,
+                        controller: cubit.emailController,
                         validator: ValidateInput.email)),
                 SizedBox(height: h * 0.025),
                 // LabelBox(
@@ -187,7 +175,7 @@ class _PersonalInfoState extends State<PersonalInfo> {
                     child: CustomTextFormField(
                         showCalendarIcon: true,
                         hintText: "",
-                        controller: birthDayController,
+                        controller: cubit.birthDayController,
                         validator: (value) =>
                             value?.isEmpty ?? true ? 'Required' : null)),
                 SizedBox(height: h * 0.025),
@@ -196,7 +184,7 @@ class _PersonalInfoState extends State<PersonalInfo> {
                     labelText: "Height",
                     child: CustomTextFormField(
                         hintText: "",
-                        controller: heightController,
+                        controller: cubit.heightController,
                         validator: ValidateInput.height)),
                 SizedBox(height: h * 0.025),
                 LabelBox(
@@ -204,7 +192,7 @@ class _PersonalInfoState extends State<PersonalInfo> {
                     labelText: "Weight",
                     child: CustomTextFormField(
                         hintText: "",
-                        controller: weightController,
+                        controller: cubit.weightController,
                         validator: ValidateInput.weight)),
                 SizedBox(height: h * 0.025),
                 LabelBox(
@@ -212,7 +200,7 @@ class _PersonalInfoState extends State<PersonalInfo> {
                     labelText: "Gender",
                     child: CustomTextFormField(
                       hintText: "",
-                      controller: genderController,
+                      controller: cubit.genderController,
                       validator: (value) =>
                           value?.isEmpty ?? true ? 'Required' : null,
                     )),

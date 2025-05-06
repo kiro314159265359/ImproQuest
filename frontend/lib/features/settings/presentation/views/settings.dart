@@ -65,7 +65,7 @@ class _SettingsState extends State<Settings> {
               ),
             );
           }
-          if (state is UserUpdating) {
+          if (state is UserDeleting) {
             Dialogs.loadingDialog(context: context);
           }
         },

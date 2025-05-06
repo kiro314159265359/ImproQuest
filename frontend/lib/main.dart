@@ -8,6 +8,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_application_2/features/auth/domain/repo/login_repo.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'core/utils/get_it_constants.dart';
+import 'features/auth/data/api/register_api.dart';
+import 'features/auth/presentation/manager/register_cubit/register_cubit.dart';
 import 'features/home/presentation/manager/user_cubit.dart';
 import 'core/utils/auth_helpers.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
@@ -48,6 +50,9 @@ class MyApp extends StatelessWidget {
     AppRoutes appRoutes = AppRoutes();
     return MultiBlocProvider(
       providers: [
+        BlocProvider<RegisterCubit>.value(
+          value: RegisterCubit(RegisterApi()),
+        ),
         BlocProvider<UserCubit>.value(
           value: getIt<UserCubit>(),
         ),

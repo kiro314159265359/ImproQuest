@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_application_2/game/models/shop_item.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
@@ -8,12 +9,21 @@ import '../../../../core/utils/get_it_constants.dart';
 import '../../../../game/logic/shop_bloc.dart';
 import '../../data/model/user_model.dart';
 import '../../domain/repo/user_repo.dart';
+import 'package:intl/intl.dart';
 
 class UserCubit extends HydratedCubit<UserState> {
   final UserRepo userRepo;
   UserModel? currentUser;
   List<ShopItem>? itemsList;
   UserCubit(this.userRepo) : super(UserInitial());
+
+  TextEditingController userNameController = TextEditingController();
+  TextEditingController emailController = TextEditingController();
+  // TextEditingController passController = TextEditingController();
+  TextEditingController weightController = TextEditingController();
+  TextEditingController heightController = TextEditingController();
+  TextEditingController birthDayController = TextEditingController();
+  TextEditingController genderController = TextEditingController();
 
   /// Helper method to get current distance from state
   double get _currentDistance =>
@@ -67,25 +77,32 @@ class UserCubit extends HydratedCubit<UserState> {
     }
   }
 
-  Future<void> updateUserData(
-      {required UserModel updatedUser,
-      required String username,
-      required String email,
-      required int height,
-      required int weight,
-      required String gender,
-      required String birthDate}) async {
+  Future<void> updateUserData() async {
     emit(UserUpdating());
     try {
+      final raw = birthDayController.text;
+      String isoDate;
+      try {
+        final dt = DateFormat('MM/dd/yyyy').parseStrict(raw);
+        isoDate = dt.toUtc().toIso8601String();
+      } catch (_) {
+        isoDate = raw;
+      }
       currentUser = await userRepo.updateUserData(
-          user: updatedUser,
-          username: username,
-          email: email,
-          height: height,
-          weight: weight,
-          gender: gender,
-          birthDate: birthDate);
+          user: currentUser!,
+          username: userNameController.text,
+          email: emailController.text,
+          height: int.parse(heightController.text),
+          weight: int.parse(weightController.text),
+          gender: genderController.text,
+          birthDate: isoDate);
 
+      currentUser!.username = userNameController.text;
+      currentUser!.email = emailController.text;
+      currentUser!.weight = int.tryParse(weightController.text);
+      currentUser!.height = int.tryParse(heightController.text);
+      currentUser!.birthDate = birthDayController.text;
+      currentUser!.gender = genderController.text;
       emit(UserLoaded(currentUser!, totalDistance: _currentDistance));
       emit(UserUpdated(currentUser!));
 
@@ -377,7 +394,7 @@ class UserCubit extends HydratedCubit<UserState> {
   }
 
   Future<void> deleteAccount() async {
-    emit(UserUpdating());
+    emit(UserDeleting());
     try {
       await userRepo.deleteAccount(currentUser!);
 
