@@ -13,6 +13,7 @@ var (
 	achievementsCollection *mongo.Collection
 	inventoriesCollection  *mongo.Collection
 	gearsCollection        *mongo.Collection
+	runsCollection         *mongo.Collection
 )
 
 func Users() *mongo.Collection {
@@ -94,4 +95,15 @@ func Gears() *mongo.Collection {
 		gearsCollection = Client.Database("App").Collection("Gears")
 	}
 	return gearsCollection
+}
+func Runs() *mongo.Collection {
+	if Client == nil {
+		panic("database client not initialized")
+	}
+	if runsCollection == nil {
+		// Initialize as a time series collection if it doesn't exist
+		InitRunsCollection()
+		runsCollection = Client.Database("App").Collection("Runs")
+	}
+	return runsCollection
 }

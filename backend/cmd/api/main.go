@@ -1,14 +1,22 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"log"
+	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/HarDizzeR/Project/backend/internal/controllers"
+	"github.com/HarDizzeR/Project/backend/internal/database"
 	"github.com/HarDizzeR/Project/backend/internal/helpers"
 	"github.com/HarDizzeR/Project/backend/internal/logger"
+	"github.com/HarDizzeR/Project/backend/internal/models"
 	"github.com/HarDizzeR/Project/backend/internal/routes"
+	"github.com/HarDizzeR/Project/backend/internal/services"
 
 	ginzap "github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
@@ -36,13 +44,14 @@ func main() {
 	controllers.InitAuthProviders()
 	controllers.InitSessionStore()
 
+	database.DBinstance()
+	database.InitRunsCollection()
+
+	runModel := models.NewRunModel()
+	runController := controllers.NewRunController(runModel)
+	wsManager := services.NewWebSocketManager(runModel)
+
 	fmt.Println("Loaded environment variables successfully.")
-
-	port := os.Getenv("PORT")
-
-	if port == "" {
-		port = "8000"
-	}
 
 	router := gin.New()
 	router.Use(ginzap.Ginzap(logger, time.RFC3339, true))
@@ -57,5 +66,36 @@ func main() {
 	routes.InventoryRoutes(router)
 	routes.LeaderboardRoutes(router)
 	routes.ShopRoutes(router)
-	router.Run(":" + port)
+
+	routes.SetupRunRoutes(router, runController, wsManager)
+	router.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"status": "up"})
+	})
+
+	// Start server with graceful shutdown
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8000"
+	}
+	srv := &http.Server{Addr: ":" + port, Handler: router}
+
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Server failed: %v", err)
+		}
+	}()
+
+	log.Printf("Server running on port %s", port)
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	log.Println("Shutting down server...")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatalf("Server forced to shutdown: %v", err)
+	}
+	log.Println("Server exited properly")
 }
