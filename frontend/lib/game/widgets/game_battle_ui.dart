@@ -4,12 +4,18 @@ import 'package:flutter_application_2/core/theme/color_manger.dart';
 import 'package:flutter_application_2/core/theme/text_style.dart';
 import 'package:flutter_application_2/game/widgets/temporary_inventory_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_application_2/core/utils/app_icons.dart';
+import 'package:flutter_application_2/core/widget/dialogs.dart';
+import 'package:flame/flame.dart';
 import '../components/game_button.dart';
 import '../logic/game_bloc.dart';
 import '../logic/game_event.dart';
 import '../logic/game_state.dart';
+import '../services/audio_manager.dart';
 import '../turn_based_game.dart';
 import '../viewmodel/game_view_model.dart';
+import '../logic/shop_bloc.dart';
+import '../logic/shop_event.dart';
 
 class GameBattleUI extends StatelessWidget {
   final GameState state;
@@ -17,6 +23,7 @@ class GameBattleUI extends StatelessWidget {
   final GameViewModel viewModel;
   final Function(GameState) onBattleEnd;
   final VoidCallback onRestart;
+  final AudioManager audioManager;
 
   const GameBattleUI({
     super.key,
@@ -25,6 +32,7 @@ class GameBattleUI extends StatelessWidget {
     required this.viewModel,
     required this.onBattleEnd,
     required this.onRestart,
+    required this.audioManager,
   });
 
   @override
@@ -35,6 +43,33 @@ class GameBattleUI extends StatelessWidget {
           child: GameWidget(game: flameGame),
         ),
         _buildBattleListener(context),
+
+        Positioned(
+          top: 1,
+          left: 1,
+          child: IconButton(
+            icon: const ImageIcon(
+              AssetImage(AppIcons.exitIcon),
+              color: ColorManager.whiteColor,
+              size: 35,
+            ),
+            onPressed: () {
+              Dialogs.confirmDialog(
+                context: context,
+                title: 'Exit Game',
+                content: 'Are you sure you want to exit the game?',
+                onPressed: () {
+                  audioManager.stopBackgroundMusic();
+                  context.read<ShopBloc>().add(ResetTemporaryGoldEvent());
+                  Flame.device.restoreFullscreen();
+                  Flame.device.setPortrait();
+                  Navigator.of(context).pop();
+                  Navigator.of(context).pop();
+                },
+              );
+            },
+          ),
+        ),
 
         // Show message about current action
         Positioned(

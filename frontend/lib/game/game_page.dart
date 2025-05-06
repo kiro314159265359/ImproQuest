@@ -68,6 +68,10 @@ class GamePageState extends State<GamePage> with WidgetsBindingObserver {
       _audioManager.pauseBackgroundMusic();
     } else if (state == AppLifecycleState.resumed) {
       _audioManager.resumeBackgroundMusic();
+    } else if (state == AppLifecycleState.detached) {
+      _audioManager.stopBackgroundMusic();
+    } else if (state == AppLifecycleState.inactive) {
+      _audioManager.stopBackgroundMusic();
     }
   }
 
@@ -191,7 +195,7 @@ class GamePageState extends State<GamePage> with WidgetsBindingObserver {
             children: [
               IconButton(
                 icon: const ImageIcon(
-                  AssetImage('assets/icons/ExitIcon.png'),
+                  AssetImage(AppIcons.exitIcon),
                   color: ColorManager.whiteColor,
                   size: 35,
                 ),
@@ -242,6 +246,7 @@ class GamePageState extends State<GamePage> with WidgetsBindingObserver {
                                   builder: (_) => const GamePage()),
                             );
                           },
+                          audioManager: _audioManager,
                         );
                 },
               ),
