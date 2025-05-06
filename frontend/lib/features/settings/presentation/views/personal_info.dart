@@ -5,13 +5,10 @@ import 'package:flutter_application_2/core/utils/validate_input.dart';
 import 'package:flutter_application_2/core/widget/custom_text_form_field.dart';
 import 'package:flutter_application_2/features/settings/presentation/views/widgets/label_box.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
-
 import '../../../../core/theme/color_manger.dart';
 import '../../../../core/theme/text_style.dart';
 import '../../../../core/utils/app_images.dart';
 import '../../../../core/widget/dialogs.dart';
-import '../../../home/data/model/user_model.dart';
 import '../../../home/presentation/manager/user_cubit.dart';
 import '../../../home/presentation/manager/user_state.dart';
 

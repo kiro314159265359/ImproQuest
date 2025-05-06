@@ -46,17 +46,7 @@ class UserCubit extends HydratedCubit<UserState> {
       currentUser = freshUser;
       // Emit the new state with the preserved distance.
       emit(UserLoaded(currentUser!, totalDistance: previousDistance));
-
-      // Update GetIt registrations...
-      if (getIt.isRegistered<UserModel>()) {
-        getIt.unregister<UserModel>();
-      }
-      getIt.registerSingleton<UserModel>(currentUser!);
-
-      if (getIt.isRegistered<ShopBloc>()) {
-        getIt.unregister<ShopBloc>();
-      }
-      getIt.registerSingleton<ShopBloc>(ShopBloc(user: currentUser!));
+      _updateGetItRegistrations(currentUser!);
 
       return currentUser!;
     } catch (error) {
@@ -106,15 +96,7 @@ class UserCubit extends HydratedCubit<UserState> {
       emit(UserLoaded(currentUser!, totalDistance: _currentDistance));
       emit(UserUpdated(currentUser!));
 
-      if (getIt.isRegistered<UserModel>()) {
-        getIt.unregister<UserModel>();
-      }
-      getIt.registerSingleton<UserModel>(currentUser!);
-
-      if (getIt.isRegistered<ShopBloc>()) {
-        getIt.unregister<ShopBloc>();
-      }
-      getIt.registerSingleton<ShopBloc>(ShopBloc(user: currentUser!));
+      _updateGetItRegistrations(currentUser!);
     } catch (error) {
       if (error is DioException) {
         emit(UpdateError(ServerFailure.fromDioError(error)));
@@ -160,15 +142,7 @@ class UserCubit extends HydratedCubit<UserState> {
       // Always emit as loaded with the preserved distance.
       emit(UserLoaded(currentUser!, totalDistance: _currentDistance));
 
-      if (getIt.isRegistered<UserModel>()) {
-        getIt.unregister<UserModel>();
-      }
-      getIt.registerSingleton<UserModel>(currentUser!);
-
-      if (getIt.isRegistered<ShopBloc>()) {
-        getIt.unregister<ShopBloc>();
-      }
-      getIt.registerSingleton<ShopBloc>(ShopBloc(user: currentUser!));
+      _updateGetItRegistrations(currentUser!);
 
       if (quests.isNotEmpty &&
           quests.every((quest) => quest.isCompleted == true)) {
@@ -235,15 +209,7 @@ class UserCubit extends HydratedCubit<UserState> {
       emit(UserLoaded(currentUser!, totalDistance: _currentDistance));
       emit(UserUpdated(currentUser!));
 
-      if (getIt.isRegistered<UserModel>()) {
-        getIt.unregister<UserModel>();
-      }
-      getIt.registerSingleton<UserModel>(currentUser!);
-
-      if (getIt.isRegistered<ShopBloc>()) {
-        getIt.unregister<ShopBloc>();
-      }
-      getIt.registerSingleton<ShopBloc>(ShopBloc(user: currentUser!));
+      _updateGetItRegistrations(currentUser!);
     } catch (error) {
       if (error is DioException) {
         emit(UpdateError(ServerFailure.fromDioError(error)));
@@ -287,15 +253,7 @@ class UserCubit extends HydratedCubit<UserState> {
       emit(UserLoaded(currentUser!, totalDistance: _currentDistance));
       emit(UserUpdated(currentUser!));
 
-      if (getIt.isRegistered<UserModel>()) {
-        getIt.unregister<UserModel>();
-      }
-      getIt.registerSingleton<UserModel>(currentUser!);
-
-      if (getIt.isRegistered<ShopBloc>()) {
-        getIt.unregister<ShopBloc>();
-      }
-      getIt.registerSingleton<ShopBloc>(ShopBloc(user: currentUser!));
+      _updateGetItRegistrations(currentUser!);
     } catch (error) {
       if (error is DioException) {
         emit(UpdateError(ServerFailure.fromDioError(error)));
@@ -319,15 +277,7 @@ class UserCubit extends HydratedCubit<UserState> {
       emit(UserLoaded(currentUser!, totalDistance: _currentDistance));
       emit(UserUpdated(currentUser!));
 
-      if (getIt.isRegistered<UserModel>()) {
-        getIt.unregister<UserModel>();
-      }
-      getIt.registerSingleton<UserModel>(currentUser!);
-
-      if (getIt.isRegistered<ShopBloc>()) {
-        getIt.unregister<ShopBloc>();
-      }
-      getIt.registerSingleton<ShopBloc>(ShopBloc(user: currentUser!));
+      _updateGetItRegistrations(currentUser!);
     } catch (error) {
       if (error is DioException) {
         emit(UpdateError(ServerFailure.fromDioError(error)));
@@ -416,6 +366,18 @@ class UserCubit extends HydratedCubit<UserState> {
         emit(UpdateError(ServerFailure(error.toString())));
       }
     }
+  }
+
+  void _updateGetItRegistrations(UserModel user) {
+    if (getIt.isRegistered<UserModel>()) {
+      getIt.unregister<UserModel>();
+    }
+    getIt.registerSingleton<UserModel>(user);
+
+    if (getIt.isRegistered<ShopBloc>()) {
+      getIt.unregister<ShopBloc>();
+    }
+    getIt.registerSingleton<ShopBloc>(ShopBloc(user: user));
   }
 
   // --- HydratedCubit overrides ---
