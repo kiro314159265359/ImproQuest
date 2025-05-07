@@ -233,3 +233,41 @@ func (m *RunModel) GetTotalStats(userID string) (map[string]interface{}, error) 
 
 	return results[0], nil
 }
+
+// models/run.go
+
+// GetYearlyHistogram gets yearly histogram data for a user
+func (m *RunModel) GetYearlyHistogram(userID string, startDate, endDate time.Time) ([]HistogramData, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	pipeline := []bson.M{
+		{"$match": bson.M{
+			"userId":    userID,
+			"timestamp": bson.M{"$gte": startDate, "$lte": endDate},
+		}},
+		{"$group": bson.M{
+			"_id": bson.M{
+				"$dateTrunc": bson.M{
+					"date": "$timestamp",
+					"unit": "year",
+				},
+			},
+			"totalDistance": bson.M{"$sum": "$distance"},
+			"count":         bson.M{"$sum": 1},
+		}},
+		{"$sort": bson.M{"_id": 1}},
+	}
+
+	cursor, err := m.collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var results []HistogramData
+	if err := cursor.All(ctx, &results); err != nil {
+		return nil, err
+	}
+	return results, nil
+}

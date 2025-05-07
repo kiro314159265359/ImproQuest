@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
+	"unicode"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -64,41 +66,75 @@ func (manager *WebSocketManager) HandleConnection(c *gin.Context) {
 		delete(manager.clients, conn)
 		manager.mutex.Unlock()
 	}()
-
 	for {
 		messageType, p, err := conn.ReadMessage()
 		if err != nil {
-			log.Printf("Error reading message: %v", err)
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+				log.Printf("Error reading message (unexpected close): %v", err)
+			} else {
+				log.Printf("Error reading message (client likely disconnected): %v", err)
+			}
 			break
 		}
 
-		// Process run data
-		if messageType == websocket.TextMessage {
-			var runData models.RunData
-			if err := json.Unmarshal(p, &runData); err != nil {
-				log.Printf("Error unmarshaling run data: %v", err)
-				continue
-			}
+		// We are typically interested in text messages for this kind of protocol
+		if messageType != websocket.TextMessage {
+			log.Printf("Received non-text message type: %d", messageType)
+			continue
+		}
 
-			// Ensure userID is set
-			runData.UserID = userID
-			if runData.Timestamp.IsZero() {
-				runData.Timestamp = time.Now()
-			}
+		messageStr := string(p)
+		log.Printf("Received raw message (length %d) from userID %s: [%s]", len(messageStr), userID, messageStr)
 
-			// Store in MongoDB time series collection
-			if err := manager.runModel.SaveRun(&runData); err != nil {
-				log.Printf("Error storing run data: %v", err)
-				if err := conn.WriteMessage(websocket.TextMessage, []byte("error: "+err.Error())); err != nil {
-					log.Printf("Error sending error message: %v", err)
-				}
-				continue
-			}
+		trimmedMessageStr := strings.TrimLeftFunc(messageStr, unicode.IsSpace)
+		if len(trimmedMessageStr) < len(messageStr) {
+			log.Printf("Trimmed message for prefix check (original length %d, new length %d) from userID %s: [%s]", len(messageStr), len(trimmedMessageStr), userID, trimmedMessageStr)
+		}
 
-			// Acknowledge receipt
-			if err := conn.WriteMessage(websocket.TextMessage, []byte("data received")); err != nil {
-				log.Printf("Error acknowledging: %v", err)
+		expectedPrefix := "SendRun, "
+
+		if !strings.HasPrefix(trimmedMessageStr, expectedPrefix) {
+			errMsg := "error: invalid format. Message must start with '" + expectedPrefix + "'"
+			log.Printf(errMsg+" (Original raw message from userID %s was: '"+messageStr+"', Trimmed message was: '"+trimmedMessageStr+"')", userID)
+			if err := conn.WriteMessage(websocket.TextMessage, []byte(errMsg)); err != nil {
+				log.Printf("Error sending error message to userID %s: %v", userID, err)
 			}
+			continue
+		}
+
+		jsonPart := strings.TrimPrefix(trimmedMessageStr, expectedPrefix)
+
+		var runData models.RunData
+		if err := json.Unmarshal([]byte(jsonPart), &runData); err != nil {
+			log.Printf("Error unmarshaling run data from userID %s (json part: '%s'): %v", userID, jsonPart, err)
+			if err := conn.WriteMessage(websocket.TextMessage, []byte("error: invalid JSON format. Details: "+err.Error())); err != nil {
+				log.Printf("Error sending JSON format error message to userID %s: %v", userID, err)
+			}
+			continue
+		}
+
+		runData.UserID = userID
+		if runData.Timestamp.IsZero() {
+			runData.Timestamp = time.Now().UTC()
+			log.Printf("Run data from userID %s had zero timestamp, set to current time: %s", userID, runData.Timestamp)
+		}
+
+		// Store in MongoDB time series collection
+		if err := manager.runModel.SaveRun(&runData); err != nil {
+			log.Printf("Error storing run data for userID %s: %v", userID, err)
+			// Be careful about sending raw db errors to client, might expose too much.
+			// Consider a generic error message or mapping to user-friendly errors.
+			if errResp := conn.WriteMessage(websocket.TextMessage, []byte("error: could not save run data")); errResp != nil {
+				log.Printf("Error sending save data error message to userID %s: %v", userID, errResp)
+			}
+			continue
+		}
+
+		log.Printf("Successfully processed and stored run data for userID %s: %+v", userID, runData)
+
+		// Acknowledge receipt
+		if err := conn.WriteMessage(websocket.TextMessage, []byte("data received and processed")); err != nil {
+			log.Printf("Error acknowledging receipt to userID %s: %v", userID, err)
 		}
 	}
 }

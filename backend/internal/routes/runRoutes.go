@@ -23,6 +23,7 @@ func SetupRunRoutes(router *gin.Engine, runController *controllers.RunController
 			runs.GET("/users/:userId/histogram/daily", runController.GetDailyHistogram)
 			runs.GET("/users/:userId/histogram/weekly", runController.GetWeeklyHistogram)
 			runs.GET("/users/:userId/histogram/monthly", runController.GetMonthlyHistogram)
+			runs.GET("/users/:userId/histogram/yearly", runController.GetYearlyHistogram)
 
 			runs.GET("/users/:userId/stats", runController.GetRunStatistics)
 		}
