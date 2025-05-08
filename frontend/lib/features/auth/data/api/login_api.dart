@@ -6,7 +6,7 @@ import 'package:flutter_application_2/features/auth/domain/repo/login_repo.dart'
 
 class LoginApi extends LoginRepo {
   final ApiService apiService;
-  
+
   // Inject the ApiService via constructor
   LoginApi(this.apiService);
 
@@ -29,6 +29,10 @@ class LoginApi extends LoginRepo {
     response = jsonDecode(response.toString());
     return response;
   }
+
+  @override
+  Future<void> forgetPassword(String email) async {
+    await apiService.patch('$email');
+    throw UnimplementedError();
+  }
 }
-
-

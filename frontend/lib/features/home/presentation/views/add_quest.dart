@@ -44,7 +44,7 @@ class _AddQuestState extends State<AddQuest> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("The Quest has been added!")),
         );
-        Navigator.pushReplacementNamed(context, Routes.appLayoutPage);
+        Navigator.pushReplacementNamed(context, Routes.appLayoutScreen);
       }
       if (state is UpdateError) {
         ScaffoldMessenger.of(context).showSnackBar(

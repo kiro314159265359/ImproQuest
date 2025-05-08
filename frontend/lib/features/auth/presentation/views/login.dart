@@ -34,7 +34,7 @@ class _LoginState extends State<Login> {
         create: (context) => LoginCubit(getIt<LoginRepo>()),
         child: BlocConsumer<LoginCubit, LoginState>(listener: (context, state) {
           if (state is LoginSuccessState) {
-            Navigator.pushReplacementNamed(context, Routes.appLayoutPage);
+            Navigator.pushReplacementNamed(context, Routes.appLayoutScreen);
           }
           if (state is LoginErrorState) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -103,7 +103,10 @@ class _LoginState extends State<Login> {
                                         text: 'Forgot password?',
                                         style: TextStyles.bold16Primary,
                                         recognizer: TapGestureRecognizer()
-                                          ..onTap = () {}),
+                                          ..onTap = () {
+                                            Navigator.pushNamed(context,
+                                                Routes.forgetPasswordScreen);
+                                          }),
                                   ),
                                 ],
                               ),

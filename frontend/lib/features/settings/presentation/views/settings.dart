@@ -93,7 +93,7 @@ class _SettingsState extends State<Settings> {
                             leadingIcon: Icons.person_outline,
                             onTap: () {
                               Navigator.pushNamed(
-                                  context, Routes.personalInfoPage);
+                                  context, Routes.personalInfoScreen);
                             }),
                         SizedBox(height: h * 0.005),
                         LabelBox(
