@@ -3,16 +3,18 @@ import '../../../../../core/theme/color_manger.dart';
 import '../../../../../core/theme/text_style.dart';
 
 class LeaderboardsListTile extends StatefulWidget {
-  final int playerPlace;
-  final String playerName;
-  final String playerImage;
-  final int playerPoints;
+  final int? playerPlace;
+  final String? playerName;
+  final String? playerImage;
+  final int? playerPoints;
+  final bool isUser;
   const LeaderboardsListTile(
       {super.key,
       required this.playerImage,
       required this.playerPlace,
       required this.playerName,
-      required this.playerPoints});
+      required this.playerPoints,
+      required this.isUser});
 
   @override
   State<LeaderboardsListTile> createState() => _LeaderboardsListTileState();
@@ -22,28 +24,26 @@ class _LeaderboardsListTileState extends State<LeaderboardsListTile> {
   @override
   Widget build(BuildContext context) {
     return Card(
-        color: ColorManager.gunmetal.withValues(alpha: .5),
+        color:
+            widget.isUser ? ColorManager.primaryColor : ColorManager.fadedNavy,
         child: ListTile(
-          leading: Text('${(widget.playerPlace + 1)}',
-              style: TextStyles.styleBold(context,
-                  fontSize: 16, color: ColorManager.whiteColor)),
+          leading: Text('${(widget.playerPlace! + 1)}',
+              style: TextStyles.bold16White),
           title: Row(
             children: [
               Padding(
                 padding: const EdgeInsets.only(right: 7),
                 child: CircleAvatar(
                   radius: 24,
-                  backgroundImage: AssetImage(widget.playerImage),
+                  backgroundImage: AssetImage(widget.playerImage!),
                 ),
               ),
-              Text(widget.playerName,
-                  style: TextStyles.styleBold(context,
-                      fontSize: 16, color: ColorManager.whiteColor)),
+              Text(widget.isUser ? "You" : widget.playerName!,
+                  style: TextStyles.bold16White),
             ],
           ),
-          trailing: Text('${widget.playerPoints}pts',
-              style: TextStyles.styleBold(context,
-                  fontSize: 16, color: ColorManager.whiteColor)),
+          trailing:
+              Text('${widget.playerPoints}', style: TextStyles.bold16White),
         ));
   }
 }

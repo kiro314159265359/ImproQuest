@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_2/core/theme/background_theme.dart';
-import 'package:flutter_application_2/features/auth/data/api/register_api.dart';
 import 'package:flutter_application_2/features/auth/presentation/manager/register_cubit/register_cubit.dart';
 import 'package:flutter_application_2/features/auth/presentation/manager/register_cubit/register_state.dart';
-import 'package:flutter_application_2/features/auth/presentation/views/register.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/routes/routes.dart';
 import '../../../../core/theme/color_manger.dart';
@@ -13,8 +11,7 @@ import '../../../../core/widget/custom_primary_button.dart';
 import '../../../../core/widget/custom_text_form_field.dart';
 
 class ContinueRegister extends StatefulWidget {
-  final RegisterArguments? arguments;
-  const ContinueRegister({super.key, this.arguments});
+  const ContinueRegister({super.key});
 
   @override
   State<ContinueRegister> createState() => _ContinueRegisterState();
@@ -23,174 +20,160 @@ class ContinueRegister extends StatefulWidget {
 class _ContinueRegisterState extends State<ContinueRegister> {
   List<bool> isSelected = [true, false];
   final formKey = GlobalKey<FormState>();
-  TextEditingController userNameController = TextEditingController();
-  TextEditingController weightController = TextEditingController();
-  TextEditingController heightController = TextEditingController();
-  TextEditingController birthDayController = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
     var w = MediaQuery.of(context).size.width;
     var h = MediaQuery.of(context).size.height;
 
-    final email = widget.arguments?.email ?? '';
-    final password = widget.arguments?.password ?? '';
+    return BlocConsumer<RegisterCubit, RegisterState>(
+        listener: (context, state) {
+      if (state is RegisterSuccessState) {
+        Navigator.pushReplacementNamed(context, Routes.loginScreen);
+      }
+      if (state is RegisterErrorState) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(state.failure.message)),
+        );
+      }
+    }, builder: (context, state) {
+      var cubit = context.read<RegisterCubit>();
 
-    return BlocProvider(
-        create: (context) => RegisterCubit(RegisterApi()),
-        child: BlocConsumer<RegisterCubit, RegisterState>(
-            listener: (context, state) {
-          if (state is RegisterSuccessState) {
-            Navigator.pushReplacementNamed(context, Routes.loginScreen);
-          }
-          if (state is RegisterErrorState) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.failure.message)),
-            );
-          }
-        }, builder: (context, state) {
-          return Scaffold(
-            body: Form(
-                key: formKey,
-                child: BackgroundTheme(
-                  child: Center(
-                    child: SingleChildScrollView(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(
-                            horizontal: w * 0.04, vertical: h * 0.02),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              "Getting Started",
-                              style: TextStyles.styleExtraBold(context,
-                                  fontSize: 32, color: ColorManager.whiteColor),
-                            ),
-                            SizedBox(
-                              height: h * 0.03,
-                            ),
-                            CustomTextFormField(
-                              hintText: "Username",
-                              controller: userNameController,
-                              validator: ValidateInput.username,
-                            ),
-                            SizedBox(
-                              height: h * 0.02,
-                            ),
-                            CustomTextFormField(
-                              hintText: "Weight",
-                              controller: weightController,
-                              validator: ValidateInput.weight,
-                            ),
-                            SizedBox(
-                              height: h * 0.02,
-                            ),
-                            CustomTextFormField(
-                              hintText: "Height",
-                              controller: heightController,
-                              validator: ValidateInput.height,
-                            ),
-                            SizedBox(
-                              height: h * 0.02,
-                            ),
-                            CustomTextFormField(
-                              hintText: "Birthday",
-                              controller: birthDayController,
-                              showCalendarIcon: true,
-                              validator: ValidateInput.birthday,
-                            ),
-                            SizedBox(
-                              height: h * 0.02,
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+      return Scaffold(
+        body: Form(
+            key: formKey,
+            child: BackgroundTheme(
+              child: Center(
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                        horizontal: w * 0.04, vertical: h * 0.02),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Getting Started",
+                          style: TextStyles.extraBold32White,
+                        ),
+                        SizedBox(
+                          height: h * 0.03,
+                        ),
+                        CustomTextFormField(
+                          hintText: "Username",
+                          controller: cubit.userNameController,
+                          validator: ValidateInput.username,
+                        ),
+                        SizedBox(
+                          height: h * 0.02,
+                        ),
+                        CustomTextFormField(
+                          hintText: "Weight",
+                          controller: cubit.weightController,
+                          validator: ValidateInput.weight,
+                        ),
+                        SizedBox(
+                          height: h * 0.02,
+                        ),
+                        CustomTextFormField(
+                          hintText: "Height",
+                          controller: cubit.heightController,
+                          validator: ValidateInput.height,
+                        ),
+                        SizedBox(
+                          height: h * 0.02,
+                        ),
+                        CustomTextFormField(
+                          hintText: "Birthday",
+                          controller: cubit.birthDayController,
+                          showCalendarIcon: true,
+                          validator: ValidateInput.birthday,
+                        ),
+                        SizedBox(
+                          height: h * 0.02,
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                "Gender",
+                                style: TextStyles.bold16lightGrey,
+                              ),
+                              ToggleButtons(
+                                isSelected: isSelected,
+                                onPressed: (index) {
+                                  setState(() {
+                                    for (int i = 0;
+                                        i < isSelected.length;
+                                        i++) {
+                                      isSelected[i] = i == index;
+                                    }
+                                  });
+                                },
+                                // borderRadius: BorderRadius.circular(8),
+                                selectedBorderColor: ColorManager.primaryColor,
+                                selectedColor: ColorManager.whiteColor,
+                                color: ColorManager.darkGreyColor,
+                                constraints: const BoxConstraints(
+                                    minHeight: 40, minWidth: 100),
                                 children: [
-                                  const Text(
-                                    "Gender",
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFFC5C6D0),
-                                    ),
-                                  ),
-                                  ToggleButtons(
-                                    isSelected: isSelected,
-                                    onPressed: (index) {
-                                      setState(() {
-                                        for (int i = 0;
-                                            i < isSelected.length;
-                                            i++) {
-                                          isSelected[i] = i == index;
-                                        }
-                                      });
-                                    },
-                                    // borderRadius: BorderRadius.circular(8),
-                                    selectedBorderColor:
-                                        const Color(0xFF8766EB),
-                                    selectedColor: Colors.white,
-                                    color: Colors.white54,
-                                    constraints: const BoxConstraints(
-                                        minHeight: 40, minWidth: 100),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Icon(Icons.male,
-                                              color: isSelected[0]
-                                                  ? Colors.white
-                                                  : Colors.white54),
-                                          SizedBox(width: w * 0.02),
-                                          const Text('Male'),
-                                        ],
-                                      ),
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Icon(Icons.female,
-                                              color: isSelected[1]
-                                                  ? Colors.white
-                                                  : Colors.white54),
-                                          SizedBox(width: w * 0.02),
-                                          const Text('Female'),
-                                        ],
-                                      ),
+                                      Icon(Icons.male,
+                                          color: isSelected[0]
+                                              ? ColorManager.whiteColor
+                                              : ColorManager.darkGreyColor),
+                                      SizedBox(width: w * 0.02),
+                                      const Text('Male'),
+                                    ],
+                                  ),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.female,
+                                          color: isSelected[1]
+                                              ? ColorManager.whiteColor
+                                              : ColorManager.darkGreyColor),
+                                      SizedBox(width: w * 0.02),
+                                      const Text('Female'),
                                     ],
                                   ),
                                 ],
                               ),
-                            ),
-                            SizedBox(
-                              height: h * 0.02,
-                            ),
-                            CustomPrimaryButton(
-                              onPressed: () {
-                                if (formKey.currentState!.validate()) {
-                                  context.read<RegisterCubit>().registerUser(
-                                        email,
-                                        password,
-                                        userNameController.text,
-                                        int.parse(heightController.text),
-                                        int.parse(weightController.text),
-                                        isSelected[0] ? 'Male' : 'Female',
-                                        birthDayController.text,
-                                      );
-                                }
-                              },
-                              buttonText: "Register",
-                              height: 45,
-                              isLoading: state is RegisterLoadingState,
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
+                        SizedBox(
+                          height: h * 0.02,
+                        ),
+                        CustomPrimaryButton(
+                          onPressed: () {
+                            if (formKey.currentState!.validate()) {
+                              context.read<RegisterCubit>().registerUser(
+                                  isSelected[0] ? 'Male' : 'Female');
+                            }
+                          },
+                          buttonText: "Register",
+                          height: 45,
+                          isLoading: state is RegisterLoadingState,
+                        ),
+                        SizedBox(
+                          height: h * 0.04,
+                        ),
+                        BackButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                        ),
+                      ],
                     ),
                   ),
-                )),
-          );
-        }));
+                ),
+              ),
+            )),
+      );
+    });
   }
 }

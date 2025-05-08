@@ -8,6 +8,8 @@ class RegisterApi extends RegisterRepo {
   @override
   Future<void> register(String email, String password, String username,
       int height, int weight, String gender, String birthday) async {
+    print(
+        "Registering user with email: $email, password: $password, username: $username, height: $height, weight : $weight, birthday:  $birthday,");
     await apiService.post(EndPoints.register, body: {
       'email': email,
       'password': password,

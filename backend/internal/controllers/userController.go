@@ -2,8 +2,10 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -177,54 +179,86 @@ func UpdateUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID := c.Param("id")
 
+		// Ensure user is authorized to update this ID
 		if err := helpers.MatchUserToid(c, userID); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
 			return
 		}
-		var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
-		defer cancel()
 
-		var user models.User
-
-		id, err := bson.ObjectIDFromHex(userID)
+		oid, err := bson.ObjectIDFromHex(userID)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid format"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
 			return
 		}
 
-		err = userCollection.FindOne(ctx, bson.M{"_id": id}).Decode(&user)
-
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
+		// Bind only the updatable fields
+		var payload struct {
+			Username  *string    `json:"username"`
+			Email     *string    `json:"email"`
+			Height    *float64   `json:"height"`
+			BirthDate *time.Time `json:"birth_date"`
+			Weight    *float64   `json:"weight"`
+			Gender    *string    `json:"gender"`
 		}
-
-		if err := c.ShouldBindJSON(&user); err != nil {
+		if err := c.ShouldBindJSON(&payload); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		var hashedPassword string
-		if user.Password != nil {
-			hashedPassword, err = helpers.HashPassword(*user.Password)
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-				return
-			}
+
+		// Build $set document
+		set := bson.M{}
+		if payload.Username != nil {
+			set["username"] = payload.Username
+		}
+		if payload.Email != nil {
+			set["email"] = payload.Email
+		}
+		if payload.Height != nil {
+			set["height"] = payload.Height
+		}
+		if payload.BirthDate != nil && !payload.BirthDate.IsZero() {
+			set["birth_date"] = payload.BirthDate
+		}
+		if payload.Weight != nil {
+			set["weight"] = payload.Weight
+		}
+		if payload.Gender != nil {
+			set["gender"] = payload.Gender
 		}
 
-		user.Password = &hashedPassword
-		user.Updated_at = time.Now()
+		// Always bump updated_at
+		set["updated_at"] = time.Now()
 
-		_, err = userCollection.ReplaceOne(ctx, bson.M{"_id": id}, user)
+		ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
+		defer cancel()
+
+		res, err := userCollection.UpdateOne(
+			ctx,
+			bson.M{"_id": oid},
+			bson.M{"$set": set},
+		)
 		if err != nil {
 			logger.Errorf("Failed to update user %s: %v", userID, err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		logger.Infof("User updated successfully: %s", userID)
-		c.JSON(http.StatusOK, gin.H{"message": "User was updated successfully", "user": user})
-	}
+		if res.MatchedCount == 0 {
+			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+			return
+		}
 
+		// Fetch updated document
+		var updatedUser models.User
+		if err := userCollection.FindOne(ctx, bson.M{"_id": oid}).Decode(&updatedUser); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not fetch updated user"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"message": "User was updated successfully",
+			"user":    updatedUser,
+		})
+	}
 }
 
 // controllers/user.go
@@ -581,5 +615,504 @@ func CreateCustomQuest() gin.HandlerFunc {
 			"message": "Custom quest created successfully",
 			"quest":   newQuest,
 		})
+	}
+}
+
+// EquipItem equips an item to the user and updates their stats
+func EquipItem() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Get user ID from context
+		userID := c.GetString("id")
+		if userID == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "user ID not found in context"})
+			return
+		}
+
+		// Parse request body for item details
+		var req struct {
+			ItemID string `json:"item_id" binding:"required"`
+			Slot   string `json:"slot" binding:"required,oneof=helmet chestplate leggings boots weapon"`
+		}
+
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request: " + err.Error()})
+			return
+		}
+
+		// Convert IDs to ObjectID
+		userOID, err := bson.ObjectIDFromHex(userID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID"})
+			return
+		}
+
+		itemOID, err := bson.ObjectIDFromHex(req.ItemID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid item ID"})
+			return
+		}
+
+		// Check if item exists and get its details
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		itemsCollection := database.Items()
+		userCollection := database.Users()
+
+		var item models.Item
+		err = itemsCollection.FindOne(ctx, bson.M{"_id": itemOID}).Decode(&item)
+		if err != nil {
+			if err == mongo.ErrNoDocuments {
+				c.JSON(http.StatusNotFound, gin.H{"error": "item not found"})
+			} else {
+				logger.Errorf("Database error: %v", err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to retrieve item"})
+			}
+			return
+		}
+
+		// Verify item is permanent (only permanent items can be equipped)
+		if !item.IsPermanent {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "only permanent items can be equipped"})
+			return
+		}
+
+		// Verify item is of type equipment
+		if item.Type != "equipment" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "only equipment items can be equipped"})
+			return
+		}
+
+		// Check if slot matches item's slot
+		if item.Slot != req.Slot {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "requested slot does not match item's slot"})
+			return
+		}
+
+		// Get user to update equipped items and stats
+		var user models.User
+		err = userCollection.FindOne(ctx, bson.M{"_id": userOID}).Decode(&user)
+		if err != nil {
+			if err == mongo.ErrNoDocuments {
+				c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+			} else {
+				logger.Errorf("Database error: %v", err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to retrieve user"})
+			}
+			return
+		}
+
+		// NEW: Verify that the user owns this item by checking their inventory
+		inventoryCollection := database.Inventories()
+		var inventory models.Inventory
+		err = inventoryCollection.FindOne(ctx, bson.M{"_id": user.InventoryID}).Decode(&inventory)
+		if err != nil {
+			if err == mongo.ErrNoDocuments {
+				c.JSON(http.StatusNotFound, gin.H{"error": "user inventory not found"})
+			} else {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "database error while retrieving inventory"})
+			}
+			return
+		}
+		owned := false
+		for _, ownedItem := range inventory.Items {
+			if ownedItem == itemOID {
+				owned = true
+				break
+			}
+		}
+		if !owned {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "item must be purchased before equipping"})
+			return
+		}
+
+		// Update equipped items based on slot
+		// Create equipped items map if it doesn't exist
+		if user.EquippedItems == nil {
+			user.EquippedItems = make(map[string]bson.ObjectID)
+		}
+
+		// Store previous item for stat calculation
+		var previousItemID bson.ObjectID
+		if prevID, exists := user.EquippedItems[req.Slot]; exists {
+			previousItemID = prevID
+		}
+
+		// Equip new item
+		user.EquippedItems[req.Slot] = itemOID
+
+		// Calculate stat changes
+		// If there was a previous item, remove its stats first
+		if !previousItemID.IsZero() {
+			var prevItem models.Item
+			err = itemsCollection.FindOne(ctx, bson.M{"_id": previousItemID}).Decode(&prevItem)
+			if err == nil && prevItem.StatBonuses != nil {
+				// Remove previous stat bonuses
+				if user.Stats.Strength != nil && prevItem.StatBonuses.Strength != nil {
+					newStrength := *user.Stats.Strength - *prevItem.StatBonuses.Strength
+					user.Stats.Strength = &newStrength
+				}
+				if user.Stats.Endurance != nil && prevItem.StatBonuses.Endurance != nil {
+					newEndurance := *user.Stats.Endurance - *prevItem.StatBonuses.Endurance
+					user.Stats.Endurance = &newEndurance
+				}
+				if user.Stats.Agility != nil && prevItem.StatBonuses.Agility != nil {
+					newAgility := *user.Stats.Agility - *prevItem.StatBonuses.Agility
+					user.Stats.Agility = &newAgility
+				}
+				if user.Stats.Vitality != nil && prevItem.StatBonuses.Vitality != nil {
+					newVitality := *user.Stats.Vitality - *prevItem.StatBonuses.Vitality
+					user.Stats.Vitality = &newVitality
+				}
+			}
+		}
+
+		// Add new item's stat bonuses
+		if item.StatBonuses != nil {
+			if user.Stats.Strength != nil && item.StatBonuses.Strength != nil {
+				newStrength := *user.Stats.Strength + *item.StatBonuses.Strength
+				user.Stats.Strength = &newStrength
+			} else if item.StatBonuses.Strength != nil {
+				user.Stats.Strength = item.StatBonuses.Strength
+			}
+
+			if user.Stats.Endurance != nil && item.StatBonuses.Endurance != nil {
+				newEndurance := *user.Stats.Endurance + *item.StatBonuses.Endurance
+				user.Stats.Endurance = &newEndurance
+			} else if item.StatBonuses.Endurance != nil {
+				user.Stats.Endurance = item.StatBonuses.Endurance
+			}
+
+			if user.Stats.Agility != nil && item.StatBonuses.Agility != nil {
+				newAgility := *user.Stats.Agility + *item.StatBonuses.Agility
+				user.Stats.Agility = &newAgility
+			} else if item.StatBonuses.Agility != nil {
+				user.Stats.Agility = item.StatBonuses.Agility
+			}
+
+			if user.Stats.Vitality != nil && item.StatBonuses.Vitality != nil {
+				newVitality := *user.Stats.Vitality + *item.StatBonuses.Vitality
+				user.Stats.Vitality = &newVitality
+			} else if item.StatBonuses.Vitality != nil {
+				user.Stats.Vitality = item.StatBonuses.Vitality
+			}
+		}
+
+		// Update user in database
+		update := bson.M{
+			"$set": bson.M{
+				"equipped_items": user.EquippedItems,
+				"stats":          user.Stats,
+				"updated_at":     time.Now(),
+			},
+		}
+
+		result, err := userCollection.UpdateOne(ctx, bson.M{"_id": userOID}, update)
+		if err != nil {
+			logger.Errorf("Failed to update user: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to equip item"})
+			return
+		}
+
+		if result.MatchedCount == 0 {
+			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Item equipped successfully",
+			"item":    item,
+			"stats":   user.Stats,
+		})
+	}
+}
+
+// UnequipItem removes an equipped item from a specified slot and updates user stats
+func UnequipItem() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Get user ID from context
+		userID := c.GetString("id")
+		if userID == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "user ID not found in context"})
+			return
+		}
+
+		// Parse request body for slot details
+		var req struct {
+			Slot string `json:"slot" binding:"required,oneof=helmet chestplate leggings boots weapon"`
+		}
+
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request: " + err.Error()})
+			return
+		}
+
+		// Convert userID to ObjectID
+		userOID, err := bson.ObjectIDFromHex(userID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID"})
+			return
+		}
+
+		// Get user to check equipped items and update stats
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		userCollection := database.Users()
+		itemsCollection := database.Items()
+
+		var user models.User
+		err = userCollection.FindOne(ctx, bson.M{"_id": userOID}).Decode(&user)
+		if err != nil {
+			if err == mongo.ErrNoDocuments {
+				c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+			} else {
+				logger.Errorf("Database error: %v", err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to retrieve user"})
+			}
+			return
+		}
+
+		// Check if user has an item equipped in the specified slot
+		if user.EquippedItems == nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "user has no equipped items"})
+			return
+		}
+
+		itemID, equipped := user.EquippedItems[req.Slot]
+		if !equipped {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "no item equipped in specified slot"})
+			return
+		}
+
+		// Get the item details to remove its stat bonuses
+		var item models.Item
+		err = itemsCollection.FindOne(ctx, bson.M{"_id": itemID}).Decode(&item)
+		if err != nil {
+			logger.Errorf("Failed to retrieve item %s: %v", itemID.Hex(), err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to retrieve item details"})
+			return
+		}
+
+		// Remove the item's stat bonuses from the user's stats
+		if item.StatBonuses != nil {
+			if user.Stats.Strength != nil && item.StatBonuses.Strength != nil {
+				newStrength := *user.Stats.Strength - *item.StatBonuses.Strength
+				user.Stats.Strength = &newStrength
+			}
+			if user.Stats.Endurance != nil && item.StatBonuses.Endurance != nil {
+				newEndurance := *user.Stats.Endurance - *item.StatBonuses.Endurance
+				user.Stats.Endurance = &newEndurance
+			}
+			if user.Stats.Agility != nil && item.StatBonuses.Agility != nil {
+				newAgility := *user.Stats.Agility - *item.StatBonuses.Agility
+				user.Stats.Agility = &newAgility
+			}
+			if user.Stats.Vitality != nil && item.StatBonuses.Vitality != nil {
+				newVitality := *user.Stats.Vitality - *item.StatBonuses.Vitality
+				user.Stats.Vitality = &newVitality
+			}
+		}
+
+		// Remove the item from the equipped items
+		delete(user.EquippedItems, req.Slot)
+
+		// Update user in database
+		update := bson.M{
+			"$set": bson.M{
+				"equipped_items": user.EquippedItems,
+				"stats":          user.Stats,
+				"updated_at":     time.Now(),
+			},
+		}
+
+		result, err := userCollection.UpdateOne(ctx, bson.M{"_id": userOID}, update)
+		if err != nil {
+			logger.Errorf("Failed to update user: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to unequip item"})
+			return
+		}
+
+		if result.MatchedCount == 0 {
+			c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Item unequipped successfully",
+			"item_id": itemID,
+			"slot":    req.Slot,
+			"stats":   user.Stats,
+		})
+	}
+}
+
+func AddStatsWithSkillPoints() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// 1. Retrieve the authenticated user ID from the context.
+		userID := c.GetString("id")
+		if userID == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "user ID not found in context"})
+			return
+		}
+
+		// 2. Get the 'stat' and 'points' parameters from the URL.
+		stat := c.Param("stat")
+		pointsStr := c.Param("points")
+		if stat == "" || pointsStr == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "both stat and points parameters are required"})
+			return
+		}
+
+		// 3. Normalize and validate the stat parameter.
+		stat = strings.ToLower(stat)
+		switch stat {
+		case "vitality", "strength", "endurance", "agility":
+			// valid stat; continue processing
+		default:
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid stat. Must be one of: vitality, strength, endurance, agility"})
+			return
+		}
+
+		// 4. Convert the points parameter to an integer.
+		points, err := strconv.Atoi(pointsStr)
+		if err != nil || points <= 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "points must be a positive integer"})
+			return
+		}
+
+		// 5. Convert the userID string to a BSON ObjectID.
+		userOID, err := bson.ObjectIDFromHex(userID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID"})
+			return
+		}
+
+		// 6. Get the database collection and prepare a context.
+		collection := database.Users()
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		// 7. Fetch the user document.
+		var user models.User
+		err = collection.FindOne(ctx, bson.M{"_id": userOID}).Decode(&user)
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+			return
+		}
+
+		// 8. Verify that the user has enough skill points.
+		if user.SkillPoints < points {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error":     "insufficient skill points",
+				"available": user.SkillPoints,
+			})
+			return
+		}
+
+		// 9. Prepare the update: add points to the chosen stat and subtract those points from available skill points.
+		update := bson.M{
+			"$inc": bson.M{
+				"stats." + stat: points,
+				"skill_points":  -points,
+			},
+		}
+
+		// 10. Execute the update.
+		result, err := collection.UpdateOne(ctx, bson.M{"_id": userOID}, update)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update stats", "details": err.Error()})
+			return
+		}
+		if result.ModifiedCount == 0 {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "no changes were made; please check the request"})
+			return
+		}
+
+		// 11. Return a success response.
+		c.JSON(http.StatusOK, gin.H{
+			"message": fmt.Sprintf("Successfully added %d point(s) to %s", points, stat),
+		})
+	}
+}
+
+// GetUserInventoryItems retrieves the items present in the logged-in user's inventory
+func GetUserInventoryItems() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Get user ID from context
+		userIDStr := c.GetString("id")
+		if userIDStr == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "user ID not found in context"})
+			return
+		}
+
+		userOID, err := bson.ObjectIDFromHex(userIDStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID format"})
+			return
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		// Get user to find their inventory ID
+		userCollection := database.Users()
+		var user models.User
+		err = userCollection.FindOne(ctx, bson.M{"_id": userOID}).Decode(&user)
+		if err != nil {
+			if err == mongo.ErrNoDocuments {
+				c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+			} else {
+				logger.Errorf("Database error retrieving user: %v", err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to retrieve user"})
+			}
+			return
+		}
+
+		// Check if user has an inventory ID
+		if user.InventoryID.IsZero() {
+			c.JSON(http.StatusNotFound, gin.H{"error": "user does not have an inventory assigned"})
+			return
+		}
+
+		// Get the inventory using the InventoryID
+		inventoryCollection := database.Inventories()
+		var inventory models.Inventory
+		err = inventoryCollection.FindOne(ctx, bson.M{"_id": user.InventoryID}).Decode(&inventory)
+		if err != nil {
+			if err == mongo.ErrNoDocuments {
+				c.JSON(http.StatusNotFound, gin.H{"error": "inventory not found"})
+			} else {
+				logger.Errorf("Database error retrieving inventory: %v", err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to retrieve inventory"})
+			}
+			return
+		}
+
+		// Check if the inventory has any items
+		if len(inventory.Items) == 0 {
+			c.JSON(http.StatusOK, gin.H{"items": []models.Item{}}) // Return empty list
+			return
+		}
+
+		// Fetch the details of the items in the inventory
+		itemsCollection := database.Items()
+		filter := bson.M{"_id": bson.M{"$in": inventory.Items}}
+		cursor, err := itemsCollection.Find(ctx, filter)
+		if err != nil {
+			logger.Errorf("Database error retrieving inventory items: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to retrieve inventory items"})
+			return
+		}
+		defer cursor.Close(ctx)
+
+		var items []models.Item
+		if err = cursor.All(ctx, &items); err != nil {
+			logger.Errorf("Failed to decode inventory items: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to process inventory items"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"items": items})
 	}
 }

@@ -1,12 +1,36 @@
-// lib/game/models/inventory_item.dart
+import 'shop_item.dart';
+
 class InventoryItem {
-  final String name;
-  final String effect; // e.g., "heal"
-  final int value;
+  final ShopItem item;
+  int quantity;
 
   InventoryItem({
-    required this.name,
-    required this.effect,
-    required this.value,
+    required this.item,
+    this.quantity = 1,
   });
+
+  String get id => item.id;
+  String get name => item.name;
+  String get description => item.description;
+  ShopTier get tier => item.tier;
+  ItemType get type => item.type;
+  Map<String, int> get effects => item.effects;
+
+  void incrementQuantity() {
+    quantity++;
+  }
+
+  bool decrementQuantity() {
+    if (quantity > 0) {
+      quantity--;
+      return true;
+    }
+    return false;
+  }
+
+  // For debugging
+  @override
+  String toString() {
+    return 'InventoryItem{name: $name, quantity: $quantity}';
+  }
 }

@@ -4,13 +4,27 @@ import 'package:flutter_application_2/core/theme/text_style.dart';
 import 'package:flutter_application_2/core/utils/get_it_constants.dart';
 import 'package:flutter_application_2/features/home/presentation/manager/user_cubit.dart';
 import 'package:flutter_application_2/features/home/presentation/views/widgets/custom_rich_text.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
+import '../../../data/model/user_model.dart';
+import '../../manager/user_state.dart';
 
 class DailyQuestCard extends StatelessWidget {
   const DailyQuestCard({super.key});
 
   @override
   Widget build(BuildContext context) {
+    return BlocBuilder<UserCubit, UserState>(
+      builder: (context, state) {
+        if (state is UserLoaded) {
+          return _buildDailyQuestCard(context, state.user);
+        }
+        return const SizedBox.shrink();
+      },
+    );
+  }
+
+  Widget _buildDailyQuestCard(BuildContext context, UserModel user) {
     return SizedBox(
       height: 150,
       child: Card(
@@ -23,17 +37,14 @@ class DailyQuestCard extends StatelessWidget {
               children: [
                 Text(
                   "DAILY QUESTS",
-                  style: TextStyles.styleBold(context,
-                      fontSize: 24, color: ColorManager.whiteColor),
+                  style: TextStyles.bold24White,
                   textAlign: TextAlign.center,
                 ),
                 CustomRichText(
                   text1: '${getIt<UserCubit>().completedQuestCount} Quest ',
-                  textStyle1: TextStyles.styleSemiBold(context,
-                      fontSize: 18, color: ColorManager.lightGreen),
+                  textStyle1: TextStyles.semiBold18lightGreen,
                   text2: 'completed',
-                  textStyle2: TextStyles.styleSemiBold(context,
-                      fontSize: 18, color: const Color(0xFFB7B7B9)),
+                  textStyle2: TextStyles.semiBold18lightGrey,
                 ),
                 Container(
                   decoration: const BoxDecoration(
@@ -43,8 +54,7 @@ class DailyQuestCard extends StatelessWidget {
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   child: Text(
                     "${getIt<UserCubit>().remainingQuestCount} Quests left",
-                    style: TextStyles.styleSemiBold(context,
-                        fontSize: 18, color: ColorManager.whiteColor),
+                    style: TextStyles.semiBold18White,
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -56,7 +66,7 @@ class DailyQuestCard extends StatelessWidget {
                 offset: const Offset(-5, 0),
                 child: const Icon(
                   Icons.circle,
-                  color: Colors.black,
+                  color: ColorManager.blackColor,
                   size: 9,
                 ),
               ),
@@ -66,8 +76,7 @@ class DailyQuestCard extends StatelessWidget {
               percent: getIt<UserCubit>().questCompletionPercent,
               center: Text(
                 "${(getIt<UserCubit>().questCompletionPercent * 100).toStringAsFixed(0)}%",
-                style: TextStyles.styleSemiBold(context,
-                    fontSize: 20, color: ColorManager.whiteColor),
+                style: TextStyles.semiBold20White,
                 textAlign: TextAlign.center,
               ),
               linearGradient: const LinearGradient(

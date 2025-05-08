@@ -1,3 +1,4 @@
+import 'package:flutter_application_2/game/models/shop_item.dart';
 import '../../../../core/error/failure.dart';
 import '../../data/model/user_model.dart';
 
@@ -19,6 +20,10 @@ class UserError extends UserState {
   UserError(this.failure);
 }
 
+class UserDeleting extends UserState {}
+
+class UserDeleted extends UserState {}
+
 class UserUpdating extends UserState {}
 
 class UserUpdated extends UserState {
@@ -29,4 +34,11 @@ class UserUpdated extends UserState {
 class UpdateError extends UserState {
   Failure failure;
   UpdateError(this.failure);
+}
+
+class InventoryLoading extends UserState {}
+
+class InventoryLoaded extends UserState {
+  final List<ShopItem> itemsList;
+  InventoryLoaded(this.itemsList);
 }

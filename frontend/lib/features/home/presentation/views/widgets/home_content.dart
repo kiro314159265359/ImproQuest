@@ -3,7 +3,6 @@ import 'package:flutter_application_2/core/routes/routes.dart';
 import 'package:flutter_application_2/core/theme/background_theme.dart';
 import 'package:flutter_application_2/core/theme/color_manger.dart';
 import 'package:flutter_application_2/core/theme/text_style.dart';
-import 'package:flutter_application_2/core/utils/get_it_constants.dart';
 import 'package:flutter_application_2/core/widget/appbar_stats.dart';
 import 'package:flutter_application_2/features/home/data/model/user_model.dart';
 import 'package:flutter_application_2/features/home/presentation/manager/home_bloc.dart';
@@ -47,6 +46,9 @@ class HomeContent extends StatelessWidget {
                 if (state is UserLoaded) {
                   return _buildHomeContent(
                       context, state.user, screenWidth, screenHeight);
+                } else if (state is UserUpdated) {
+                  return _buildHomeContent(
+                      context, state.user, screenWidth, screenHeight);
                 }
 
                 // If UserCubit is loading but HomeBloc is ready, show empty content
@@ -55,7 +57,7 @@ class HomeContent extends StatelessWidget {
                   return const Center(
                     child: Text(
                       "Loading user data...",
-                      style: TextStyle(color: Colors.white),
+                      style: TextStyle(color: ColorManager.whiteColor),
                     ),
                   );
                 }
@@ -66,7 +68,7 @@ class HomeContent extends StatelessWidget {
           },
         ),
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.small(
         heroTag: "addQuest",
         backgroundColor: ColorManager.primaryColor,
         tooltip: "Add Custom Quest",
@@ -75,6 +77,7 @@ class HomeContent extends StatelessWidget {
         },
         child: const Icon(Icons.add),
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
     );
   }
 
@@ -92,18 +95,19 @@ class HomeContent extends StatelessWidget {
             SizedBox(height: screenHeight * 0.025),
             CustomRichText(
               text1: 'Welcome, ',
-              textStyle1: TextStyles.styleExtraBold(context,
-                  fontSize: 30, color: ColorManager.whiteColor),
+              textStyle1: TextStyles.extraBold30White,
               text2: user.username?.trim().split(' ').first ?? 'Player',
-              textStyle2: TextStyles.styleExtraBold(context,
-                  fontSize: 30, color: ColorManager.primaryColor),
+              textStyle2: TextStyles.extraBold30Primary,
             ),
             SizedBox(height: screenHeight * 0.025),
             const DailyQuestCard(),
-            QuestsList(quests: getIt<UserCubit>().quests),
             LabelBox(
-              labelText: "Your Quests",
-              child: CustomQuestsList(quests: getIt<UserCubit>().customQuests),
+                labelText: "Daily Quest",
+                child: QuestsList(quests: context.read<UserCubit>().quests)),
+            LabelBox(
+              labelText: "My Quests",
+              child: CustomQuestsList(
+                  quests: context.read<UserCubit>().customQuests),
             ),
           ],
         ),

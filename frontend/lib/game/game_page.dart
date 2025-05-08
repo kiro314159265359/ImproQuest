@@ -1,8 +1,12 @@
 import 'package:flame/flame.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_application_2/core/utils/app_icons.dart';
+import 'package:flutter_application_2/core/widget/dialogs.dart';
+import 'package:flutter_application_2/game/logic/game_event.dart';
 import 'package:flutter_application_2/game/logic/shop_event.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../core/theme/color_manger.dart';
+import '../core/theme/text_style.dart';
 import '../core/utils/get_it_constants.dart';
 import '../features/home/data/model/user_model.dart';
 import 'logic/shop_bloc.dart';
@@ -26,6 +30,8 @@ class GamePageState extends State<GamePage> with WidgetsBindingObserver {
   final TurnBasedGame flameGame = TurnBasedGame();
   late GameViewModel viewModel;
   late ShopBloc temporaryShopBloc;
+  // Add a reference to store the GameBloc
+  late GameBloc gameBloc;
   bool _temporaryShopOpened = false;
   final AudioManager _audioManager = AudioManager();
   bool _pendingTransition = false;
@@ -35,6 +41,10 @@ class GamePageState extends State<GamePage> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     temporaryShopBloc = ShopBloc(user: getIt<UserModel>());
+    // Initialize the GameBloc here
+    gameBloc = GameBloc();
+    // Connect the GameBloc to the Flame game
+    flameGame.setGameBloc(gameBloc);
     _audioManager.initialize();
 
     // Set up death animation completion handler
@@ -46,6 +56,8 @@ class GamePageState extends State<GamePage> with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
     _audioManager.stopBackgroundMusic();
     temporaryShopBloc.close();
+    // Close the GameBloc when disposing
+    gameBloc.close();
     super.dispose();
   }
 
@@ -56,6 +68,10 @@ class GamePageState extends State<GamePage> with WidgetsBindingObserver {
       _audioManager.pauseBackgroundMusic();
     } else if (state == AppLifecycleState.resumed) {
       _audioManager.resumeBackgroundMusic();
+    } else if (state == AppLifecycleState.detached) {
+      _audioManager.stopBackgroundMusic();
+    } else if (state == AppLifecycleState.inactive) {
+      _audioManager.stopBackgroundMusic();
     }
   }
 
@@ -68,8 +84,8 @@ class GamePageState extends State<GamePage> with WidgetsBindingObserver {
         _pendingTransition = false;
       });
       print('Showing shop screen after death animation');
-      // Add a small delay to ensure the state updates properly
-      Future.delayed(const Duration(milliseconds: 100), () {
+      // Add a small delay to ensure the state updates properly before transition
+      Future.delayed(const Duration(milliseconds: 300), () {
         _showShopScreen();
       });
     }
@@ -87,31 +103,75 @@ class GamePageState extends State<GamePage> with WidgetsBindingObserver {
         ),
       ),
     ).then((_) {
-      print('Returned from shop, going to next fight');
-      viewModel.nextFight();
+      print('Returned from shop, transitioning directly to menu');
+
+      // Make sure we properly clean up old enemy state
+      if (flameGame.enemy != null) {
+        print('Cleaning up enemy from previous stage');
+        if (flameGame.enemy!.statusContainer != null) {
+          flameGame.enemy!.statusContainer!.removeFromParent();
+        }
+        flameGame.enemy!.removeFromParent();
+        flameGame.enemy = null;
+      }
+
+      // Reset the cached game state to force UI updates
+      flameGame.resetGameState();
+
+      // Use the stored gameBloc reference instead of context.read
+      gameBloc.add(ShowFightMenuEvent());
+
+      // After a delay, then trigger the next fight setup
+      Future.delayed(const Duration(milliseconds: 300), () {
+        print('Setting up next fight data');
+        viewModel.nextFight();
+      });
     });
   }
 
   void _handleBattleReward(GameState state) {
     if (state.gameOver && state.player.currentHp > 0 && !_temporaryShopOpened) {
       print(
-          'Battle ended, player won. Current animation state: ${flameGame.isDeathAnimationPlaying}');
+          'Battle ended, player won. Current animation playing: ${flameGame.isDeathAnimationPlaying}');
+
+      // Mark shop as opened to prevent multiple transitions
       _temporaryShopOpened = true;
-      temporaryShopBloc
-          .add(RewardTemporaryGoldEvent(GameConstants.battleRewardGold));
 
-      // Stop background music before navigating to shop
-      _audioManager.stopBackgroundMusic();
+      Dialogs.noticeDialog(
+        context: context,
+        title: 'Victory!',
+        content: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('You earned ', style: TextStyles.bold16White),
+            Image.asset(AppIcons.coinsIcon, width: 20, height: 20),
+            Text(' ${GameConstants.battleRewardGold}',
+                style: TextStyles.bold16White),
+          ],
+        ),
+        onPressed: () {
+          Navigator.of(context).pop();
 
-      // If a death animation is playing, wait for it to finish
-      if (flameGame.isDeathAnimationPlaying) {
-        print('Death animation in progress, setting pending transition');
-        _pendingTransition = true;
-      } else {
-        print('No death animation in progress, proceeding to shop immediately');
-        // No death animation playing, proceed immediately
-        _showShopScreen();
-      }
+          // Add reward after dialog is closed
+          temporaryShopBloc
+              .add(RewardTemporaryGoldEvent(GameConstants.battleRewardGold));
+
+          // Ensure the reward is processed before showing shop
+          Future.delayed(const Duration(milliseconds: 200), () {
+            // Stop background music before navigating to shop
+            _audioManager.stopBackgroundMusic();
+
+            if (flameGame.isDeathAnimationPlaying) {
+              print('Death animation in progress, setting pending transition');
+              _pendingTransition = true;
+            } else {
+              print(
+                  'No death animation in progress, proceeding to shop immediately');
+              _showShopScreen();
+            }
+          });
+        },
+      );
     } else if (!state.gameOver) {
       _temporaryShopOpened = false;
     }
@@ -126,12 +186,8 @@ class GamePageState extends State<GamePage> with WidgetsBindingObserver {
       },
       child: MultiBlocProvider(
         providers: [
-          BlocProvider<GameBloc>(create: (_) {
-            final bloc = GameBloc();
-            // Connect the GameBloc to the Flame game
-            flameGame.setGameBloc(bloc);
-            return bloc;
-          }),
+          // Ensure GameBloc is provided first
+          BlocProvider<GameBloc>.value(value: gameBloc),
           BlocProvider<ShopBloc>.value(value: temporaryShopBloc),
         ],
         child: Scaffold(
@@ -139,20 +195,30 @@ class GamePageState extends State<GamePage> with WidgetsBindingObserver {
             children: [
               IconButton(
                 icon: const ImageIcon(
-                  AssetImage('assets/icons/ExitIcon.png'),
+                  AssetImage(AppIcons.exitIcon),
                   color: ColorManager.whiteColor,
                   size: 35,
                 ),
                 onPressed: () {
-                  Flame.device.restoreFullscreen();
-                  Flame.device.setPortrait();
-                  Navigator.of(context).pop();
+                  Dialogs.confirmDialog(
+                      context: context,
+                      title: 'Exit Game',
+                      content: 'Are you sure you want to exit the game?',
+                      onPressed: () {
+                        _audioManager.stopBackgroundMusic();
+                        temporaryShopBloc.add(ResetTemporaryGoldEvent());
+                        Flame.device.restoreFullscreen();
+                        Flame.device.setPortrait();
+                        Navigator.of(context).pop();
+                        Navigator.of(context).pop();
+                      });
                 },
               ),
-              // Remove audio control buttons
               BlocBuilder<GameBloc, GameState>(
                 builder: (context, state) {
-                  viewModel = GameViewModel(context.read<GameBloc>());
+                  // Pass the ShopBloc to the GameViewModel
+                  viewModel =
+                      GameViewModel(gameBloc, shopBloc: temporaryShopBloc);
 
                   // Control music based on game state
                   if (!state.inFightMenu && !state.gameOver) {
@@ -166,7 +232,7 @@ class GamePageState extends State<GamePage> with WidgetsBindingObserver {
                   return state.inFightMenu
                       ? GameMenuUI(
                           state: state,
-                          bloc: context.read<GameBloc>(),
+                          bloc: gameBloc,
                         )
                       : GameBattleUI(
                           state: state,
@@ -180,6 +246,7 @@ class GamePageState extends State<GamePage> with WidgetsBindingObserver {
                                   builder: (_) => const GamePage()),
                             );
                           },
+                          audioManager: _audioManager,
                         );
                 },
               ),

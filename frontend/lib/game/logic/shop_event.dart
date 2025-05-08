@@ -1,16 +1,25 @@
 import '../models/shop_item.dart';
 
-// shop_event.dart
 abstract class ShopEvent {}
 
-class FetchShopItemsEvent extends ShopEvent {}
+// Separate events for permanent and temporary shops
+class FetchPermanentItemsEvent extends ShopEvent {}
 
-class BuyShopItemEvent extends ShopEvent {
+class FetchTemporaryItemsEvent extends ShopEvent {}
+
+class BuyPermanentItemEvent extends ShopEvent {
   final ShopItem item;
-  BuyShopItemEvent(this.item);
+  final String itemId;
+  final int price;
+
+  BuyPermanentItemEvent(this.item, this.itemId, this.price);
 }
 
-// New event to reward temporary gold
+class BuyTemporaryItemEvent extends ShopEvent {
+  final ShopItem item;
+  BuyTemporaryItemEvent(this.item);
+}
+
 class RewardTemporaryGoldEvent extends ShopEvent {
   final int reward;
   RewardTemporaryGoldEvent(this.reward);
@@ -19,3 +28,8 @@ class RewardTemporaryGoldEvent extends ShopEvent {
 class ResetTemporaryGoldEvent extends ShopEvent {}
 
 class ResetTemporaryShopItemsEvent extends ShopEvent {}
+
+class RemoveTemporaryItemFromInventoryEvent extends ShopEvent {
+  final ShopItem item;
+  RemoveTemporaryItemFromInventoryEvent(this.item);
+}

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/color_manger.dart';
 import '../../core/theme/text_style.dart';
 
 class GameButton extends StatelessWidget {
@@ -28,11 +27,7 @@ class GameButton extends StatelessWidget {
           ),
         ),
         onPressed: onPressed,
-        child: Text(
-          text,
-          style: TextStyles.styleBold(context,
-              fontSize: 18, color: ColorManager.whiteColor),
-        ),
+        child: Text(text, style: TextStyles.bold18White),
       ),
     );
   }

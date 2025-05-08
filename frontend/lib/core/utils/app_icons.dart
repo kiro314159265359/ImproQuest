@@ -7,4 +7,8 @@ class AppIcons {
   static const String runningIcon = 'assets/icons/RunningChIcon.png';
   static const String exitIcon = 'assets/icons/ExitIcon.png';
   static const String coinsIcon = 'assets/icons/CoinsIcon.png';
+  static const String flameIcon = 'assets/icons/FlameIcon.png';
+  static const String trophyUnlockedIcon =
+      'assets/icons/TrophyUnlockedIcon.png';
+  static const String trophyLockedIcon = 'assets/icons/TrophyLockedIcon.png';
 }

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_2/core/theme/color_manger.dart';
 import 'package:flutter_application_2/core/theme/text_style.dart';
 import 'package:flutter_application_2/core/utils/app_icons.dart';
 import 'package:flutter_application_2/features/home/data/model/user_model.dart';
@@ -22,8 +21,7 @@ class CustomQuestsList extends StatelessWidget {
         child: Center(
           child: Text(
             "No custom quests available",
-            style: TextStyles.styleSemiBold(context,
-                fontSize: 20, color: ColorManager.whiteColor),
+            style: TextStyles.semiBold20White,
           ),
         ),
       );
@@ -35,6 +33,7 @@ class CustomQuestsList extends StatelessWidget {
             state is HomeReady ? state.questLoadingStates : {};
 
         return ListView.builder(
+          padding: EdgeInsets.zero,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: quests!.length,

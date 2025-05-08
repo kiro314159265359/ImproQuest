@@ -7,7 +7,8 @@ Future<bool> hasValidAccessToken(String? accessToken) async {
   return accessToken != null && !JwtDecoder.isExpired(accessToken);
 }
 
-Future<String> _handleInvalidAccessToken(LoginRepo loginRepo, String? accessToken) async {
+Future<String> _handleInvalidAccessToken(
+    LoginRepo loginRepo, String? accessToken) async {
   if (accessToken == null) {
     return Routes.loginScreen;
   }
@@ -26,11 +27,12 @@ Future<String> _handleExpiredAccessToken(LoginRepo loginRepo) async {
   return await _attemptTokenRefresh(loginRepo, refreshToken);
 }
 
-Future<String> _attemptTokenRefresh(LoginRepo loginRepo, String refreshToken) async {
+Future<String> _attemptTokenRefresh(
+    LoginRepo loginRepo, String refreshToken) async {
   try {
     final response = await loginRepo.refreshToken(refreshToken);
     await _saveNewTokens(response);
-    return Routes.appLayoutPage;
+    return Routes.appLayoutScreen;
   } catch (error) {
     await clearTokens();
     return Routes.loginScreen;
@@ -47,8 +49,7 @@ Future<void> _saveNewTokens(Map<String, dynamic> response) async {
 Future<String> determineInitialRoute(LoginRepo loginRepo) async {
   final accessToken = await getAccessToken();
   if (await hasValidAccessToken(accessToken)) {
-    return Routes.appLayoutPage;
+    return Routes.appLayoutScreen;
   }
   return await _handleInvalidAccessToken(loginRepo, accessToken);
 }
-

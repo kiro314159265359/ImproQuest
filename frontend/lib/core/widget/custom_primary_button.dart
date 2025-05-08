@@ -52,11 +52,7 @@ class _CustomPrimaryButtonState extends State<CustomPrimaryButton> {
                 color: ColorManager.whiteColor,
                 strokeWidth: 2,
               )
-            : Text(
-                widget.buttonText,
-                style: TextStyles.styleBold(context,
-                    fontSize: 18, color: ColorManager.whiteColor),
-              ),
+            : Text(widget.buttonText, style: TextStyles.bold18White),
       ),
     );
   }

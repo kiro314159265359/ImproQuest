@@ -22,8 +22,15 @@ class _AppBarStatsState extends State<AppBarStats> {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<UserCubit, UserState>(
+      buildWhen: (previous, current) =>
+          current is UserLoaded ||
+          current is UserUpdated ||
+          current is UserError,
       builder: (context, state) {
         if (state is UserLoaded) {
+          return _buildAppBatStats(context, state.user);
+        }
+        if (state is UserUpdated) {
           return _buildAppBatStats(context, state.user);
         }
         return const SizedBox.shrink();
@@ -48,15 +55,13 @@ class _AppBarStatsState extends State<AppBarStats> {
                 percent: (user.xp! / 1959541954191981),
                 center: CustomRichText(
                   text1: "${user.xp}/240",
-                  textStyle1: TextStyles.styleMedium(context,
-                      fontSize: 12, color: ColorManager.whiteColor),
+                  textStyle1: TextStyles.medium12White,
                   text2: "XP",
-                  textStyle2: TextStyles.styleMedium(context,
-                      fontSize: 8, color: ColorManager.whiteColor),
+                  textStyle2: TextStyles.medium8White,
                 ),
                 barRadius: const Radius.circular(4),
                 backgroundColor: ColorManager.containerBackGround,
-                progressColor: const Color(0xff6693EB),
+                progressColor: ColorManager.lightBlue,
               ),
             ),
             CircleAvatar(
@@ -77,8 +82,7 @@ class _AppBarStatsState extends State<AppBarStats> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                     child: Text("${user.level}",
-                        style: TextStyles.styleMedium(context,
-                            fontSize: 8, color: ColorManager.whiteColor),
+                        style: TextStyles.medium8White,
                         textAlign: TextAlign.center),
                   ),
                 ),
@@ -96,9 +100,7 @@ class _AppBarStatsState extends State<AppBarStats> {
               width: w * 0.3,
               height: 25,
               child: Text("${user.gold}",
-                  style: TextStyles.styleMedium(context,
-                      fontSize: 16, color: ColorManager.whiteColor),
-                  textAlign: TextAlign.center),
+                  style: TextStyles.medium16White, textAlign: TextAlign.center),
             ),
             CircleAvatar(
               radius: 30,

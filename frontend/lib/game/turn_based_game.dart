@@ -1,6 +1,6 @@
 import 'package:flame/game.dart';
 import 'package:flame/components.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter_application_2/core/theme/text_style.dart';
 import '../core/theme/color_manger.dart';
 import 'components/simple_progress_bar.dart';
 import 'components/status_container.dart';
@@ -69,53 +69,40 @@ class GameCharacter extends SpriteAnimationComponent with HasGameRef {
       size: Vector2(200, 100),
       nameText: TextComponent(
         text: 'SUNG JINWOO',
-        textRenderer: TextPaint(
-          style:
-              const TextStyle(color: ColorManager.primaryColor, fontSize: 14),
-        ),
+        textRenderer: TextPaint(style: TextStyles.regular14primary),
       ),
       levelText: TextComponent(
         text: 'LEVEL 25',
-        textRenderer: TextPaint(
-          style: const TextStyle(color: Colors.white, fontSize: 12),
-        ),
+        textRenderer: TextPaint(style: TextStyles.regular12White),
       ),
       hpLabelText: TextComponent(
         text: 'HP',
-        textRenderer: TextPaint(
-          style: const TextStyle(color: Colors.white, fontSize: 12),
-        ),
+        textRenderer: TextPaint(style: TextStyles.regular12White),
       ),
       hpValueText: TextComponent(
         text: '100/100',
-        textRenderer: TextPaint(
-          style: const TextStyle(color: Colors.white, fontSize: 12),
-        ),
+        textRenderer: TextPaint(style: TextStyles.regular12White),
       ),
       hpBar: SimpleProgressBar(
         progress: 1.0,
         size: Vector2(180, 8),
         position: Vector2(10, 25),
-        foregroundColor: Colors.green,
-        backgroundColor: Colors.red,
+        foregroundColor: ColorManager.greenColor,
+        backgroundColor: ColorManager.redColor,
       ),
       initLabelText: TextComponent(
         text: 'INIT',
-        textRenderer: TextPaint(
-          style: const TextStyle(color: Colors.white, fontSize: 12),
-        ),
+        textRenderer: TextPaint(style: TextStyles.regular12White),
       ),
       initValueText: TextComponent(
         text: '0/100',
-        textRenderer: TextPaint(
-          style: const TextStyle(color: Colors.white, fontSize: 12),
-        ),
+        textRenderer: TextPaint(style: TextStyles.regular12White),
       ),
       initBar: SimpleProgressBar(
         progress: 0.0,
         size: Vector2(180, 8),
-        foregroundColor: Colors.blue,
-        backgroundColor: Colors.grey,
+        foregroundColor: ColorManager.blueColor,
+        backgroundColor: ColorManager.greyColor,
       ),
     );
   }
@@ -230,6 +217,10 @@ class TurnBasedGame extends FlameGame {
   // Add a public getter for the private field
   bool get isDeathAnimationPlaying => _deathAnimationPlaying;
 
+  void resetGameState() {
+    _lastState = null;
+  }
+
   // Helper method to create characters with consistent configuration
   Future<GameCharacter> _createCharacter({
     required String type,
@@ -299,17 +290,34 @@ class TurnBasedGame extends FlameGame {
   }
 
   Future<void> updateEnemy(dynamic enemyObj) async {
-    if (enemy != null) {
-      // Don't immediately remove enemy if they died
-      if (enemyObj?.currentHp <= 0) {
-        // We handle enemy death animation in updateBars
-        // Don't create a new enemy immediately
-        return;
-      } else {
-        enemy!.removeFromParent();
-      }
+    // Skip if enemyObj is null
+    if (enemyObj == null) {
+      return;
     }
 
+    // If enemy is dead (HP <= 0), let death animation play out but don't create a new enemy yet
+    if (enemyObj.currentHp <= 0) {
+      return;
+    }
+
+    // If current enemy exists and is the same as the previous enemy, just update stats
+    if (enemy != null &&
+        _lastState != null &&
+        _lastState!.enemy.name == enemyObj.name) {
+      // Just update stats - no need to recreate the sprite
+      enemy!.updateHealthInfo(enemyObj.currentHp, enemyObj.vitality,
+          _lastState?.enemyInitiative ?? 0);
+      return;
+    }
+
+    // Otherwise, we need to remove the existing enemy (if any) and create a new one
+    if (enemy != null) {
+      enemy!.removeFromParent();
+      if (enemy!.statusContainer != null) {
+        enemy!.statusContainer!.removeFromParent();
+      }
+      enemy = null;
+    }
     _createNewEnemy(enemyObj);
   }
 
@@ -329,7 +337,7 @@ class TurnBasedGame extends FlameGame {
       idlePath: enemyIdlePath,
       attackPath: enemyAttackPath,
       size: Vector2(256, 256),
-      position: Vector2(size.x - 128, 128),
+      position: Vector2(size.x - 100, 180),
       isFlipped: true,
     );
     add(enemy!);
@@ -382,13 +390,15 @@ class TurnBasedGame extends FlameGame {
     print('Starting death animation for ${isPlayer ? "player" : "enemy"}');
     _deathAnimationPlaying = true;
 
+    // Make sure we use the right animation
     character.playDeathAnimation(onComplete: () {
-      print('Death animation completed');
+      print('Death animation completed for ${isPlayer ? "player" : "enemy"}');
       _deathAnimationPlaying = false;
+
       // Make sure we call the callback on the next frame to avoid state conflicts
       Future.microtask(() {
         if (onDeathAnimationComplete != null) {
-          print('Calling onDeathAnimationComplete');
+          print('Calling onDeathAnimationComplete callback');
           onDeathAnimationComplete!();
         }
       });

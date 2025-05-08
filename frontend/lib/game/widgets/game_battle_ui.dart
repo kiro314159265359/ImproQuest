@@ -1,12 +1,21 @@
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_application_2/core/theme/color_manger.dart';
+import 'package:flutter_application_2/core/theme/text_style.dart';
+import 'package:flutter_application_2/game/widgets/temporary_inventory_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_application_2/core/utils/app_icons.dart';
+import 'package:flutter_application_2/core/widget/dialogs.dart';
+import 'package:flame/flame.dart';
 import '../components/game_button.dart';
 import '../logic/game_bloc.dart';
 import '../logic/game_event.dart';
 import '../logic/game_state.dart';
+import '../services/audio_manager.dart';
 import '../turn_based_game.dart';
 import '../viewmodel/game_view_model.dart';
+import '../logic/shop_bloc.dart';
+import '../logic/shop_event.dart';
 
 class GameBattleUI extends StatelessWidget {
   final GameState state;
@@ -14,6 +23,7 @@ class GameBattleUI extends StatelessWidget {
   final GameViewModel viewModel;
   final Function(GameState) onBattleEnd;
   final VoidCallback onRestart;
+  final AudioManager audioManager;
 
   const GameBattleUI({
     super.key,
@@ -22,6 +32,7 @@ class GameBattleUI extends StatelessWidget {
     required this.viewModel,
     required this.onBattleEnd,
     required this.onRestart,
+    required this.audioManager,
   });
 
   @override
@@ -32,7 +43,59 @@ class GameBattleUI extends StatelessWidget {
           child: GameWidget(game: flameGame),
         ),
         _buildBattleListener(context),
-        _buildActionButtons(),
+
+        Positioned(
+          top: 1,
+          left: 1,
+          child: IconButton(
+            icon: const ImageIcon(
+              AssetImage(AppIcons.exitIcon),
+              color: ColorManager.whiteColor,
+              size: 35,
+            ),
+            onPressed: () {
+              Dialogs.confirmDialog(
+                context: context,
+                title: 'Exit Game',
+                content: 'Are you sure you want to exit the game?',
+                onPressed: () {
+                  audioManager.stopBackgroundMusic();
+                  context.read<ShopBloc>().add(ResetTemporaryGoldEvent());
+                  Flame.device.restoreFullscreen();
+                  Flame.device.setPortrait();
+                  Navigator.of(context).pop();
+                  Navigator.of(context).pop();
+                },
+              );
+            },
+          ),
+        ),
+
+        // Show message about current action
+        Positioned(
+          top: 60,
+          left: 20,
+          right: 20,
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: ColorManager.blackColor,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              state.message,
+              style: TextStyles.regular16White,
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+
+        // Show action buttons when inventory is closed
+        if (!state.inventoryOpen) _buildActionButtons(),
+
+        // Show inventory UI when inventory is open
+        if (state.inventoryOpen) TemporaryInventoryUi(viewModel: viewModel),
+
         if (state.gameOver && state.player.currentHp == 0)
           Center(
             child: GameButton(
@@ -54,8 +117,19 @@ class GameBattleUI extends StatelessWidget {
           previous.enemy.currentHp != current.enemy.currentHp ||
           previous.playerInitiative != current.playerInitiative ||
           previous.enemyInitiative != current.enemyInitiative ||
-          previous.lastAttackActor != current.lastAttackActor,
+          previous.lastAttackActor != current.lastAttackActor ||
+          // Add this condition to detect enemy changes between stages
+          previous.enemy.name != current.enemy.name ||
+          previous.currentAnte != current.currentAnte ||
+          previous.currentBlind != current.currentBlind,
       listener: (context, state) {
+        // Update the enemy sprite when state changes (especially between stages)
+        if (!state.inFightMenu && !state.gameOver) {
+          print(
+              'Battle UI detected new enemy: ${state.enemy.name}, Ante: ${state.currentAnte}, Blind: ${state.currentBlind}');
+          flameGame.updateEnemy(state.enemy);
+        }
+
         flameGame.updateBars(state);
 
         if (state.lastAttackActor == "player") {
@@ -69,7 +143,6 @@ class GameBattleUI extends StatelessWidget {
         }
 
         // Always call onBattleEnd to set up pending transitions
-        // (the GamePage will handle whether to show UI immediately or wait)
         onBattleEnd(state);
       },
       child: Container(),

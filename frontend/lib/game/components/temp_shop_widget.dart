@@ -1,19 +1,39 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_2/core/theme/text_style.dart';
+import 'package:flutter_application_2/core/widget/custom_button.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../game/logic/shop_bloc.dart';
-import '../../game/logic/shop_state.dart';
-import '../../game/viewmodel/shop_view_model.dart';
+import '../../core/theme/color_manger.dart';
+import '../../core/utils/app_icons.dart';
+import '../logic/shop_bloc.dart';
+import '../logic/shop_state.dart';
+import '../models/shop_item.dart';
+import '../viewmodel/shop_view_model.dart';
 import '../logic/shop_event.dart';
-import '../widgets/item_card.dart';
 
-class TemporaryShopPage extends StatelessWidget {
+class TemporaryShopPage extends StatefulWidget {
   const TemporaryShopPage({super.key});
+
+  @override
+  State<TemporaryShopPage> createState() => _TemporaryShopPageState();
+}
+
+class _TemporaryShopPageState extends State<TemporaryShopPage> {
+  late ShopBloc shopBloc;
+
+  @override
+  void initState() {
+    super.initState();
+    // Get the ShopBloc from the context instead of from GetIt
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      shopBloc = context.read<ShopBloc>();
+      shopBloc.add(FetchTemporaryItemsEvent());
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return MultiBlocListener(
       listeners: [
-        // Listen for successful purchases.
         BlocListener<ShopBloc, ShopState>(
           listenWhen: (previous, current) => current is ShopPurchaseSuccess,
           listener: (context, state) {
@@ -24,7 +44,6 @@ class TemporaryShopPage extends StatelessWidget {
             }
           },
         ),
-        // Listen for errors.
         BlocListener<ShopBloc, ShopState>(
           listenWhen: (previous, current) => current is ShopError,
           listener: (context, state) {
@@ -35,33 +54,48 @@ class TemporaryShopPage extends StatelessWidget {
             }
           },
         ),
+        BlocListener<ShopBloc, ShopState>(
+          listenWhen: (previous, current) => current is ShopAlreadyOwned,
+          listener: (context, state) {
+            if (state is ShopAlreadyOwned) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: ColorManager.errorColor,
+                ),
+              );
+            }
+          },
+        ),
       ],
       child: Scaffold(
         appBar: AppBar(
           backgroundColor: Colors.transparent,
+          title: const Text("Temporary Shop"),
+          centerTitle: true,
           actions: [
             BlocBuilder<ShopBloc, ShopState>(
               builder: (context, state) {
                 int gold = 0;
-                if (state is ShopLoaded) {
+                if (state is TemporaryShopLoaded) {
                   gold = state.temporaryCurrency;
-                } else if (state is ShopPurchaseSuccess) {
-                  // Since ShopPurchaseSuccess doesn’t carry currency data,
-                  // we trigger a fetch for the updated data (handled elsewhere),
-                  // and display a placeholder.
-                  gold = 0;
-                } else if (state is ShopError) {
-                  gold = -1;
-                } else if (state is ShopInitial) {
-                  // Dispatch fetch if we’re in the initial state.
-                  context.read<ShopBloc>().add(FetchShopItemsEvent());
                 }
                 return Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Center(
-                    child: Text(
-                      'Gold: $gold',
-                      style: const TextStyle(fontSize: 16),
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: ColorManager.lightGoldColor,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: ColorManager.goldColor),
+                    ),
+                    child: Row(
+                      children: [
+                        Image.asset(AppIcons.coinsIcon, width: 24, height: 24),
+                        const SizedBox(width: 4),
+                        Text('$gold', style: TextStyles.bold18Gold),
+                      ],
                     ),
                   ),
                 );
@@ -69,37 +103,181 @@ class TemporaryShopPage extends StatelessWidget {
             ),
           ],
         ),
-        body: BlocBuilder<ShopBloc, ShopState>(
-          builder: (context, state) {
-            if (state is ShopInitial) {
-              context.read<ShopBloc>().add(FetchShopItemsEvent());
-              return const Center(child: CircularProgressIndicator());
-            } else if (state is ShopLoading) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (state is ShopLoaded) {
-              final tempItems =
-                  state.items.where((item) => !item.permanent).toList();
-              return ListView.builder(
-                itemCount: tempItems.length,
-                itemBuilder: (context, index) {
-                  final item = tempItems[index];
-                  final shopViewModel = ShopViewModel(context.read<ShopBloc>());
-                  return ItemCard(item: item, viewModel: shopViewModel);
+        body: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text("These items will be reset after your run ends",
+                  style: TextStyles.regularItalic14darkGold),
+            ),
+            Expanded(
+              child: BlocBuilder<ShopBloc, ShopState>(
+                builder: (context, state) {
+                  if (state is ShopLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (state is TemporaryShopLoaded) {
+                    final tempItems = state.items;
+
+                    if (tempItems.isEmpty) {
+                      return const Center(
+                        child: Text("No temporary items available"),
+                      );
+                    }
+
+                    return ListView.builder(
+                      itemCount: tempItems.length,
+                      itemBuilder: (context, index) {
+                        final item = tempItems[index];
+                        final shopViewModel =
+                            ShopViewModel(context.read<ShopBloc>());
+                        return TemporaryItemCard(
+                            item: item, viewModel: shopViewModel);
+                      },
+                    );
+                  } else if (state is ShopError) {
+                    return Center(child: Text(state.message));
+                  }
+                  // Show loading indicator by default
+                  return const Center(child: CircularProgressIndicator());
                 },
-              );
-            } else if (state is ShopPurchaseSuccess) {
-              // After a purchase, fetch updated shop data.
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                context.read<ShopBloc>().add(FetchShopItemsEvent());
-              });
-              return const Center(child: CircularProgressIndicator());
-            } else if (state is ShopError) {
-              return Center(child: Text(state.message));
-            }
-            return const Center(child: Text("Unexpected state"));
-          },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  CustomButton(
+                    width: null,
+                    height: null,
+                    borderColor: ColorManager.lightGrey,
+                    fillColor: Colors.transparent,
+                    buttonText: "Refresh Items",
+                    onPressed: () {
+                      context
+                          .read<ShopBloc>()
+                          .add(ResetTemporaryShopItemsEvent());
+                    },
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      context
+                          .read<ShopBloc>()
+                          .add(RewardTemporaryGoldEvent(50));
+                    },
+                    child: const Text("+ 50 Gold (Test)"),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
+  }
+}
+
+class TemporaryItemCard extends StatelessWidget {
+  final ShopItem item;
+  final ShopViewModel viewModel;
+
+  const TemporaryItemCard({
+    super.key,
+    required this.item,
+    required this.viewModel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Check if the item exists in inventory and get its quantity
+    final shopBloc = context.read<ShopBloc>();
+    final inventoryItem = shopBloc.temporaryInventory
+        .where((invItem) => invItem.id == item.id)
+        .firstOrNull;
+    final int ownedQuantity = inventoryItem?.quantity ?? 0;
+
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  item.name,
+                  style: TextStyles.styleBold(context,
+                      fontSize: 18, color: _getTierColor(item.tier)),
+                ),
+                if (ownedQuantity > 0)
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: ColorManager.greenColor),
+                    ),
+                    child: Text('Owned: $ownedQuantity',
+                        style: TextStyles.bold12Green),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(item.description),
+
+            // Show temporary effects
+            if (item.effects.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text("Temporary Effects:", style: TextStyles.bold12White),
+              ...item.effects.entries.map((entry) =>
+                  Text("• ${_formatStatName(entry.key)}: +${entry.value}")),
+            ],
+
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Image.asset(AppIcons.coinsIcon, width: 20, height: 20),
+                    const SizedBox(width: 4),
+                    Text("${item.price}", style: TextStyles.bold16White),
+                  ],
+                ),
+                CustomButton(
+                    width: null,
+                    height: null,
+                    fillColor: ColorManager.primaryColor,
+                    buttonText: "Buy",
+                    onPressed: () => viewModel.buyTemporaryItem(item)),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Color _getTierColor(ShopTier tier) {
+    switch (tier) {
+      case ShopTier.basic:
+        return ColorManager.whiteColor;
+      case ShopTier.meta:
+        return ColorManager.blueColor;
+      case ShopTier.prestige:
+        return ColorManager.prupleColor;
+    }
+  }
+
+  // Helper method to format stat names for display
+  String _formatStatName(String stat) {
+    return stat
+        .split('_')
+        .map((word) => word.isNotEmpty
+            ? '${word[0].toUpperCase()}${word.substring(1)}'
+            : '')
+        .join(' ');
   }
 }
