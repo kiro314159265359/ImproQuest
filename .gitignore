@@ -1,3 +1,4 @@
 # Ignore the log folder in the backend
 backend/logs/
 backend/logs/app.log
+frontend/
