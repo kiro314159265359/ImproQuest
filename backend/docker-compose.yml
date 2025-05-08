@@ -13,8 +13,8 @@ services:
       - ACCESS_SECRET_KEY=${ACCESS_SECRET_KEY}
       - REFRESH_SECRET_KEY=${REFRESH_SECRET_KEY}
     networks:
-      - impro-network
+      - app-network
 
 networks:
-  impro-network:
+  app-network:
     driver: bridge
