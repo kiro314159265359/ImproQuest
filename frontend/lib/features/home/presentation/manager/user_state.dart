@@ -6,7 +6,65 @@ abstract class UserState {}
 
 class UserInitial extends UserState {}
 
-class UserLoading extends UserState {}
+class UserLoading extends UserState {
+  final UserModel user = UserModel(
+    username: "John Doe",
+    email: " hi@gmail.com",
+    xp: 120,
+    level: 10,
+    gold: 1000,
+    streak: Streak(current: 1, highestStreak: 5),
+    quests: [
+      Quests(
+        isCompleted: false,
+        goal: 1,
+        goldReward: 50,
+        xpReward: 100,
+        name: "Quest 1",
+        progress: 0,
+        isCustom: false,
+      ),
+      Quests(
+        isCompleted: false,
+        goal: 1,
+        goldReward: 50,
+        xpReward: 100,
+        name: "Quest 1",
+        progress: 0,
+        isCustom: true,
+      ),
+      Quests(
+        isCompleted: false,
+        goal: 1,
+        goldReward: 50,
+        xpReward: 100,
+        name: "Quest 1",
+        progress: 0,
+        isCustom: true,
+      ),
+      Quests(
+        isCompleted: false,
+        goal: 1,
+        goldReward: 50,
+        xpReward: 100,
+        name: "Quest 1",
+        progress: 0,
+        isCustom: true,
+      ),
+      Quests(
+        isCompleted: true,
+        goal: 1,
+        goldReward: 50,
+        xpReward: 100,
+        name: "Quest 1",
+        progress: 0,
+        isCustom: true,
+      )
+    ],
+  );
+
+  UserLoading();
+}
 
 class UserLoaded extends UserState {
   final UserModel user;

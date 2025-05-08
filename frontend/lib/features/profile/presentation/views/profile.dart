@@ -3,6 +3,7 @@ import 'package:flutter_application_2/core/theme/color_manger.dart';
 import 'package:flutter_application_2/features/profile/presentation/views/statistics.dart';
 import 'package:flutter_application_2/features/profile/presentation/views/achievements.dart';
 import 'package:flutter_application_2/features/profile/presentation/views/character.dart';
+import 'package:flutter_application_2/features/profile/presentation/views/widgets/statistics_loading.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/background_theme.dart';
 import '../../../../core/widget/appbar_stats.dart';
@@ -49,7 +50,13 @@ class _ProfileState extends State<Profile> {
               if (state is UserUpdated) {
                 return _buildProfileContent(state.user);
               }
-              return const Center(child: CircularProgressIndicator());
+              if (state is UserLoading) {
+                return const StatisticsLoading();
+              }
+
+              return const Center(
+                child: CircularProgressIndicator(),
+              );
             },
           ),
         ),
@@ -93,4 +100,40 @@ class _ProfileState extends State<Profile> {
       ),
     );
   }
+
+  // Widget _buildProfileLoadingContent() {
+  //   var w = MediaQuery.of(context).size.width;
+  //   var h = MediaQuery.of(context).size.height;
+  //   return Padding(
+  //     padding: EdgeInsets.symmetric(horizontal: w * 0.04, vertical: h * 0.02),
+  //     child: Column(
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: [
+  //         SizedBox(height: h * 0.025),
+  //         const AppBarStats(),
+  //         SizedBox(height: h * 0.025),
+  //         const TabBar(
+  //           dividerColor: Colors.transparent,
+  //           labelColor: ColorManager.primaryColor,
+  //           unselectedLabelColor: ColorManager.darkGreyColor,
+  //           indicatorColor: ColorManager.primaryColor,
+  //           tabs: [
+  //             Tab(text: 'STATS'),
+  //             Tab(text: 'ACHIEVEMENTS'),
+  //             Tab(text: 'CHARACTER'),
+  //           ],
+  //         ),
+  //         const Expanded(
+  //           child: TabBarView(
+  //             children: <Widget>[
+  //               StatisticsLoading(),
+  //               Achievements(),
+  //               Character(),
+  //             ],
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 }
