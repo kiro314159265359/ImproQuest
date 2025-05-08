@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_2/core/theme/background_theme.dart';
+import 'package:flutter_application_2/core/widget/dialogs.dart';
+import 'package:flutter_application_2/features/home/presentation/manager/user_cubit.dart';
+import 'package:flutter_application_2/features/home/presentation/manager/user_state.dart';
 import 'package:flutter_application_2/features/settings/presentation/views/widgets/custom_single_listtile.dart';
 import 'package:flutter_application_2/features/settings/presentation/views/widgets/divider_box.dart';
 import 'package:flutter_application_2/features/settings/presentation/views/widgets/label_box.dart';
 import 'package:flutter_application_2/game/services/audio_manager.dart';
-
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/routes/routes.dart';
 import '../../../../core/service/cache_helper.dart';
 import '../../../../core/theme/color_manger.dart';
@@ -40,8 +43,39 @@ class _SettingsState extends State<Settings> {
 
   @override
   Widget build(BuildContext context) {
+    return BlocListener<UserCubit, UserState>(
+        listener: (context, state) {
+          if (state is UserDeleted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Account deleted successfully.',
+                    style: TextStyles.medium16White),
+                backgroundColor: ColorManager.primaryColor,
+              ),
+            );
+            clearTokens();
+            Navigator.pushReplacementNamed(context, Routes.loginScreen);
+          } else if (state is UpdateError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                    'Failed to delete account: ${state.failure.message}',
+                    style: TextStyles.medium16White),
+                backgroundColor: ColorManager.errorColor,
+              ),
+            );
+          }
+          if (state is UserDeleting) {
+            Dialogs.loadingDialog(context: context);
+          }
+        },
+        child: _buildSettingsContent(context));
+  }
+
+  Widget _buildSettingsContent(BuildContext context) {
     var w = MediaQuery.of(context).size.width;
     var h = MediaQuery.of(context).size.height;
+
     return Scaffold(
       body: BackgroundTheme(
           child: SingleChildScrollView(
@@ -52,18 +86,14 @@ class _SettingsState extends State<Settings> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         SizedBox(height: h * 0.025),
-                        Text(
-                          'Settings',
-                          style: TextStyles.styleExtraBold(context,
-                              fontSize: 38, color: ColorManager.whiteColor),
-                        ),
+                        Text('Settings', style: TextStyles.extraBold38White),
                         SizedBox(height: h * 0.035),
                         CustomSingleListTile(
                             titleText: 'Edit your information',
                             leadingIcon: Icons.person_outline,
                             onTap: () {
                               Navigator.pushNamed(
-                                  context, Routes.personalInfoPage);
+                                  context, Routes.personalInfoScreen);
                             }),
                         SizedBox(height: h * 0.005),
                         LabelBox(
@@ -71,9 +101,7 @@ class _SettingsState extends State<Settings> {
                           child: DividerBox(
                               child1: SwitchListTile(
                                 title: Text("Pop Up Notifications",
-                                    style: TextStyles.styleSemiBold(context,
-                                        fontSize: 18,
-                                        color: ColorManager.whiteColor)),
+                                    style: TextStyles.semiBold18White),
                                 value: popNotificationBool,
                                 activeTrackColor: ColorManager.primaryColor,
                                 secondary: const Icon(Icons.notifications_none,
@@ -89,9 +117,7 @@ class _SettingsState extends State<Settings> {
                                 secondary:
                                     const Icon(Icons.email_outlined, size: 30),
                                 title: Text("Email Notifications",
-                                    style: TextStyles.styleSemiBold(context,
-                                        fontSize: 18,
-                                        color: ColorManager.whiteColor)),
+                                    style: TextStyles.semiBold18White),
                                 value: emailNotificationBool,
                                 onChanged: (value) {
                                   setState(() {
@@ -115,11 +141,7 @@ class _SettingsState extends State<Settings> {
                                         const Icon(Icons.music_note, size: 30),
                                         const SizedBox(width: 8),
                                         Text("Music",
-                                            style: TextStyles.styleSemiBold(
-                                                context,
-                                                fontSize: 18,
-                                                color:
-                                                    ColorManager.whiteColor)),
+                                            style: TextStyles.semiBold18White),
                                       ],
                                     ),
                                     Expanded(
@@ -131,8 +153,7 @@ class _SettingsState extends State<Settings> {
                                           value: master,
                                           activeColor:
                                               ColorManager.primaryColor,
-                                          inactiveColor:
-                                              const Color(0xff9B9B9B),
+                                          inactiveColor: ColorManager.greyColor,
                                           max: 100,
                                           label: master.round().toString(),
                                           onChanged: (double value) {
@@ -161,11 +182,8 @@ class _SettingsState extends State<Settings> {
                                           const Icon(Icons.volume_up, size: 30),
                                           const SizedBox(width: 8),
                                           Text("SFX",
-                                              style: TextStyles.styleSemiBold(
-                                                  context,
-                                                  fontSize: 18,
-                                                  color:
-                                                      ColorManager.whiteColor)),
+                                              style:
+                                                  TextStyles.semiBold18White),
                                         ],
                                       ),
                                     ),
@@ -178,8 +196,7 @@ class _SettingsState extends State<Settings> {
                                           value: sfx,
                                           activeColor:
                                               ColorManager.primaryColor,
-                                          inactiveColor:
-                                              const Color(0xff9B9B9B),
+                                          inactiveColor: ColorManager.greyColor,
                                           max: 100,
                                           label: sfx.round().toString(),
                                           onChanged: (double value) {
@@ -210,13 +227,18 @@ class _SettingsState extends State<Settings> {
                                 color: ColorManager.errorColor,
                               ),
                               title: Text("Delete Account",
-                                  style: TextStyles.styleSemiBold(context,
-                                      fontSize: 18,
-                                      color: ColorManager.errorColor)),
+                                  style: TextStyles.semiBold18Error),
                               onTap: () {
-                                clearTokens();
-                                Navigator.pushReplacementNamed(
-                                    context, Routes.loginScreen);
+                                Dialogs.confirmDialog(
+                                  context: context,
+                                  title: 'Delete Account',
+                                  content:
+                                      'This action cannot be undone. All your data will be permanently deleted. Are you sure?',
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                    context.read<UserCubit>().deleteAccount();
+                                  },
+                                );
                               },
                             ),
                             child2: ListTile(
@@ -226,13 +248,18 @@ class _SettingsState extends State<Settings> {
                                 color: ColorManager.errorColor,
                               ),
                               title: Text("Logout",
-                                  style: TextStyles.styleSemiBold(context,
-                                      fontSize: 18,
-                                      color: ColorManager.errorColor)),
+                                  style: TextStyles.semiBold18Error),
                               onTap: () {
-                                clearTokens();
-                                Navigator.pushReplacementNamed(
-                                    context, Routes.loginScreen);
+                                Dialogs.confirmDialog(
+                                  context: context,
+                                  title: 'Logout',
+                                  content: 'Are you sure you want to logout?',
+                                  onPressed: () {
+                                    clearTokens();
+                                    Navigator.pushReplacementNamed(
+                                        context, Routes.loginScreen);
+                                  },
+                                );
                               },
                             ))
                       ])))),

@@ -23,6 +23,10 @@ class EndPoints {
   static const String leaderboardByStreak = "/leaderboard/streak";
   static const String leaderboardByLevel = "/leaderboard/level";
 
+  static const String userItems = "/users/inventory/items";
+  static const String equipItems = "/users/equip";
+  static const String unequipItems = "/users/unequip";
+
   // Shop endpoints
   static const String permanentShop = "/shop/permanent";
   static const String purchaseItem = "/shop/buy";

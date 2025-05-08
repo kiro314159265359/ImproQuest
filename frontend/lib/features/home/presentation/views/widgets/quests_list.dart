@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_2/core/theme/color_manger.dart';
 import 'package:flutter_application_2/core/theme/text_style.dart';
 import 'package:flutter_application_2/core/utils/app_icons.dart';
 import 'package:flutter_application_2/core/utils/get_it_constants.dart';
@@ -21,8 +20,7 @@ class QuestsList extends StatelessWidget {
         child: Center(
           child: Text(
             "No quests available",
-            style: TextStyles.styleSemiBold(context,
-                fontSize: 20, color: ColorManager.whiteColor),
+            style: TextStyles.semiBold20White,
           ),
         ),
       );

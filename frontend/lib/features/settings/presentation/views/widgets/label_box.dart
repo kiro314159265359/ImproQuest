@@ -30,12 +30,8 @@ class _LabelBoxState extends State<LabelBox> {
                 color: ColorManager.darkGreyColor,
               )
             : null,
-        title: Text(
-          widget.labelText,
-          style: TextStyles.styleSemiBold(context,
-              fontSize: 18, color: ColorManager.darkGreyColor),
-          textAlign: TextAlign.start,
-        ),
+        title: Text(widget.labelText,
+            style: TextStyles.semiBold18darkGrey, textAlign: TextAlign.start),
       ),
       widget.child
     ]);

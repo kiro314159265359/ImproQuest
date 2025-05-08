@@ -24,44 +24,38 @@ class ShopPage extends StatelessWidget {
         appBar: AppBar(
           centerTitle: true,
           backgroundColor: Colors.transparent,
-          title: BlocBuilder<ShopBloc, ShopState>(
-            builder: (context, state) {
-              int gold = 0;
-              if (state is PermanentShopLoaded) {
-                gold = state.permanentCurrency;
-              }
-
-              return Container(
-                decoration: const BoxDecoration(
-                    color: ColorManager.containerBackGround,
-                    borderRadius: BorderRadius.all(Radius.circular(4))),
-                child: Padding(
+          actions: [
+            BlocBuilder<ShopBloc, ShopState>(
+              builder: (context, state) {
+                int gold = 0;
+                if (state is PermanentShopLoaded) {
+                  gold = state.permanentCurrency;
+                }
+                return Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      Image.asset(AppIcons.coinsIcon,
-                          width: 25, fit: BoxFit.contain),
-                      Text("$gold",
-                          style: TextStyles.styleMedium(context,
-                              fontSize: 16, color: ColorManager.whiteColor),
-                          textAlign: TextAlign.center),
-                    ],
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: ColorManager.lightGoldColor,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: ColorManager.goldColor),
+                    ),
+                    child: Row(
+                      children: [
+                        Image.asset(AppIcons.coinsIcon, width: 24, height: 24),
+                        const SizedBox(width: 4),
+                        Text('$gold', style: TextStyles.bold18Gold),
+                      ],
+                    ),
                   ),
-                ),
-              );
-            },
-          ),
+                );
+              },
+            ),
+          ],
         ),
         body: Column(
           children: [
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 10),
-              child: Text(
-                "Permanent Items Shop",
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-            ),
             Expanded(
               child: BlocListener<ShopBloc, ShopState>(
                 listener: (context, state) {
@@ -74,7 +68,7 @@ class ShopPage extends StatelessWidget {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(state.message),
-                        backgroundColor: Colors.orange,
+                        backgroundColor: ColorManager.errorColor,
                       ),
                     );
                   } else if (state is ShopError) {
@@ -150,16 +144,14 @@ class PermanentItemCard extends StatelessWidget {
               children: [
                 Text(
                   item.name,
-                  style: TextStyle(
+                  style: TextStyles.styleBold(
+                    context,
                     fontSize: 18,
-                    fontWeight: FontWeight.bold,
                     color: _getTierColor(item.tier),
                   ),
                 ),
-                Text(
-                  "Slot: ${item.slot ?? 'None'}",
-                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                ),
+                Text("Slot: ${item.slot ?? 'None'}",
+                    style: TextStyles.regular14Grey),
               ],
             ),
             const SizedBox(height: 8),
@@ -168,8 +160,7 @@ class PermanentItemCard extends StatelessWidget {
             // Show permanent stat bonuses
             if (item.statBonuses.isNotEmpty) ...[
               const SizedBox(height: 8),
-              const Text("Permanent Bonuses:",
-                  style: TextStyle(fontWeight: FontWeight.bold)),
+              Text("Permanent Bonuses:", style: TextStyles.bold12White),
               ...item.statBonuses.entries.map((entry) =>
                   Text("• ${_formatStatName(entry.key)}: +${entry.value}")),
             ],
@@ -182,13 +173,7 @@ class PermanentItemCard extends StatelessWidget {
                   children: [
                     Image.asset(AppIcons.coinsIcon, width: 20, height: 20),
                     const SizedBox(width: 4),
-                    Text(
-                      "${item.price}",
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    Text("${item.price}", style: TextStyles.bold16White),
                   ],
                 ),
                 ElevatedButton(
@@ -209,11 +194,11 @@ class PermanentItemCard extends StatelessWidget {
   Color _getTierColor(ShopTier tier) {
     switch (tier) {
       case ShopTier.basic:
-        return Colors.white;
+        return ColorManager.whiteColor;
       case ShopTier.meta:
-        return Colors.blue;
+        return ColorManager.blueColor;
       case ShopTier.prestige:
-        return Colors.purple;
+        return ColorManager.prupleColor;
     }
   }
 

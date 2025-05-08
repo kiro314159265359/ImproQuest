@@ -7,7 +7,7 @@ import '../logic/game_bloc.dart';
 import '../logic/game_event.dart';
 import '../logic/game_state.dart';
 import 'enemy_blind_card.dart';
-import 'menu_button.dart';
+import '../../core/widget/custom_button.dart';
 
 class GameMenuUI extends StatelessWidget {
   final GameState state;
@@ -21,6 +21,8 @@ class GameMenuUI extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // var w = MediaQuery.of(context).size.width;
+    var h = MediaQuery.of(context).size.height;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(8.0),
@@ -28,21 +30,21 @@ class GameMenuUI extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text('Current Ante: ${state.currentAnte}',
-                style: const TextStyle(fontSize: 24)),
-            const SizedBox(height: 16),
+                style: TextStyles.regular24White),
+            SizedBox(height: h * 0.016),
             _buildPlayerStats(context),
-            const SizedBox(height: 24),
-            _buildBlindSelectionRow(),
-            const SizedBox(height: 24),
-            MenuButton(
+            SizedBox(height: h * 0.024),
+            _buildBlindSelectionRow(h),
+            SizedBox(height: h * 0.024),
+            CustomButton(
                 fillColor: ColorManager.primaryColor,
                 buttonText: "Start Fight",
                 onPressed: () {
                   bloc.add(SelectBlindEvent(state.currentBlind));
                 },
                 buttonIcon: AppIcons.fightIcon),
-            const SizedBox(height: 14),
-            MenuButton(
+            SizedBox(height: h * 0.014),
+            CustomButton(
                 borderColor: ColorManager.lightGrey,
                 buttonText: "Permanent Shop",
                 onPressed: () {
@@ -57,16 +59,14 @@ class GameMenuUI extends StatelessWidget {
 
   Widget _buildPlayerStats(context) {
     return Text(
-      'Player Stats:\nHP: ${state.player.currentHp}/${state.player.vitality}\n'
-      'Strength: ${state.player.strength}  Endurance: ${state.player.endurance}  '
-      'Agility: ${state.player.agility}',
-      textAlign: TextAlign.center,
-      style: TextStyles.styleSemiBold(context,
-          fontSize: 16, color: ColorManager.whiteColor),
-    );
+        'Player Stats:\nHP: ${state.player.currentHp}/${state.player.vitality}\n'
+        'Strength: ${state.player.strength}  Endurance: ${state.player.endurance}  '
+        'Agility: ${state.player.agility}',
+        textAlign: TextAlign.center,
+        style: TextStyles.semiBold16White);
   }
 
-  Widget _buildBlindSelectionRow() {
+  Widget _buildBlindSelectionRow(double h) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -74,12 +74,12 @@ class GameMenuUI extends StatelessWidget {
             blind: 1,
             currentAnte: state.currentAnte,
             currentBlind: state.currentBlind),
-        const SizedBox(height: 16),
+        SizedBox(height: h * 0.016),
         EnemyBlindCard(
             blind: 2,
             currentAnte: state.currentAnte,
             currentBlind: state.currentBlind),
-        const SizedBox(height: 16),
+        SizedBox(height: h * 0.016),
         EnemyBlindCard(
             blind: 3,
             currentAnte: state.currentAnte,

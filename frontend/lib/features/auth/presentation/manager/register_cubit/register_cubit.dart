@@ -9,17 +9,24 @@ class RegisterCubit extends Cubit<RegisterState> {
   final RegisterRepo registerRepo;
 
   RegisterCubit(this.registerRepo) : super(RegisterInitial());
-  static RegisterCubit get(context) => BlocProvider.of(context);
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController passController = TextEditingController();
-  final TextEditingController confPassController = TextEditingController();
-
-  Future<void> registerUser(String email, String password, String username,
-      int height, int weight, String gender, String birthday) async {
+  TextEditingController emailController = TextEditingController();
+  TextEditingController passController = TextEditingController();
+  TextEditingController confPassController = TextEditingController();
+  TextEditingController userNameController = TextEditingController();
+  TextEditingController weightController = TextEditingController();
+  TextEditingController heightController = TextEditingController();
+  TextEditingController birthDayController = TextEditingController();
+  Future<void> registerUser(String gender) async {
     emit(RegisterLoadingState());
     try {
       await registerRepo.register(
-          email, password, username, height, weight, gender, birthday);
+          emailController.text,
+          passController.text,
+          userNameController.text,
+          int.parse(heightController.text),
+          int.parse(weightController.text),
+          gender,
+          birthDayController.text);
       emit(RegisterSuccessState());
     } catch (error) {
       if (error is DioException) {

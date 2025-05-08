@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_2/core/theme/color_manger.dart';
 import 'package:flutter_application_2/features/rankings/presentation/manager/leaderboard_cubit.dart';
 import 'package:flutter_application_2/features/rankings/presentation/manager/leaderboard_state.dart';
 import 'package:flutter_application_2/features/rankings/presentation/views/widgets/leaderboards_listtile.dart';
@@ -105,7 +106,7 @@ class _LeaderboardsListState extends State<LeaderboardsList> {
     return const Center(
       child: Text(
         'Unexpected Error!',
-        style: TextStyle(color: Colors.white),
+        style: TextStyle(color: ColorManager.whiteColor),
       ),
     );
   }

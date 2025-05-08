@@ -18,6 +18,7 @@ class UserModel {
   // List<Null>? achievements;
   List<Quests>? quests;
   Stats? stats;
+  EquippedItems? equippedItems;
   int? accumDistance;
   String? rank;
   String? createdAt;
@@ -41,6 +42,7 @@ class UserModel {
       // this.achievements,
       this.quests,
       this.stats,
+      this.equippedItems,
       this.accumDistance,
       this.rank,
       this.createdAt,
@@ -81,6 +83,9 @@ class UserModel {
       });
     }
     stats = json['stats'] != null ? Stats.fromJson(json['stats']) : null;
+    equippedItems = json['equipped_items'] != null
+        ? EquippedItems.fromJson(json['equipped_items'])
+        : null;
     accumDistance = json['accum_distance'];
     rank = json['rank'];
     createdAt = json['created_at'];
@@ -210,6 +215,40 @@ class Stats {
     data['strength'] = strength;
     data['endurance'] = endurance;
     data['agility'] = agility;
+    return data;
+  }
+}
+
+class EquippedItems {
+  String? boots;
+  String? helmet;
+  String? gloves;
+  String? armor;
+  String? weapon;
+
+  EquippedItems({
+    this.boots,
+    this.helmet,
+    this.gloves,
+    this.armor,
+    this.weapon,
+  });
+
+  EquippedItems.fromJson(Map<String, dynamic> json) {
+    boots = json['boots'];
+    helmet = json['helmet'];
+    gloves = json['gloves'];
+    armor = json['armor'];
+    weapon = json['weapon'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['boots'] = boots;
+    data['helmet'] = helmet;
+    data['gloves'] = gloves;
+    data['armor'] = armor;
+    data['weapon'] = weapon;
     return data;
   }
 }

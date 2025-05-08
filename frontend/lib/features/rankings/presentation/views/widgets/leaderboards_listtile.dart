@@ -24,13 +24,11 @@ class _LeaderboardsListTileState extends State<LeaderboardsListTile> {
   @override
   Widget build(BuildContext context) {
     return Card(
-        color: widget.isUser
-            ? ColorManager.primaryColor
-            : ColorManager.gunmetal.withValues(alpha: .5),
+        color:
+            widget.isUser ? ColorManager.primaryColor : ColorManager.fadedNavy,
         child: ListTile(
           leading: Text('${(widget.playerPlace! + 1)}',
-              style: TextStyles.styleBold(context,
-                  fontSize: 16, color: ColorManager.whiteColor)),
+              style: TextStyles.bold16White),
           title: Row(
             children: [
               Padding(
@@ -41,13 +39,11 @@ class _LeaderboardsListTileState extends State<LeaderboardsListTile> {
                 ),
               ),
               Text(widget.isUser ? "You" : widget.playerName!,
-                  style: TextStyles.styleBold(context,
-                      fontSize: 16, color: ColorManager.whiteColor)),
+                  style: TextStyles.bold16White),
             ],
           ),
-          trailing: Text('${widget.playerPoints}',
-              style: TextStyles.styleBold(context,
-                  fontSize: 16, color: ColorManager.whiteColor)),
+          trailing:
+              Text('${widget.playerPoints}', style: TextStyles.bold16White),
         ));
   }
 }

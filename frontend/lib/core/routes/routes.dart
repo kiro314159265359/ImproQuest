@@ -3,12 +3,11 @@ class Routes {
   static const String loginScreen = 'loginScreen';
   static const String registerScreen = 'registerScreen';
   static const String continueRegisterScreen = 'ContinueRegisterScreen';
-  static const String forgetPassword = 'ForgetPassword';
-  static const String homepage = 'HomePage';
-  static const String appLayoutPage = 'AppLayout';
-  static const String personalInfoPage = 'PersonalInfo';
+  static const String forgetPasswordScreen = 'ForgetPassword';
+  static const String appLayoutScreen = 'AppLayout';
+  static const String homeScreen = 'HomePage';
+  static const String addQuestScreen = 'AddQuestScreen';
   static const String gameScreen = 'GameScreen';
   static const String shopScreen = 'ShopScreen';
-  static const String addQuestScreen = 'AddQuestScreen';
-
+  static const String personalInfoScreen = 'PersonalInfo';
 }
