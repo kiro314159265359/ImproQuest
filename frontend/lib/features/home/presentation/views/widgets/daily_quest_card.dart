@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_2/core/theme/color_manger.dart';
 import 'package:flutter_application_2/core/theme/text_style.dart';
-import 'package:flutter_application_2/core/utils/get_it_constants.dart';
 import 'package:flutter_application_2/features/home/presentation/manager/user_cubit.dart';
 import 'package:flutter_application_2/features/home/presentation/views/widgets/custom_rich_text.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';

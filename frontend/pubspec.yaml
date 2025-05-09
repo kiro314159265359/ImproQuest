@@ -55,8 +55,9 @@ dependencies:
   path_provider: ^2.1.5
   flame_audio: ^2.11.1
   fl_chart:
-  # flutter_skeleton_ui:
   skeletonizer:
+  flutter_native_splash: ^2.4.4
+  
   # image_picker:
 dev_dependencies:
   flutter_test:
