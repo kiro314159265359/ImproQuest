@@ -6,7 +6,13 @@ require go.mongodb.org/mongo-driver/v2 v2.0.0
 
 require github.com/golang-jwt/jwt/v5 v5.2.1
 
-require github.com/montanaflynn/stats v0.7.1 // indirect
+require (
+	github.com/cloudinary/cloudinary-go/v2 v2.10.0 // indirect
+	github.com/creasty/defaults v1.7.0 // indirect
+	github.com/google/uuid v1.5.0 // indirect
+	github.com/gorilla/schema v1.4.1 // indirect
+	github.com/montanaflynn/stats v0.7.1 // indirect
+)
 
 require (
 	cloud.google.com/go/compute v1.20.1 // indirect

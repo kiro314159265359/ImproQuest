@@ -59,6 +59,7 @@ class _ForgetpasswordState extends State<Forgetpassword> {
                               Text(
                                 "Enter the email to send Verification code ",
                                 style: TextStyles.semiBold18White,
+                                textAlign: TextAlign.center,
                               ),
                               SizedBox(
                                 height: h * 0.06,

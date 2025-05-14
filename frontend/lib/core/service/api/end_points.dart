@@ -1,8 +1,8 @@
 class EndPoints {
   // static const String baseUrl = "http://192.168.1.3:5000"; //  Asaad's IP
   // static const String baseUrl = "http://192.168.1.5:5000"; // Hanna's IP
-  static const String baseUrl = "http://10.0.2.2:5000"; // emu IP
-  // static const String baseUrl = "http://13.60.12.145:5000"; // EC2 IP
+  // static const String baseUrl = "http://10.0.2.2:5000"; // emu IP
+  static const String baseUrl = "https://api.improquest.mavoid.com"; // EC2 IP 
 
   static const String login = "/users/login";
 

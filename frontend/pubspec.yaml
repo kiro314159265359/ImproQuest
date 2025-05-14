@@ -55,6 +55,10 @@ dependencies:
   path_provider: ^2.1.5
   flame_audio: ^2.11.1
   fl_chart:
+  skeletonizer:
+  flutter_native_splash: ^2.4.4
+  flutter_launcher_icons: ^0.14.3
+  
   # image_picker:
 dev_dependencies:
   flutter_test:
@@ -122,3 +126,10 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+flutter_launcher_icons:
+    android: true
+    # ios: true
+    image_path: "assets/images/MQ_Logo.png"
+    adaptive_icon_background: "#1C1C1E"
+    adaptive_icon_foreground: "assets/images/MQ_fore.png"
+    # remove_alpha_ios: true
