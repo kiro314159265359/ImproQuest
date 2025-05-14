@@ -37,13 +37,11 @@ class _CustomQuestCardState extends State<CustomQuestCard> {
         ),
         title: Text(
           widget.questName,
-          style: TextStyles.styleSemiBold(context,
-              fontSize: 16, color: ColorManager.whiteColor),
+          style: TextStyles.semiBold16White,
         ),
         subtitle: Text(
           widget.questDesc,
-          style: TextStyles.styleSemiBold(context,
-              fontSize: 12, color: ColorManager.whiteColor),
+          style: TextStyles.semiBold12White,
         ),
         trailing: widget.isLoading
             ? const CircularProgressIndicator(

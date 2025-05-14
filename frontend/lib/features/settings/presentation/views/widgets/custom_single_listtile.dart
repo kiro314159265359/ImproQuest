@@ -24,9 +24,7 @@ class _CustomSingleListTileState extends State<CustomSingleListTile> {
       color: ColorManager.gunmetal,
       child: ListTile(
         leading: Icon(widget.leadingIcon, size: 30),
-        title: Text(widget.titleText,
-            style: TextStyles.styleSemiBold(context,
-                fontSize: 18, color: ColorManager.whiteColor)),
+        title: Text(widget.titleText, style: TextStyles.semiBold18White),
         trailing: const Icon(Icons.arrow_forward_ios, size: 30),
         onTap: widget.onTap,
       ),

@@ -1,6 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_2/core/theme/background_theme.dart';
+import 'package:flutter_application_2/core/utils/app_images.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_application_2/features/auth/domain/repo/login_repo.dart';
 import '../../../../core/utils/get_it_constants.dart';
@@ -23,10 +24,6 @@ class Login extends StatefulWidget {
 class _LoginState extends State<Login> {
   bool rememberMe = true;
   final formKey = GlobalKey<FormState>();
-  TextEditingController emailController =
-      TextEditingController(text: "nigga@gmail.com");
-  TextEditingController passController =
-      TextEditingController(text: "nigga123");
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +34,7 @@ class _LoginState extends State<Login> {
         create: (context) => LoginCubit(getIt<LoginRepo>()),
         child: BlocConsumer<LoginCubit, LoginState>(listener: (context, state) {
           if (state is LoginSuccessState) {
-            Navigator.pushReplacementNamed(context, Routes.appLayoutPage);
+            Navigator.pushReplacementNamed(context, Routes.appLayoutScreen);
           }
           if (state is LoginErrorState) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -45,6 +42,8 @@ class _LoginState extends State<Login> {
             );
           }
         }, builder: (context, state) {
+          var cubit = context.read<LoginCubit>();
+
           return Scaffold(
               body: Form(
                   key: formKey,
@@ -59,16 +58,14 @@ class _LoginState extends State<Login> {
                             children: [
                               Text(
                                 'Login',
-                                style: TextStyles.styleExtraBold(context,
-                                    fontSize: 32,
-                                    color: ColorManager.whiteColor),
+                                style: TextStyles.extraBold32White,
                               ),
                               SizedBox(
                                 height: h * 0.02,
                               ),
                               CustomTextFormField(
                                 hintText: "Email",
-                                controller: emailController,
+                                controller: cubit.emailController,
                                 validator: ValidateInput.email,
                               ),
                               SizedBox(
@@ -76,7 +73,7 @@ class _LoginState extends State<Login> {
                               ),
                               CustomTextFormField(
                                   hintText: "Password",
-                                  controller: passController,
+                                  controller: cubit.passController,
                                   validator: ValidateInput.password,
                                   obscureText: true),
                               SizedBox(
@@ -97,26 +94,19 @@ class _LoginState extends State<Login> {
                                           });
                                         },
                                       ),
-                                      const Text(
-                                        "Remember me",
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color: ColorManager.whiteColor,
-                                        ),
-                                      ),
+                                      Text("Remember me",
+                                          style: TextStyles.bold16White),
                                     ],
                                   ),
                                   RichText(
                                     text: TextSpan(
                                         text: 'Forgot password?',
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color: Color(0xFF8766EB),
-                                        ),
+                                        style: TextStyles.bold16Primary,
                                         recognizer: TapGestureRecognizer()
-                                          ..onTap = () {}),
+                                          ..onTap = () {
+                                            Navigator.pushNamed(context,
+                                                Routes.forgetPasswordScreen);
+                                          }),
                                   ),
                                 ],
                               ),
@@ -126,10 +116,9 @@ class _LoginState extends State<Login> {
                               CustomPrimaryButton(
                                   onPressed: () {
                                     if (formKey.currentState!.validate()) {
-                                      context.read<LoginCubit>().loginUser(
-                                          emailController.text,
-                                          passController.text,
-                                          rememberMe);
+                                      context
+                                          .read<LoginCubit>()
+                                          .loginUser(rememberMe);
                                     }
                                   },
                                   buttonText: "Login",
@@ -138,8 +127,8 @@ class _LoginState extends State<Login> {
                               SizedBox(
                                 height: h * 0.02,
                               ),
-                              const Row(children: [
-                                Expanded(
+                              Row(children: [
+                                const Expanded(
                                     child: Divider(
                                   thickness: 2,
                                   indent: 10,
@@ -147,12 +136,9 @@ class _LoginState extends State<Login> {
                                 )),
                                 Text(
                                   "OR",
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.white,
-                                  ),
+                                  style: TextStyles.regular14White,
                                 ),
-                                Expanded(
+                                const Expanded(
                                     child: Divider(
                                   thickness: 2,
                                   indent: 10,
@@ -168,16 +154,13 @@ class _LoginState extends State<Login> {
                                   child: ElevatedButton.icon(
                                     onPressed: () {},
                                     icon: Image.asset(
-                                      "assets/images/google.png",
+                                      AppImages.googleLogo,
                                       height: h * 0.06,
                                       width: w * 0.06,
                                     ),
-                                    label: const Text(
+                                    label: Text(
                                       "Sign in with Google",
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.white,
-                                      ),
+                                      style: TextStyles.regular12White,
                                     ),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.transparent,
@@ -187,8 +170,8 @@ class _LoginState extends State<Login> {
                                           borderRadius:
                                               BorderRadius.circular(10)),
                                       side: const BorderSide(
-                                        color: Colors.grey,
-                                        width: 1, // Border width
+                                        color: ColorManager.greyColor,
+                                        width: 1,
                                       ),
                                     ),
                                   )),
@@ -201,16 +184,13 @@ class _LoginState extends State<Login> {
                                   child: ElevatedButton.icon(
                                     onPressed: () {},
                                     icon: Image.asset(
-                                      "assets/images/facebook.png",
+                                      AppImages.facebookLogo,
                                       height: h * 0.06,
                                       width: w * 0.06,
                                     ),
-                                    label: const Text(
+                                    label: Text(
                                       "Sign in with Facebook",
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.white,
-                                      ),
+                                      style: TextStyles.regular12White,
                                     ),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.transparent,
@@ -220,8 +200,8 @@ class _LoginState extends State<Login> {
                                           borderRadius:
                                               BorderRadius.circular(10)),
                                       side: const BorderSide(
-                                        color: Colors.grey,
-                                        width: 1, // Border width
+                                        color: ColorManager.greyColor,
+                                        width: 1,
                                       ),
                                     ),
                                   )),
@@ -234,16 +214,13 @@ class _LoginState extends State<Login> {
                                   child: ElevatedButton.icon(
                                     onPressed: () {},
                                     icon: Image.asset(
-                                      "assets/images/Social_Icons.png",
+                                      AppImages.appleLogo,
                                       height: h * 0.06,
                                       width: w * 0.06,
                                     ),
-                                    label: const Text(
+                                    label: Text(
                                       "Sign in with Apple",
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.white,
-                                      ),
+                                      style: TextStyles.regular12White,
                                     ),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.transparent,
@@ -253,8 +230,8 @@ class _LoginState extends State<Login> {
                                           borderRadius:
                                               BorderRadius.circular(10)),
                                       side: const BorderSide(
-                                        color: Colors.grey,
-                                        width: 1, // Border width
+                                        color: ColorManager.greyColor,
+                                        width: 1,
                                       ),
                                     ),
                                   )),
@@ -264,22 +241,14 @@ class _LoginState extends State<Login> {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const Text(
+                                  Text(
                                     "Not a player yet?",
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.grey,
-                                    ),
+                                    style: TextStyles.bold16Grey,
                                   ),
                                   RichText(
                                     text: TextSpan(
                                       text: 'Register',
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFF8766EB),
-                                      ),
+                                      style: TextStyles.bold16Primary,
                                       recognizer: TapGestureRecognizer()
                                         ..onTap = () {
                                           Navigator.pushReplacementNamed(

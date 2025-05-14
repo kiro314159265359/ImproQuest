@@ -1,3 +1,4 @@
+import 'package:flutter_application_2/game/models/shop_item.dart';
 import '../../../../core/error/failure.dart';
 import '../../data/model/user_model.dart';
 
@@ -5,7 +6,65 @@ abstract class UserState {}
 
 class UserInitial extends UserState {}
 
-class UserLoading extends UserState {}
+class UserLoading extends UserState {
+  final UserModel user = UserModel(
+    username: "John Doe",
+    email: " hi@gmail.com",
+    xp: 120,
+    level: 10,
+    gold: 1000,
+    streak: Streak(current: 1, highestStreak: 5),
+    quests: [
+      Quests(
+        isCompleted: false,
+        goal: 1,
+        goldReward: 50,
+        xpReward: 100,
+        name: "Quest 1",
+        progress: 0,
+        isCustom: false,
+      ),
+      Quests(
+        isCompleted: false,
+        goal: 1,
+        goldReward: 50,
+        xpReward: 100,
+        name: "Quest 1",
+        progress: 0,
+        isCustom: true,
+      ),
+      Quests(
+        isCompleted: false,
+        goal: 1,
+        goldReward: 50,
+        xpReward: 100,
+        name: "Quest 1",
+        progress: 0,
+        isCustom: true,
+      ),
+      Quests(
+        isCompleted: false,
+        goal: 1,
+        goldReward: 50,
+        xpReward: 100,
+        name: "Quest 1",
+        progress: 0,
+        isCustom: true,
+      ),
+      Quests(
+        isCompleted: true,
+        goal: 1,
+        goldReward: 50,
+        xpReward: 100,
+        name: "Quest 1",
+        progress: 0,
+        isCustom: true,
+      )
+    ],
+  );
+
+  UserLoading();
+}
 
 class UserLoaded extends UserState {
   final UserModel user;
@@ -19,6 +78,10 @@ class UserError extends UserState {
   UserError(this.failure);
 }
 
+class UserDeleting extends UserState {}
+
+class UserDeleted extends UserState {}
+
 class UserUpdating extends UserState {}
 
 class UserUpdated extends UserState {
@@ -29,4 +92,11 @@ class UserUpdated extends UserState {
 class UpdateError extends UserState {
   Failure failure;
   UpdateError(this.failure);
+}
+
+class InventoryLoading extends UserState {}
+
+class InventoryLoaded extends UserState {
+  final List<ShopItem> itemsList;
+  InventoryLoaded(this.itemsList);
 }

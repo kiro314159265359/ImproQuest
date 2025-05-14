@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter_application_2/features/home/data/model/inventory_model.dart';
 import 'package:flutter_application_2/features/home/data/model/leaderboard_level_model.dart';
 import 'package:flutter_application_2/features/home/data/model/leaderboard_streak_model.dart';
 import 'package:flutter_application_2/features/home/data/model/user_model.dart';
@@ -14,12 +15,27 @@ class UserApi extends UserRepo {
   Future<UserModel> getUserData() async {
     await apiService.put(EndPoints.quests);
     var response = await apiService.get(EndPoints.userData);
+    print(jsonDecode(response.toString()));
     return UserModel.fromJson(jsonDecode(response.toString()));
   }
 
   @override
-  Future<UserModel> updateUserData(UserModel user) async {
-    await apiService.patch('/users/${user.sId}', body: user.toJson());
+  Future<UserModel> updateUserData(
+      {required UserModel user,
+      required String username,
+      required String email,
+      required int height,
+      required int weight,
+      required String gender,
+      required String birthDate}) async {
+    await apiService.patch('/users/${user.sId}', body: {
+      "username": username,
+      "email": email,
+      "height": height,
+      "weight": weight,
+      "gender": gender,
+      "birth_date": birthDate,
+    });
     return user;
   }
 
@@ -54,5 +70,32 @@ class UserApi extends UserRepo {
   Future<LeaderboardStreakListModel> getLeaderboardByStreakList() async {
     var response = await apiService.get(EndPoints.leaderboardByStreak);
     return LeaderboardStreakListModel.fromJson(jsonDecode(response.toString()));
+  }
+
+  @override
+  Future<void> equipItem(String? itemId, String? slot) async {
+    await apiService.post(EndPoints.equipItems, body: {
+      'item_id': itemId,
+      'slot': slot,
+    });
+  }
+
+  @override
+  Future<void> unequipItem(String? itemId, String? slot) async {
+    await apiService.post(EndPoints.unequipItems, body: {
+      'item_id': itemId,
+      'slot': slot,
+    });
+  }
+
+  @override
+  Future<void> deleteAccount(UserModel user) async {
+    await apiService.delete('/users/${user.sId}');
+  }
+
+  @override
+  Future<InventoryModel> getUserItems() async {
+    var response = await apiService.get(EndPoints.userItems);
+    return InventoryModel.fromJson(jsonDecode(response.toString()));
   }
 }

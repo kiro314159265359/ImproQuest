@@ -20,6 +20,7 @@ type User struct {
 	ID                     bson.ObjectID            `json:"_id,omitempty" bson:"_id,omitempty"`
 	Username               *string                  `json:"username" bson:"username" validate:"required,min=2,max=200"`
 	MobileNumber           *string                  `json:"mobile_number" bson:"mobile_number"`
+	AvatarURL              *string                  `json:"avatar_url" bson:"avatar_url"`
 	Email                  *string                  `json:"email" bson:"email" validate:"required,email"`
 	Password               *string                  `json:"-" bson:"password" validate:"required,min=8"`
 	Height                 *float64                 `json:"height" bson:"height" validate:"required,min=50,max=300"`

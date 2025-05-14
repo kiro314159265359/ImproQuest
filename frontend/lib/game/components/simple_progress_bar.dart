@@ -1,6 +1,7 @@
 // lib/game/components/simple_progress_bar.dart
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_application_2/core/theme/color_manger.dart';
 
 /// A simple progress bar drawn as a filled rectangle with an optional border.
 class SimpleProgressBar extends PositionComponent {
@@ -11,8 +12,8 @@ class SimpleProgressBar extends PositionComponent {
 
   SimpleProgressBar({
     required this.progress,
-    this.backgroundColor = Colors.grey,
-    this.foregroundColor = Colors.green,
+    this.backgroundColor = ColorManager.greyColor,
+    this.foregroundColor = ColorManager.greenColor,
     this.borderWidth = 2.0,
     super.size,
     super.position,

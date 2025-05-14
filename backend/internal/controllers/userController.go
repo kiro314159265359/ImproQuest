@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -11,6 +12,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
+
+	"github.com/cloudinary/cloudinary-go/v2"
+	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 
 	"github.com/HarDizzeR/Project/backend/internal/database"
 	"github.com/HarDizzeR/Project/backend/internal/helpers"
@@ -177,86 +181,177 @@ func DeleteUser() gin.HandlerFunc {
 // Update User include password update
 func UpdateUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// 1. Authorization + ObjectID parsing
 		userID := c.Param("id")
-
-		// Ensure user is authorized to update this ID
 		if err := helpers.MatchUserToid(c, userID); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID"})
 			return
 		}
-
 		oid, err := bson.ObjectIDFromHex(userID)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID format"})
 			return
 		}
 
-		// Bind only the updatable fields
-		var payload struct {
-			Username  *string    `json:"username"`
-			Email     *string    `json:"email"`
-			Height    *float64   `json:"height"`
-			BirthDate *time.Time `json:"birth_date"`
-			Weight    *float64   `json:"weight"`
-			Gender    *string    `json:"gender"`
-		}
-		if err := c.ShouldBindJSON(&payload); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		// Initialize Cloudinary
+		cld, err := cloudinary.NewFromURL(os.Getenv("CLOUDINARY_URL"))
+		if err != nil {
+			logger.Errorf("Failed to initialize Cloudinary: %v", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Image service configuration error"})
 			return
 		}
 
-		// Build $set document
+		// 2. Build the $set document
 		set := bson.M{}
-		if payload.Username != nil {
-			set["username"] = payload.Username
-		}
-		if payload.Email != nil {
-			set["email"] = payload.Email
-		}
-		if payload.Height != nil {
-			set["height"] = payload.Height
-		}
-		if payload.BirthDate != nil && !payload.BirthDate.IsZero() {
-			set["birth_date"] = payload.BirthDate
-		}
-		if payload.Weight != nil {
-			set["weight"] = payload.Weight
-		}
-		if payload.Gender != nil {
-			set["gender"] = payload.Gender
+
+		// 3. Handle optional avatar upload (multipart/form-data "avatar")
+		if fh, err := c.FormFile("avatar"); err == nil && fh != nil {
+			file, err := fh.Open()
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "could not open avatar file"})
+				return
+			}
+			defer file.Close()
+
+			logger.Infof("Processing avatar upload: %s (%d bytes)", fh.Filename, fh.Size)
+
+			// Upload with eager transformation: c_thumb,g_auto,w_200,h_200,r_max
+			uploadParams := uploader.UploadParams{
+				Folder: "profile_pics",
+				Eager:  "c_thumb,g_auto,w_200,h_200,r_max",
+			}
+
+			resp, err := cld.Upload.Upload(context.Background(), file, uploadParams)
+			if err != nil {
+				logger.Errorf("Failed to upload avatar: %v", err)
+				c.JSON(http.StatusBadGateway, gin.H{"error": "failed to upload avatar"})
+				return
+			}
+
+			logger.Infof("Upload successful, URL: %s, EagerCount: %d", resp.SecureURL, len(resp.Eager))
+
+			// Use the transformed URL (circle thumb), fallback to original if missing
+			if len(resp.Eager) > 0 {
+				set["avatar_url"] = resp.Eager[0].SecureURL
+			} else {
+				set["avatar_url"] = resp.SecureURL
+			}
 		}
 
-		// Always bump updated_at
+		// 4. Process form fields directly for better debugging
+		// Handle text fields directly from the form data
+		if username := c.PostForm("username"); username != "" {
+			logger.Infof("Updating username to: %s", username)
+			set["username"] = username
+		}
+
+		if email := c.PostForm("email"); email != "" {
+			logger.Infof("Updating email to: %s", email)
+			set["email"] = email
+		}
+
+		if heightStr := c.PostForm("height"); heightStr != "" {
+			if height, err := strconv.ParseFloat(heightStr, 64); err == nil {
+				logger.Infof("Updating height to: %f", height)
+				set["height"] = height
+			} else {
+				logger.Errorf("Failed to parse height: %v", err)
+			}
+		}
+
+		if weightStr := c.PostForm("weight"); weightStr != "" {
+			if weight, err := strconv.ParseFloat(weightStr, 64); err == nil {
+				logger.Infof("Updating weight to: %f", weight)
+				set["weight"] = weight
+			} else {
+				logger.Errorf("Failed to parse weight: %v", err)
+			}
+		}
+
+		if gender := c.PostForm("gender"); gender != "" {
+			logger.Infof("Updating gender to: %s", gender)
+			set["gender"] = gender
+		}
+
+		if birthDateStr := c.PostForm("birth_date"); birthDateStr != "" {
+			birthDate, err := time.Parse(time.RFC3339, birthDateStr)
+			if err != nil {
+				logger.Errorf("Failed to parse birth_date: %v", err)
+			} else {
+				logger.Infof("Updating birth_date to: %s", birthDate)
+				set["birth_date"] = birthDate
+			}
+		}
+
+		// Handle JSON payload (for when not using multipart)
+		if c.ContentType() == "application/json" {
+			var jsonPayload struct {
+				Username  *string    `json:"username"`
+				Email     *string    `json:"email"`
+				Height    *float64   `json:"height"`
+				BirthDate *time.Time `json:"birth_date"`
+				Weight    *float64   `json:"weight"`
+				Gender    *string    `json:"gender"`
+			}
+
+			if err := c.ShouldBindJSON(&jsonPayload); err == nil {
+				if jsonPayload.Username != nil {
+					set["username"] = *jsonPayload.Username
+				}
+				if jsonPayload.Email != nil {
+					set["email"] = *jsonPayload.Email
+				}
+				if jsonPayload.Height != nil {
+					set["height"] = *jsonPayload.Height
+				}
+				if jsonPayload.BirthDate != nil && !jsonPayload.BirthDate.IsZero() {
+					set["birth_date"] = *jsonPayload.BirthDate
+				}
+				if jsonPayload.Weight != nil {
+					set["weight"] = *jsonPayload.Weight
+				}
+				if jsonPayload.Gender != nil {
+					set["gender"] = *jsonPayload.Gender
+				}
+			}
+		}
+
+		// 5. Check if we have any fields to update
+		if len(set) == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "No fields to update"})
+			return
+		}
+
+		// Bump the updated_at timestamp
 		set["updated_at"] = time.Now()
 
+		// 6. Perform the update
 		ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
 		defer cancel()
+		collection := database.Users()
 
-		res, err := userCollection.UpdateOne(
-			ctx,
-			bson.M{"_id": oid},
-			bson.M{"$set": set},
-		)
+		logger.Infof("Updating user %s with fields: %+v", userID, set)
+
+		res, err := collection.UpdateOne(ctx, bson.M{"_id": oid}, bson.M{"$set": set})
 		if err != nil {
 			logger.Errorf("Failed to update user %s: %v", userID, err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "database error"})
 			return
 		}
 		if res.MatchedCount == 0 {
-			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
 			return
 		}
 
-		// Fetch updated document
-		var updatedUser models.User
-		if err := userCollection.FindOne(ctx, bson.M{"_id": oid}).Decode(&updatedUser); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not fetch updated user"})
+		// 7. Return the updated user
+		var updated models.User
+		if err := collection.FindOne(ctx, bson.M{"_id": oid}).Decode(&updated); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not fetch updated user"})
 			return
 		}
-
 		c.JSON(http.StatusOK, gin.H{
-			"message": "User was updated successfully",
-			"user":    updatedUser,
+			"message": "User updated successfully",
+			"user":    updated,
 		})
 	}
 }
@@ -409,7 +504,7 @@ func UpdateUserStats() gin.HandlerFunc {
 			setValues["stats.endurance"] = *updateData.Endurance
 		}
 		if updateData.Agility != nil {
-			setValues["stats.agility"] = *updateData.Agility
+			setValues["stats.agility"] = updateData.Agility
 		}
 
 		// Check if any fields were provided

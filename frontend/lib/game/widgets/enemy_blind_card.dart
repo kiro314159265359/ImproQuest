@@ -28,9 +28,7 @@ class EnemyBlindCard extends StatelessWidget {
         padding: const EdgeInsets.all(8.0),
         child: Column(
           children: [
-            Text('Blind $blind: $enemyType',
-                style: TextStyles.styleSemiBold(context,
-                    fontSize: 18, color: ColorManager.whiteColor)),
+            Text('Blind $blind: $enemyType', style: TextStyles.semiBold18White),
             IntrinsicHeight(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -39,12 +37,10 @@ class EnemyBlindCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('Strength: ${stats.strength}',
-                          style: TextStyles.styleMedium(context,
-                              fontSize: 16, color: ColorManager.whiteColor)),
+                          style: TextStyles.medium16White),
                       const SizedBox(height: 14),
                       Text('Endurance: ${stats.endurance}',
-                          style: TextStyles.styleMedium(context,
-                              fontSize: 16, color: ColorManager.whiteColor)),
+                          style: TextStyles.medium16White),
                     ],
                   ),
                   const Padding(
@@ -59,12 +55,10 @@ class EnemyBlindCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('Vitality: ${stats.vitality}',
-                          style: TextStyles.styleMedium(context,
-                              fontSize: 16, color: ColorManager.whiteColor)),
+                          style: TextStyles.medium16White),
                       const SizedBox(height: 14),
                       Text('Agility: ${stats.agility}',
-                          style: TextStyles.styleMedium(context,
-                              fontSize: 16, color: ColorManager.whiteColor)),
+                          style: TextStyles.medium16White),
                     ],
                   ),
                 ],

@@ -15,6 +15,7 @@ import 'package:flutter_application_2/features/home/presentation/views/widgets/d
 import 'package:flutter_application_2/features/home/presentation/views/widgets/quests_list.dart';
 import 'package:flutter_application_2/features/settings/presentation/views/widgets/label_box.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class HomeContent extends StatelessWidget {
   const HomeContent({super.key});
@@ -30,9 +31,7 @@ class HomeContent extends StatelessWidget {
         child: BlocBuilder<HomeBloc, HomeState>(
           builder: (context, homeState) {
             // Show loading only when HomeBloc is in loading state
-            if (homeState is HomeLoading) {
-              return const Center(child: CircularProgressIndicator());
-            }
+            if (homeState is HomeLoading) {}
 
             return BlocConsumer<UserCubit, UserState>(
               listener: (context, state) {
@@ -49,17 +48,17 @@ class HomeContent extends StatelessWidget {
                 } else if (state is UserUpdated) {
                   return _buildHomeContent(
                       context, state.user, screenWidth, screenHeight);
+                } else if (state is UserLoading) {
+                  // Show loading skeleton UI that matches the home structure
+                  return _buildHomeContent(
+                      context, state.user, screenWidth, screenHeight);
                 }
 
                 // If UserCubit is loading but HomeBloc is ready, show empty content
                 // This prevents infinite loading
                 if (homeState is HomeReady) {
-                  return const Center(
-                    child: Text(
-                      "Loading user data...",
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  );
+                  //  return _buildHomeContent(
+                  //         context, state.user, screenWidth, screenHeight);
                 }
 
                 return const Center(child: CircularProgressIndicator());
@@ -68,49 +67,55 @@ class HomeContent extends StatelessWidget {
           },
         ),
       ),
-      floatingActionButton: FloatingActionButton.small(
-        heroTag: "addQuest",
-        backgroundColor: ColorManager.primaryColor,
-        tooltip: "Add Custom Quest",
-        onPressed: () {
-          Navigator.pushNamed(context, Routes.addQuestScreen);
-        },
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton: (context.read<UserCubit>().state is UserLoaded ||
+              context.read<UserCubit>().state is UserUpdated)
+          ? FloatingActionButton.small(
+              heroTag: "addQuest",
+              backgroundColor: ColorManager.primaryColor,
+              tooltip: "Add Custom Quest",
+              onPressed: () {
+                Navigator.pushNamed(context, Routes.addQuestScreen);
+              },
+              child: const Icon(Icons.add),
+            )
+          : null,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
     );
   }
 
   Widget _buildHomeContent(BuildContext context, UserModel user,
       double screenWidth, double screenHeight) {
-    return SingleChildScrollView(
-      child: Padding(
-        padding: EdgeInsets.symmetric(
-            horizontal: screenWidth * 0.04, vertical: screenHeight * 0.02),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(height: screenHeight * 0.025),
-            const AppBarStats(),
-            SizedBox(height: screenHeight * 0.025),
-            CustomRichText(
-              text1: 'Welcome, ',
-              textStyle1: TextStyles.styleExtraBold(context,
-                  fontSize: 30, color: ColorManager.whiteColor),
-              text2: user.username?.trim().split(' ').first ?? 'Player',
-              textStyle2: TextStyles.styleExtraBold(context,
-                  fontSize: 30, color: ColorManager.primaryColor),
-            ),
-            SizedBox(height: screenHeight * 0.025),
-            const DailyQuestCard(),
-            LabelBox(
-                labelText: "Daily Quest",
-                child: QuestsList(quests: context.read<UserCubit>().quests)),
-            LabelBox(
-              labelText: "My Quests",
-              child: CustomQuestsList(
-                  quests: context.read<UserCubit>().customQuests),
-            ),
-          ],
+    return Skeletonizer(
+      enabled: context.read<UserCubit>().state is UserLoading,
+      enableSwitchAnimation: true,
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+              horizontal: screenWidth * 0.04, vertical: screenHeight * 0.02),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(height: screenHeight * 0.025),
+              const AppBarStats(),
+              SizedBox(height: screenHeight * 0.025),
+              CustomRichText(
+                text1: 'Welcome, ',
+                textStyle1: TextStyles.extraBold30White,
+                text2: user.username?.trim().split(' ').first ?? 'Player',
+                textStyle2: TextStyles.extraBold30Primary,
+              ),
+              SizedBox(height: screenHeight * 0.025),
+              const DailyQuestCard(),
+              LabelBox(
+                  labelText: "Daily Quest",
+                  child: QuestsList(quests: context.read<UserCubit>().quests)),
+              LabelBox(
+                labelText: "My Quests",
+                child: CustomQuestsList(
+                    quests: context.read<UserCubit>().customQuests),
+              ),
+            ],
+          ),
         ),
       ),
     );

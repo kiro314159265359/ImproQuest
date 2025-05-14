@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_2/core/theme/color_manger.dart';
 import 'package:flutter_application_2/features/rankings/presentation/manager/leaderboard_cubit.dart';
 import 'package:flutter_application_2/features/rankings/presentation/manager/leaderboard_state.dart';
 import 'package:flutter_application_2/features/rankings/presentation/views/widgets/leaderboards_listtile.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import '../../../../../core/theme/background_theme.dart';
 import '../../../../../core/utils/app_images.dart';
 import '../../../../../core/utils/get_it_constants.dart';
@@ -60,7 +62,10 @@ class _LeaderboardsListState extends State<LeaderboardsList> {
           builder: (context, state) {
             if (state is LeaderboardLoaded &&
                 state.type == widget.leaderboardType) {
-              return _buildList(state.leaderboard, state.type);
+              return _buildList(state.leaderboard, state.type, state);
+            }
+            if (state is LeaderboardLoading) {
+              return _buildLoadingList();
             }
             return const Center(child: CircularProgressIndicator());
           },
@@ -69,43 +74,74 @@ class _LeaderboardsListState extends State<LeaderboardsList> {
     );
   }
 
-  Widget _buildList(dynamic leaderboard, String type) {
+  Widget _buildList(dynamic leaderboard, String type, LeaderboardState state) {
+    final bool isLoading = state is LeaderboardLoading;
+
     if (type == 'level' && leaderboard is LeaderboardLevelListModel) {
-      return ListView.builder(
-          itemCount: leaderboard.leaderboardList!.length,
-          itemBuilder: (context, index) {
-            final leaderboardItem = leaderboard.leaderboardList?[index];
-            final bool isUser = leaderboardItem?.sId == getIt<UserModel>().sId;
+      return Skeletonizer(
+        enabled: isLoading,
+        enableSwitchAnimation: true,
+        child: ListView.builder(
+            itemCount: leaderboard.leaderboardList!.length,
+            itemBuilder: (context, index) {
+              final leaderboardItem = leaderboard.leaderboardList?[index];
+              final bool isUser =
+                  leaderboardItem?.sId == getIt<UserModel>().sId;
 
-            return LeaderboardsListTile(
-              playerImage: AppImages.profilePhoto,
-              playerPlace: index,
-              playerName: leaderboardItem?.username,
-              playerPoints: leaderboardItem?.level ?? 0,
-              isUser: isUser,
-            );
-          });
+              return LeaderboardsListTile(
+                playerImage: AppImages.profilePhoto,
+                playerPlace: index,
+                playerName: leaderboardItem?.username,
+                playerPoints: leaderboardItem?.level ?? 0,
+                isUser: isUser,
+              );
+            }),
+      );
     } else if (type == 'streak' && leaderboard is LeaderboardStreakListModel) {
-      return ListView.builder(
-          itemCount: leaderboard.leaderboardList!.length,
-          itemBuilder: (context, index) {
-            final leaderboardItem = leaderboard.leaderboardList?[index];
-            final bool isUser = leaderboardItem?.sId == getIt<UserModel>().sId;
+      return Skeletonizer(
+        enabled: isLoading,
+        enableSwitchAnimation: true,
+        child: ListView.builder(
+            itemCount: leaderboard.leaderboardList!.length,
+            itemBuilder: (context, index) {
+              final leaderboardItem = leaderboard.leaderboardList?[index];
+              final bool isUser =
+                  leaderboardItem?.sId == getIt<UserModel>().sId;
 
-            return LeaderboardsListTile(
-              playerImage: AppImages.profilePhoto,
-              playerPlace: index,
-              playerName: leaderboardItem?.username,
-              playerPoints: leaderboardItem?.highestStreak ?? 0,
-              isUser: isUser,
-            );
-          });
+              return LeaderboardsListTile(
+                playerImage: AppImages.profilePhoto,
+                playerPlace: index,
+                playerName: leaderboardItem?.username,
+                playerPoints: leaderboardItem?.highestStreak ?? 0,
+                isUser: isUser,
+              );
+            }),
+      );
     }
 
     return const Center(
       child: Text(
         'Unexpected Error!',
-        style: TextStyle(color: Colors.white),
+        style: TextStyle(color: ColorManager.whiteColor),
+      ),
+    );
+  }
+
+  Widget _buildLoadingList() {
+    return Skeletonizer(
+      enabled: true,
+      enableSwitchAnimation: true,
+      child: ListView.builder(
+        itemCount: 10,
+        itemBuilder: (context, index) {
+          return const LeaderboardsListTile(
+            playerImage: AppImages.profilePhoto,
+            playerPlace: 0,
+            playerName: "Loading...",
+            playerPoints: 0,
+            isUser: false,
+          );
+        },
       ),
     );
   }

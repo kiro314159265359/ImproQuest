@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_2/core/theme/text_style.dart';
 import '../../core/theme/color_manger.dart';
 import '../../core/utils/app_icons.dart';
 import '../models/shop_item.dart';
@@ -28,17 +29,14 @@ class ItemCard extends StatelessWidget {
               children: [
                 Text(
                   item.name,
-                  style: TextStyle(
+                  style: TextStyles.styleBold(
+                    context,
                     fontSize: 18,
-                    fontWeight: FontWeight.bold,
                     color: _getTierColor(item.tier),
                   ),
                 ),
                 if (item.type == ItemType.equipment && item.slot != null)
-                  Text(
-                    "Slot: ${item.slot}",
-                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                  ),
+                  Text("Slot: ${item.slot}", style: TextStyles.regular14Grey),
               ],
             ),
             const SizedBox(height: 8),
@@ -47,8 +45,7 @@ class ItemCard extends StatelessWidget {
             // Display stat bonuses if they exist
             if (item.statBonuses.isNotEmpty) ...[
               const SizedBox(height: 8),
-              const Text("Permanent Bonuses:",
-                  style: TextStyle(fontWeight: FontWeight.bold)),
+              Text("Permanent Bonuses:", style: TextStyles.bold12White),
               ...item.statBonuses.entries.map((entry) =>
                   Text("• ${_formatStatName(entry.key)}: +${entry.value}")),
             ],
@@ -56,8 +53,7 @@ class ItemCard extends StatelessWidget {
             // Display effects if they exist
             if (item.effects.isNotEmpty) ...[
               const SizedBox(height: 8),
-              const Text("Temporary Effects:",
-                  style: TextStyle(fontWeight: FontWeight.bold)),
+              Text("Temporary Effects:", style: TextStyles.bold12White),
               ...item.effects.entries.map((entry) =>
                   Text("• ${_formatStatName(entry.key)}: +${entry.value}")),
             ],
@@ -70,13 +66,7 @@ class ItemCard extends StatelessWidget {
                   children: [
                     Image.asset(AppIcons.coinsIcon, width: 20, height: 20),
                     const SizedBox(width: 4),
-                    Text(
-                      "${item.price}",
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    Text("${item.price}", style: TextStyles.bold16White),
                   ],
                 ),
                 ElevatedButton(
@@ -102,11 +92,11 @@ class ItemCard extends StatelessWidget {
   Color _getTierColor(ShopTier tier) {
     switch (tier) {
       case ShopTier.basic:
-        return Colors.white;
+        return ColorManager.whiteColor;
       case ShopTier.meta:
-        return Colors.blue;
+        return ColorManager.blueColor;
       case ShopTier.prestige:
-        return Colors.purple;
+        return ColorManager.prupleColor;
     }
   }
 

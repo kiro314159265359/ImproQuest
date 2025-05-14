@@ -44,7 +44,7 @@ class _AddQuestState extends State<AddQuest> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("The Quest has been added!")),
         );
-        Navigator.pushReplacementNamed(context, Routes.appLayoutPage);
+        Navigator.pushReplacementNamed(context, Routes.appLayoutScreen);
       }
       if (state is UpdateError) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -58,8 +58,7 @@ class _AddQuestState extends State<AddQuest> {
             centerTitle: true,
             title: Text(
               'Add Quest',
-              style: TextStyles.styleExtraBold(context,
-                  fontSize: 28, color: ColorManager.whiteColor),
+              style: TextStyles.extraBold28White,
             ),
           ),
           body: Form(
@@ -81,35 +80,55 @@ class _AddQuestState extends State<AddQuest> {
                           SizedBox(
                             height: h * 0.02,
                           ),
-                          DropdownButtonFormField<String>(
-                            value: questType,
-                            items: ['Mental', 'Habit'].map((gender) {
-                              return DropdownMenuItem<String>(
-                                value: gender,
-                                child: Text(
-                                  gender,
-                                  style: TextStyles.styleSemiBold(context,
-                                      fontSize: 18,
-                                      color: ColorManager.whiteColor),
-                                ),
-                              );
-                            }).toList(),
-                            onChanged: (value) {
-                              setState(() {
-                                questType = value;
-                              });
-                            },
-                            decoration: InputDecoration(
-                              filled: true,
-                              fillColor:
-                                  ColorManager.gunmetal.withValues(alpha: .6),
-                              border: OutlineInputBorder(
+                          LabelBox(
+                            labelText: "Quest Type",
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: ColorManager.fadedNavy,
                                 borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide.none,
                               ),
-                              labelText: 'Quest Type',
-                              hintStyle: const TextStyle(
-                                  color: ColorManager.lightGrey, fontSize: 20),
+                              child: Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: DropdownButton<String>(
+                                  isDense: true,
+                                  elevation: 0,
+                                  value: questType,
+                                  isExpanded: true,
+                                  dropdownColor: ColorManager.gunmetal,
+                                  icon: const Icon(
+                                    Icons.arrow_drop_down,
+                                    color: ColorManager.whiteColor,
+                                  ),
+                                  items: ['Mental', 'Habit'].map((type) {
+                                    return DropdownMenuItem<String>(
+                                      value: type,
+                                      child: Text(
+                                        type,
+                                        style: TextStyles.semiBold18White,
+                                      ),
+                                    );
+                                  }).toList(),
+                                  onChanged: (value) {
+                                    setState(() {
+                                      questType = value;
+                                    });
+                                  },
+                                  borderRadius: BorderRadius.circular(16),
+                                  underline: SizedBox(),
+                                  // decoration: InputDecoration(
+                                  //   filled: true,
+                                  //   fillColor:
+                                  //       ColorManager.gunmetal.withValues(alpha: .6),
+                                  //   border: OutlineInputBorder(
+                                  //     borderRadius: BorderRadius.circular(16),
+                                  //     borderSide: BorderSide.none,
+                                  //   ),
+                                  //   labelText: 'Quest Type',
+                                  //   hintStyle: const TextStyle(
+                                  //       color: ColorManager.lightGrey, fontSize: 20),
+                                  // ),
+                                ),
+                              ),
                             ),
                           ),
                           SizedBox(
@@ -139,7 +158,6 @@ class _AddQuestState extends State<AddQuest> {
                           SizedBox(
                             height: h * 0.02,
                           ),
-
                           SizedBox(
                             height: h * 0.02,
                           ),

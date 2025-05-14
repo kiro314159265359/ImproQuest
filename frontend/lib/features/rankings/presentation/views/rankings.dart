@@ -27,11 +27,7 @@ class _RankingsState extends State<Rankings> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       SizedBox(height: h * 0.025),
-                      Text(
-                        'Leaderboards',
-                        style: TextStyles.styleExtraBold(context,
-                            fontSize: 38, color: ColorManager.whiteColor),
-                      ),
+                      Text('Leaderboards', style: TextStyles.extraBold38White),
                       SizedBox(height: h * 0.035),
                       const TabBar(
                         dividerColor: Colors.transparent,
