@@ -5,7 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func AuthRoutes(incomingRoutes *gin.Engine) {
+func AuthRoutes(incomingRoutes *gin.Engine, authController *controllers.AuthController) {
 
 	users := incomingRoutes.Group("/users")
 
@@ -15,5 +15,7 @@ func AuthRoutes(incomingRoutes *gin.Engine) {
 	users.PATCH("/refresh", controllers.Refresh())
 	users.GET("/auth/:provider", controllers.BeginAuthHandler)
 	users.GET("/auth/:provider/callback", controllers.AuthCallbackHandler)
-
+	users.POST("/forgot-password", authController.ForgotPassword())
+	users.POST("/verify-otp", authController.VerifyOTP())
+	users.POST("/reset-password", authController.ResetPassword())
 }

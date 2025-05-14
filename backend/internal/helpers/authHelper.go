@@ -1,6 +1,8 @@
 package helpers
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"os"
@@ -53,9 +55,6 @@ func VerifyPassword(password, hashedPassword string) error {
 
 	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 	if err != nil {
-		fmt.Println("Stored Hashed Password: ", hashedPassword)
-		fmt.Println("Plain Password: ", password)
-
 		return fmt.Errorf("incorrect password")
 	}
 	return nil
@@ -79,4 +78,17 @@ func SetAuthCookies(c *gin.Context, access, refresh string) {
 	secure := os.Getenv("ENV") == "production"
 	c.SetCookie("access_token", access, 86400, "/", "", secure, true)
 	c.SetCookie("refresh_token", refresh, 86400*7, "/", "", secure, true)
+}
+
+func CheckPasswordHash(password, hash string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	return err == nil
+}
+
+func GenerateSecureToken(length int) (string, error) {
+	bytes := make([]byte, length) // Number of bytes, not string length after hex encoding
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(bytes), nil // Hex encoding doubles the length
 }

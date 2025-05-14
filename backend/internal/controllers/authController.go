@@ -16,7 +16,8 @@ import (
 	"github.com/HarDizzeR/Project/backend/internal/helpers"
 	"github.com/HarDizzeR/Project/backend/internal/logger"
 	"github.com/HarDizzeR/Project/backend/internal/models"
-
+	"github.com/HarDizzeR/Project/backend/internal/services"
+	"github.com/HarDizzeR/Project/backend/internal/utils"
 	"github.com/gorilla/sessions"
 	"github.com/joho/godotenv"
 	"github.com/markbates/goth"
@@ -375,5 +376,68 @@ func Refresh() gin.HandlerFunc {
 			"access_token":  newAccessToken,
 			"refresh_token": newRefreshToken,
 		})
+	}
+}
+
+type AuthController struct {
+	pwdSvc *services.PasswordResetService
+}
+
+func NewAuthController() *AuthController {
+	return &AuthController{pwdSvc: services.NewPasswordResetService()}
+}
+
+func (ac *AuthController) ForgotPassword() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req struct {
+			Email string `json:"email" binding:"required,email"`
+		}
+		if c.BindJSON(&req) == nil {
+			_ = ac.pwdSvc.SendResetOTP(c, req.Email)
+		}
+		c.JSON(http.StatusOK, gin.H{"message": "If that email exists, a code has been sent."})
+	}
+}
+
+func (ac *AuthController) VerifyOTP() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req struct {
+			Email string `json:"email" binding:"required,email"`
+			OTP   string `json:"otp" binding:"required,min=5,max=8"`
+		}
+		if err := c.BindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+			return
+		}
+		user, err := ac.pwdSvc.VerifyOTP(c, req.Email, req.OTP)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Code invalid or expired"})
+			return
+		}
+		token, _ := utils.GenerateShortLivedJWT(user.ID)
+		c.JSON(http.StatusOK, gin.H{"reset_token": token})
+	}
+}
+
+func (ac *AuthController) ResetPassword() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userID, err := utils.GetUserIDFromJWT(c)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+			return
+		}
+		var req struct {
+			NewPassword string `json:"new_password" binding:"required,min=8"`
+		}
+		if c.BindJSON(&req) != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+			return
+		}
+		hashed, _ := helpers.HashPassword(req.NewPassword)
+		if err := ac.pwdSvc.ResetPassword(c, userID, hashed); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not reset password"})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"message": "Password reset successful"})
 	}
 }

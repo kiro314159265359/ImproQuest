@@ -44,6 +44,11 @@ func main() {
 	controllers.InitAuthProviders()
 	controllers.InitSessionStore()
 
+	// Create AuthController with user model and base URL
+	// Ensure APP_BASE_URL is set in .env (e.g., "http://localhost:8000")
+
+	authController := controllers.NewAuthController()
+
 	database.DBinstance()
 	database.InitRunsCollection()
 
@@ -57,7 +62,7 @@ func main() {
 	router.Use(ginzap.Ginzap(logger, time.RFC3339, true))
 	router.Use(ginzap.RecoveryWithZap(logger, true))
 
-	routes.AuthRoutes(router)
+	routes.AuthRoutes(router, authController)
 	routes.UserRoutes(router)
 	routes.QuestRoutes(router)
 	routes.StageRoutes(router)
