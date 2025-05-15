@@ -6,6 +6,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 
 	"github.com/HarDizzeR/Project/backend/internal/database" // Replace with your actual import path
 )
@@ -46,7 +47,30 @@ func (m *RunModel) SaveRun(run *RunData) error {
 		run.Timestamp = time.Now()
 	}
 
-	_, err := m.collection.InsertOne(ctx, run)
+	// Get the start of the day for the timestamp
+	year, month, day := run.Timestamp.Date()
+	startOfDay := time.Date(year, month, day, 0, 0, 0, 0, run.Timestamp.Location())
+	endOfDay := startOfDay.Add(24 * time.Hour)
+
+	// Filter to find existing record for the same user on the same day
+	filter := bson.M{
+		"userId": run.UserID,
+		"timestamp": bson.M{
+			"$gte": startOfDay,
+			"$lt":  endOfDay,
+		},
+	}
+
+	update := bson.M{
+		"$set": bson.M{
+			"distance":  run.Distance,
+			"timestamp": run.Timestamp, // Keep the exact timestamp
+		},
+	}
+
+	opts := options.UpdateOne().SetUpsert(true)
+
+	_, err := m.collection.UpdateOne(ctx, filter, update, opts)
 	return err
 }
 
@@ -74,7 +98,7 @@ func (m *RunModel) GetDailyHistogram(userID string, startDate, endDate time.Time
 						"unit": "day",
 					},
 				},
-				"totalDistance": bson.M{"$sum": "$distance"},
+				"totalDistance": bson.M{"$max": "$distance"},
 				"count":         bson.M{"$sum": 1},
 			},
 		},
