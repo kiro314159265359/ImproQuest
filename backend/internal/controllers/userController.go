@@ -148,7 +148,7 @@ func GetMyData() gin.HandlerFunc {
 		// 4. Build response with computed maxXp
 		resp := struct {
 			models.User
-			MaxXp int `json:"maxXp"`
+			MaxXp int `json:"maxXp" bson:"maxXp"`
 		}{
 			User:  user,
 			MaxXp: user.Level * 100,
