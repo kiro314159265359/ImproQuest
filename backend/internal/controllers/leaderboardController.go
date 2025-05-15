@@ -79,22 +79,17 @@ func getLevelLeaderboard(ctx context.Context, rank string) ([]bson.M, error) {
 	pipeline := mongo.Pipeline{
 		// Match users with same rank
 		{{Key: "$match", Value: bson.M{"rank": rank}}},
-
-		// Project needed fields
+		// Project needed fields (including avatar_url)
 		{{Key: "$project", Value: bson.M{
-			"_id":      1,
-			"username": 1,
-			"level":    1,
-			"xp":       1,
-			"rank":     1,
+			"_id":        1,
+			"username":   1,
+			"level":      1,
+			"xp":         1,
+			"rank":       1,
+			"avatar_url": 1,
 		}}},
-
 		// Sort by level and XP
-		{{Key: "$sort", Value: bson.M{
-			"level": -1,
-			"xp":    -1,
-		}}},
-
+		{{Key: "$sort", Value: bson.M{"level": -1, "xp": -1}}},
 		// Limit results
 		{{Key: "$limit", Value: 100}},
 	}
@@ -109,7 +104,6 @@ func getLevelLeaderboard(ctx context.Context, rank string) ([]bson.M, error) {
 	if err = cursor.All(ctx, &results); err != nil {
 		return nil, err
 	}
-
 	return results, nil
 }
 
@@ -120,22 +114,17 @@ func getStreakLeaderboard(ctx context.Context, rank string) ([]bson.M, error) {
 	pipeline := mongo.Pipeline{
 		// Match users with same rank
 		{{Key: "$match", Value: bson.M{"rank": rank}}},
-
-		// Project needed fields
+		// Project needed fields (including avatar_url)
 		{{Key: "$project", Value: bson.M{
 			"_id":            1,
 			"username":       1,
 			"current_streak": "$streak.current",
 			"highest_streak": "$streak.highest_count",
 			"rank":           1,
+			"avatar_url":     1,
 		}}},
-
 		// Sort by current streak and highest streak
-		{{Key: "$sort", Value: bson.M{
-			"current_streak": -1,
-			"highest_streak": -1,
-		}}},
-
+		{{Key: "$sort", Value: bson.M{"current_streak": -1, "highest_streak": -1}}},
 		// Limit results
 		{{Key: "$limit", Value: 100}},
 	}
@@ -150,6 +139,5 @@ func getStreakLeaderboard(ctx context.Context, rank string) ([]bson.M, error) {
 	if err = cursor.All(ctx, &results); err != nil {
 		return nil, err
 	}
-
 	return results, nil
 }
