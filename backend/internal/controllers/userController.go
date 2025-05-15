@@ -117,32 +117,45 @@ func GetUser() gin.HandlerFunc {
 
 func GetMyData() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Get user ID from context
+		// 1. Get user ID from context
 		userId := c.GetString("id")
+		if userId == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "user ID missing"})
+			return
+		}
 
-		// Convert string ID to ObjectID
+		// 2. Convert to ObjectID
 		objId, err := bson.ObjectIDFromHex(userId)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID"})
 			return
 		}
 
-		// Get MongoDB collection
-		collection := database.Users()
-
-		// Find user in database
+		// 3. Fetch from Mongo
 		var user models.User
-		err = collection.FindOne(c.Request.Context(), bson.M{"_id": objId}).Decode(&user)
-		if err != nil {
+		if err := database.Users().
+			FindOne(c.Request.Context(), bson.M{"_id": objId}).
+			Decode(&user); err != nil {
+
 			if err == mongo.ErrNoDocuments {
 				c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
-				return
+			} else {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch user data"})
 			}
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch user data"})
 			return
 		}
-		// Directly return the user struct with sensitive fields omitted
-		c.JSON(http.StatusOK, user)
+
+		// 4. Build response with computed maxXp
+		resp := struct {
+			models.User
+			MaxXp int `json:"maxXp"`
+		}{
+			User:  user,
+			MaxXp: user.Level * 100,
+		}
+
+		// 5. Return
+		c.JSON(http.StatusOK, resp)
 	}
 }
 
