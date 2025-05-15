@@ -30,6 +30,13 @@ type QuestRequest struct {
 	Type       *string  `json:"type" bson:"type" validate:"required,oneof=Running Mental Habit"`
 }
 
+type UpdateMentalHabitQuestRequest struct {
+	Name       *string  `json:"name,omitempty" validate:"omitempty,min=3,max=100"`
+	Goal       *float64 `json:"goal,omitempty" bson:"goal,omitempty" validate:"omitempty,gte=0"`
+	XPReward   *float64 `json:"xp_reward,omitempty" bson:"xp_reward,omitempty" validate:"omitempty,gte=0"`
+	GoldReward *float64 `json:"gold_reward,omitempty" bson:"gold_reward,omitempty" validate:"omitempty,gte=0"`
+}
+
 // Create Quest
 
 func CreateQuest() gin.HandlerFunc {
@@ -420,4 +427,155 @@ func UpdateStreakHandler() gin.HandlerFunc {
 			"streak":  user.Streak,
 		})
 	}
+}
+func EditMentalOrHabitQuest() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// 1. Get user ID from token/context
+		userID := c.GetString("userId")
+		if userID == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized: missing user ID"})
+			return
+		}
+
+		// 2. Parse quest ID
+		questIDStr := c.Param("id")
+		questOID, err := bson.ObjectIDFromHex(questIDStr)
+		if err != nil {
+			logger.Errorf("Invalid quest ID format for edit: %v", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid quest ID format"})
+			return
+		}
+
+		// 3. Bind & validate input
+		var upd UpdateMentalHabitQuestRequest
+		if err := c.ShouldBindJSON(&upd); err != nil {
+			logger.Errorf("Invalid Request Format for editing quest: %v", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		if err := validate.Struct(upd); err != nil {
+			var errs []string
+			for _, e := range err.(validator.ValidationErrors) {
+				errs = append(errs, fmt.Sprintf("Field '%s': validation '%s' failed", e.Field(), e.Tag()))
+			}
+			c.JSON(http.StatusBadRequest, gin.H{"errors": errs})
+			return
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		// 4. Fetch and verify ownership & type
+		var existing models.Quest
+		filter := bson.M{"_id": questOID, "user_id": userID}
+		if err := questCollection.FindOne(ctx, filter).Decode(&existing); err != nil {
+			if err == mongo.ErrNoDocuments {
+				c.JSON(http.StatusNotFound, gin.H{"error": "Quest not found"})
+			} else {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve quest"})
+			}
+			return
+		}
+		if existing.Type == nil || (*existing.Type != "Mental" && *existing.Type != "Habit") {
+			c.JSON(http.StatusForbidden, gin.H{"error": fmt.Sprintf("Cannot edit a '%s' quest", ptrToString(existing.Type))})
+			return
+		}
+
+		// 5. Build update document
+		updates := bson.M{}
+		if upd.Name != nil {
+			updates["name"] = *upd.Name
+		}
+		if upd.Goal != nil {
+			updates["goal"] = *upd.Goal
+		}
+		if upd.XPReward != nil {
+			updates["xp_reward"] = *upd.XPReward
+		}
+		if upd.GoldReward != nil {
+			updates["gold_reward"] = *upd.GoldReward
+		}
+		if len(updates) == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "No fields to update"})
+			return
+		}
+
+		// 6. Perform update
+		result, err := questCollection.UpdateOne(ctx, filter, bson.M{"$set": updates})
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update quest"})
+			return
+		}
+		if result.MatchedCount == 0 {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Quest not found or not yours"})
+			return
+		}
+		if result.ModifiedCount == 0 {
+			c.JSON(http.StatusOK, gin.H{"message": "No changes were made", "quest_id": questIDStr})
+			return
+		}
+
+		// 7. Return updated quest
+		var updated models.Quest
+		_ = questCollection.FindOne(ctx, filter).Decode(&updated)
+		c.JSON(http.StatusOK, gin.H{"message": "Quest updated successfully", "quest": updated})
+	}
+}
+
+func DeleteMentalOrHabitQuest() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// 1. Get user ID
+		userID := c.GetString("userId")
+		if userID == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized: missing user ID"})
+			return
+		}
+
+		// 2. Parse quest ID
+		questIDStr := c.Param("id")
+		questOID, err := bson.ObjectIDFromHex(questIDStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid quest ID format"})
+			return
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		// 3. Fetch to verify ownership & type
+		var toDelete models.Quest
+		filter := bson.M{"_id": questOID, "user_id": userID}
+		if err := questCollection.FindOne(ctx, filter).Decode(&toDelete); err != nil {
+			if err == mongo.ErrNoDocuments {
+				c.JSON(http.StatusNotFound, gin.H{"error": "Quest not found"})
+			} else {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve quest"})
+			}
+			return
+		}
+		if toDelete.Type == nil || (*toDelete.Type != "Mental" && *toDelete.Type != "Habit") {
+			c.JSON(http.StatusForbidden, gin.H{"error": fmt.Sprintf("Cannot delete a '%s' quest", ptrToString(toDelete.Type))})
+			return
+		}
+
+		// 4. Delete
+		result, err := questCollection.DeleteOne(ctx, filter)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete quest"})
+			return
+		}
+		if result.DeletedCount == 0 {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Quest not found or not yours"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"message": "Quest deleted successfully", "quest_id": questIDStr})
+	}
+}
+
+func ptrToString(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
 }

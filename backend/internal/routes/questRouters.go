@@ -20,4 +20,6 @@ func QuestRoutes(incomingRoutes *gin.Engine) {
 	quests.PATCH("/IsCompleted/:questId", controllers.CompleteQuest())
 	quests.PATCH("/streak", controllers.UpdateStreakHandler())
 
+	quests.PUT("/mental-habit/:id", controllers.EditMentalOrHabitQuest())
+	quests.DELETE("/mental-habit/:id", controllers.DeleteMentalOrHabitQuest())
 }
