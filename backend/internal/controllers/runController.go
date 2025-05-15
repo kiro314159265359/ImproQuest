@@ -21,26 +21,6 @@ func NewRunController(runModel *models.RunModel) *RunController {
 	}
 }
 
-// SaveRun handles requests to save run data via HTTP (alternative to WebSocket)
-func (c *RunController) SaveRun(ctx *gin.Context) {
-	var runData models.RunData
-	if err := ctx.ShouldBindJSON(&runData); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	// Ensure timestamp is set
-	if runData.Timestamp.IsZero() {
-		runData.Timestamp = time.Now()
-	}
-
-	if err := c.runModel.SaveRun(&runData); err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	ctx.JSON(http.StatusOK, gin.H{"message": "Run data saved successfully"})
-}
 
 // GetDailyHistogram handles requests for daily histogram data
 func (c *RunController) GetDailyHistogram(ctx *gin.Context) {

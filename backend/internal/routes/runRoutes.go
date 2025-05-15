@@ -18,7 +18,6 @@ func SetupRunRoutes(router *gin.Engine, runController *controllers.RunController
 	{
 		runs := api.Group("/runs")
 		{
-			runs.POST("/", runController.SaveRun)
 
 			runs.GET("/users/:userId/histogram/daily", runController.GetDailyHistogram)
 			runs.GET("/users/:userId/histogram/weekly", runController.GetWeeklyHistogram)

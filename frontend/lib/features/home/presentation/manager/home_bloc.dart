@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter_application_2/features/home/presentation/manager/home_event.dart';
 import 'package:flutter_application_2/features/home/presentation/manager/home_state.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 import '../../../../core/services/distance_tracking_service.dart';
 import 'user_cubit.dart';
 import 'user_state.dart';
@@ -12,6 +14,7 @@ class HomeBloc extends HydratedBloc<HomeEvent, HomeState> {
   final DistanceTrackingService distanceService;
   late StreamSubscription<UserState> _userStateSub;
   bool _distanceSent = false;
+  WebSocketChannel? channel;
 
   HomeBloc({
     required this.userCubit,
@@ -59,6 +62,11 @@ class HomeBloc extends HydratedBloc<HomeEvent, HomeState> {
       // if (userState is UserLoaded) {
       //   await distanceService.startServiceIfNeeded(userState);
 
+      channel = WebSocketChannel.connect(
+        Uri.parse(
+            'ws://api.improquest.mavoid.com/ws/runs?userId=${userCubit.currentUser?.sId}'),
+      );
+      print("connected with sockets to $channel");
       //   // Send current distance to service
       //   if (!_distanceSent) {
       //     _distanceSent = true;
@@ -80,6 +88,13 @@ class HomeBloc extends HydratedBloc<HomeEvent, HomeState> {
     print("HomeBloc received distance update: ${event.distance}");
 
     try {
+      final now = DateTime.now().toUtc();
+      final payload = {
+        'distance': event.distance,
+        'timestamp': '${now.toIso8601String().split('.').first}Z'
+      };
+      final msg = 'SendRun, ${jsonEncode(payload)}';
+      channel?.sink.add(msg);
       await userCubit.updateDistanceAndCheckQuests(event.distance);
       print("Updated user cubit with new distance: ${event.distance}");
     } catch (e) {
