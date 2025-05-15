@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'package:dio/dio.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter_application_2/features/home/data/model/inventory_model.dart';
 import 'package:flutter_application_2/features/home/data/model/leaderboard_level_model.dart';
 import 'package:flutter_application_2/features/home/data/model/leaderboard_streak_model.dart';
@@ -27,15 +29,36 @@ class UserApi extends UserRepo {
       required int height,
       required int weight,
       required String gender,
-      required String birthDate}) async {
-    await apiService.patch('/users/${user.sId}', body: {
+      required String birthDate,
+      XFile? profilePicture}) async {
+    Map<String, dynamic> fields = {
       "username": username,
       "email": email,
       "height": height,
       "weight": weight,
       "gender": gender,
       "birth_date": birthDate,
-    });
+    };
+
+    FormData formData = FormData.fromMap(fields);
+
+    if (profilePicture != null) {
+      formData.files.add(MapEntry(
+        "avatar",
+        await MultipartFile.fromFile(profilePicture.path,
+            filename: profilePicture.name),
+      ));
+    }
+
+    await apiService.patch('/users/${user.sId}', body: formData);
+
+    user.username = username;
+    user.email = email;
+    user.height = height;
+    user.weight = weight;
+    user.gender = gender;
+    user.birthDate = birthDate;
+
     return user;
   }
 

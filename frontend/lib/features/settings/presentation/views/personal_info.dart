@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_application_2/core/theme/background_theme.dart';
 import 'package:flutter_application_2/core/utils/get_it_constants.dart';
@@ -5,6 +7,7 @@ import 'package:flutter_application_2/core/utils/validate_input.dart';
 import 'package:flutter_application_2/core/widget/custom_text_form_field.dart';
 import 'package:flutter_application_2/features/settings/presentation/views/widgets/label_box.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/color_manger.dart';
 import '../../../../core/theme/text_style.dart';
 import '../../../../core/utils/app_images.dart';
@@ -21,13 +24,14 @@ class PersonalInfo extends StatefulWidget {
 
 class _PersonalInfoState extends State<PersonalInfo> {
   final formKey = GlobalKey<FormState>();
-
+  final ImagePicker imagePicker = ImagePicker();
+  XFile? imageFile;
   var cubit = getIt<UserCubit>();
 
   @override
   void initState() {
     super.initState();
-    getIt<UserCubit>().fetchUserData();
+    cubit.fetchUserData();
   }
 
   @override
@@ -42,7 +46,7 @@ class _PersonalInfoState extends State<PersonalInfo> {
             child: Text('Save', style: TextStyles.semiBold20White),
             onPressed: () {
               if (formKey.currentState!.validate()) {
-                getIt<UserCubit>().updateUserData();
+                cubit.updateUserData(profilePicture: imageFile);
               }
             },
           ),
@@ -69,19 +73,17 @@ class _PersonalInfoState extends State<PersonalInfo> {
           if (state is UserUpdating) {
             Dialogs.loadingDialog(context: context);
           }
-          if (state is UserError) {
+          if (state is UserError || state is UpdateError) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.failure.message)),
-            );
-          }
-          if (state is UpdateError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.failure.message)),
+              SnackBar(
+                  content: Text(state is UserError
+                      ? state.failure.message
+                      : (state as UpdateError).failure.message)),
             );
           }
         },
         builder: (context, state) {
-          if (state is UserLoading) {
+          if (state is UserLoading && cubit.currentUser == null) {
             return const Scaffold(
                 backgroundColor: ColorManager.navyColor,
                 body: Center(child: CircularProgressIndicator()));
@@ -97,6 +99,17 @@ class _PersonalInfoState extends State<PersonalInfo> {
   Widget _buildBody() {
     var w = MediaQuery.of(context).size.width;
     var h = MediaQuery.of(context).size.height;
+
+    ImageProvider<Object> backgroundImageProvider;
+    if (imageFile != null) {
+      backgroundImageProvider = FileImage(File(imageFile!.path));
+    } else if (cubit.currentUser?.avatarUrl != null &&
+        cubit.currentUser!.avatarUrl!.isNotEmpty) {
+      backgroundImageProvider = NetworkImage(cubit.currentUser!.avatarUrl!);
+    } else {
+      backgroundImageProvider = const AssetImage(AppImages.profilePhoto);
+    }
+
     return BackgroundTheme(
       child: SingleChildScrollView(
         child: Form(
@@ -109,7 +122,7 @@ class _PersonalInfoState extends State<PersonalInfo> {
               children: [
                 CircleAvatar(
                   radius: 85,
-                  backgroundImage: const AssetImage(AppImages.profilePhoto),
+                  backgroundImage: backgroundImageProvider,
                   child: Align(
                     alignment: Alignment.bottomRight,
                     child: CircleAvatar(
@@ -117,7 +130,7 @@ class _PersonalInfoState extends State<PersonalInfo> {
                       radius: 20.0,
                       child: IconButton(
                         onPressed: () {
-                          // showPictureDialog();
+                          showPictureDialog();
                         },
                         icon: const Icon(Icons.camera_alt_outlined),
                         color: ColorManager.whiteColor,
@@ -185,57 +198,55 @@ class _PersonalInfoState extends State<PersonalInfo> {
     );
   }
 
-// Future<void> showPictureDialog() async {
-//   await showDialog<void>(
-//       context: context,
-//       builder: (BuildContext context) {
-//         return SimpleDialog(
-//           title: const Text('Select Action'),
-//           children: [
-//             SimpleDialogOption(
-//               onPressed: () {
-//                 getFromCamera();
-//                 Navigator.of(context).pop();
-//               },
-//               child: const Text('Open Camera'),
-//             ),
-//             SimpleDialogOption(
-//               onPressed: () {
-//                 getFromGallery();
-//                 Navigator.of(context).pop();
-//               },
-//               child: const Text('Open Gallery'),
-//             ),
-//           ],
-//         );
-//       });
-// }
-//
-// // get from gallery
-// getFromGallery() async {
-//   final pickedFile = await imagePicker.pickImage(
-//     source: ImageSource.gallery,
-//     maxWidth: 1800,
-//     maxHeight: 1800,
-//   );
-//   if (pickedFile != null) {
-//     setState(() {
-//       imageFile = File(pickedFile.path);
-//     });
-//   }
-// }
-//
-// // get from camera
-// getFromCamera() async {
-//   final pickedFile = await imagePicker.pickImage(
-//     source: ImageSource.camera,
-//     maxWidth: 1800,
-//     maxHeight: 1800,
-//   );
-//   if (pickedFile != null) {
-//     setState(() {
-//       imageFile = File(pickedFile.path);
-//     });
-//   }
-// }
+  Future<void> showPictureDialog() async {
+    await showDialog<void>(
+        context: context,
+        builder: (BuildContext context) {
+          return SimpleDialog(
+            title: const Text('Select Action'),
+            children: [
+              SimpleDialogOption(
+                onPressed: () {
+                  getFromCamera();
+                  Navigator.of(context).pop();
+                },
+                child: const Text('Open Camera'),
+              ),
+              SimpleDialogOption(
+                onPressed: () {
+                  getFromGallery();
+                  Navigator.of(context).pop();
+                },
+                child: const Text('Open Gallery'),
+              ),
+            ],
+          );
+        });
+  }
+
+  getFromGallery() async {
+    final pickedFile = await imagePicker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 200,
+      maxHeight: 200,
+    );
+    if (pickedFile != null) {
+      setState(() {
+        imageFile = XFile(pickedFile.path);
+      });
+    }
+  }
+
+  getFromCamera() async {
+    final pickedFile = await imagePicker.pickImage(
+      source: ImageSource.camera,
+      maxWidth: 200,
+      maxHeight: 200,
+    );
+    if (pickedFile != null) {
+      setState(() {
+        imageFile = XFile(pickedFile.path);
+      });
+    }
+  }
 }

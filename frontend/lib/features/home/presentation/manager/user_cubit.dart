@@ -4,6 +4,7 @@ import 'package:flutter_application_2/game/models/shop_item.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:flutter_application_2/features/home/presentation/manager/user_state.dart';
+import 'package:image_picker/image_picker.dart'; // Added for XFile
 import '../../../../core/error/failure.dart';
 import '../../../../core/utils/get_it_constants.dart';
 import '../../../../game/logic/shop_bloc.dart';
@@ -67,7 +68,7 @@ class UserCubit extends HydratedCubit<UserState> {
     }
   }
 
-  Future<void> updateUserData() async {
+  Future<void> updateUserData({XFile? profilePicture}) async {
     emit(UserUpdating());
     try {
       final raw = birthDayController.text;
@@ -85,7 +86,8 @@ class UserCubit extends HydratedCubit<UserState> {
           height: int.parse(heightController.text),
           weight: int.parse(weightController.text),
           gender: genderController.text,
-          birthDate: isoDate);
+          birthDate: isoDate,
+          profilePicture: profilePicture); 
 
       currentUser!.username = userNameController.text;
       currentUser!.email = emailController.text;

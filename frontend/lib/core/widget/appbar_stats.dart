@@ -81,7 +81,9 @@ class _AppBarStatsState extends State<AppBarStats> {
                 backgroundColor: ColorManager.primaryColor,
                 child: CircleAvatar(
                   radius: 26,
-                  backgroundImage: const AssetImage(AppImages.profilePhoto),
+                  backgroundImage: user.avatarUrl == null
+                      ? const AssetImage(AppImages.profilePhoto)
+                      : NetworkImage(user.avatarUrl!),
                   child: Transform.translate(
                     offset: const Offset(0, 28),
                     child: Container(

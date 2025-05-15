@@ -15,6 +15,7 @@ class UserModel {
   int? gold;
   Streak? streak;
   String? inventoryId;
+  String? avatarUrl;
   // List<Null>? achievements;
   List<Quests>? quests;
   Stats? stats;
@@ -39,6 +40,7 @@ class UserModel {
       this.gold,
       this.streak,
       this.inventoryId,
+      this.avatarUrl,
       // this.achievements,
       this.quests,
       this.stats,
@@ -70,6 +72,7 @@ class UserModel {
     gold = json['gold'];
     streak = json['streak'] != null ? Streak.fromJson(json['streak']) : null;
     inventoryId = json['inventory_id'];
+    avatarUrl = json['avatar_url'];
     // if (json['achievements'] != null) {
     //   achievements = <Null>[];
     //   json['achievements'].forEach((v) {
@@ -110,6 +113,7 @@ class UserModel {
       data['streak'] = streak!.toJson();
     }
     data['inventory_id'] = inventoryId;
+    data['avatar_url'] = avatarUrl;
     // if (this.achievements != null) {
     //   data['achievements'] = this.achievements!.map((v) => v.toJson()).toList();
     // }
