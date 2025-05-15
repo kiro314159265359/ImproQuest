@@ -85,39 +85,46 @@ class HomeContent extends StatelessWidget {
 
   Widget _buildHomeContent(BuildContext context, UserModel user,
       double screenWidth, double screenHeight) {
-    return Skeletonizer(
-      enabled: context.read<UserCubit>().state is UserLoading,
-      enableSwitchAnimation: true,
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.symmetric(
-              horizontal: screenWidth * 0.04, vertical: screenHeight * 0.02),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(height: screenHeight * 0.025),
-              const AppBarStats(),
-              SizedBox(height: screenHeight * 0.025),
-              CustomRichText(
-                text1: 'Welcome, ',
-                textStyle1: TextStyles.extraBold30White,
-                text2: user.username?.trim().split(' ').first ?? 'Player',
-                textStyle2: TextStyles.extraBold30Primary,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Skeletonizer(
+          enabled: context.read<UserCubit>().state is UserLoading,
+          enableSwitchAnimation: true,
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                  horizontal: screenWidth * 0.04,
+                  vertical: screenHeight * 0.02),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: screenHeight * 0.025),
+                  const AppBarStats(),
+                  SizedBox(height: screenHeight * 0.025),
+                  CustomRichText(
+                    text1: 'Welcome, ',
+                    textStyle1: TextStyles.extraBold30White,
+                    text2: user.username?.trim().split(' ').first ?? 'Player',
+                    textStyle2: TextStyles.extraBold30Primary,
+                  ),
+                  SizedBox(height: screenHeight * 0.025),
+                  const DailyQuestCard(),
+                  LabelBox(
+                      labelText: "Daily Quest",
+                      child:
+                          QuestsList(quests: context.read<UserCubit>().quests)),
+                  LabelBox(
+                    labelText: "My Quests",
+                    child: CustomQuestsList(
+                        quests: context.read<UserCubit>().customQuests),
+                  ),
+                ],
               ),
-              SizedBox(height: screenHeight * 0.025),
-              const DailyQuestCard(),
-              LabelBox(
-                  labelText: "Daily Quest",
-                  child: QuestsList(quests: context.read<UserCubit>().quests)),
-              LabelBox(
-                labelText: "My Quests",
-                child: CustomQuestsList(
-                    quests: context.read<UserCubit>().customQuests),
-              ),
-            ],
+            ),
           ),
         ),
-      ),
+      ],
     );
   }
 }

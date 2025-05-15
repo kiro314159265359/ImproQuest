@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_2/features/auth/presentation/views/continue_register.dart';
 import 'package:flutter_application_2/features/auth/presentation/views/forgetpassword.dart';
+import 'package:flutter_application_2/features/auth/presentation/views/resetpassword.dart';
 import 'package:flutter_application_2/features/home/presentation/views/add_quest.dart';
 import 'package:flutter_application_2/features/settings/presentation/views/personal_info.dart';
 import 'package:flutter_application_2/game/game_page.dart';
 import '../../features/app_layout/presentation/views/app_layout.dart';
+import '../../features/auth/presentation/views/verify_otp.dart';
 import '../../features/home/presentation/views/home.dart';
 import '../../features/auth/presentation/views/login.dart';
 import '../../features/auth/presentation/views/register.dart';
@@ -27,6 +29,12 @@ class AppRoutes {
 
       case Routes.forgetPasswordScreen:
         return MaterialPageRoute(builder: (_) => const Forgetpassword());
+
+      case Routes.verifyOTPScreen:
+        return MaterialPageRoute(builder: (_) => const VerifyOtp());
+
+      case Routes.resetPasswordScreen:
+        return MaterialPageRoute(builder: (_) => const Resetpassword());
 
       case Routes.appLayoutScreen:
         return MaterialPageRoute(builder: (_) => const AppLayout());

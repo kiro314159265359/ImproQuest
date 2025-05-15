@@ -4,6 +4,8 @@ class Routes {
   static const String registerScreen = 'registerScreen';
   static const String continueRegisterScreen = 'ContinueRegisterScreen';
   static const String forgetPasswordScreen = 'ForgetPassword';
+  static const String verifyOTPScreen = 'VerifyOTPScreen';
+  static const String resetPasswordScreen = 'ResetPassword';
   static const String appLayoutScreen = 'AppLayout';
   static const String homeScreen = 'HomePage';
   static const String addQuestScreen = 'AddQuestScreen';

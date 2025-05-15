@@ -7,7 +7,6 @@ import 'package:flutter_application_2/features/auth/domain/repo/login_repo.dart'
 class LoginApi extends LoginRepo {
   final ApiService apiService;
 
-  // Inject the ApiService via constructor
   LoginApi(this.apiService);
 
   @override
@@ -16,7 +15,6 @@ class LoginApi extends LoginRepo {
       'email': email,
       'password': password,
     });
-    // Convert response to map string dynamic
     response = jsonDecode(response.toString());
     return response;
   }
@@ -32,7 +30,27 @@ class LoginApi extends LoginRepo {
 
   @override
   Future<void> forgetPassword(String email) async {
-    await apiService.patch('$email');
-    throw UnimplementedError();
+    await apiService.post(EndPoints.forgetPassword, body: {
+      'email': email,
+    });
+  }
+
+  @override
+  Future<Map<String, dynamic>> verifyOTP(String email, String otp) async {
+    var response = await apiService.post(EndPoints.verifyOTP, body: {
+      'email': email,
+      'otp': otp,
+    });
+    response = jsonDecode(response.toString());
+    return response;
+  }
+
+  @override
+  Future<void> resetPassword(String newPassword, String resetToken) async {
+    await apiService.post(EndPoints.resetPassword, body: {
+      'new_password': newPassword,
+    }, headers: {
+      "Authorization": "Bearer $resetToken",
+    });
   }
 }
