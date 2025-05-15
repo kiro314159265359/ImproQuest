@@ -30,15 +30,6 @@ class _PersonalInfoState extends State<PersonalInfo> {
     getIt<UserCubit>().fetchUserData();
   }
 
-  // void _populateUserData(UserModel user) {
-  //   userNameController.text = user.username ?? '';
-  //   emailController.text = user.email ?? '';
-  //   weightController.text = user.weight?.toString() ?? '';
-  //   heightController.text = user.height?.toString() ?? '';
-  //   birthDayController.text = user.birthDate ?? '';
-  //   genderController.text = user.gender ?? '';
-  // }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -51,14 +42,7 @@ class _PersonalInfoState extends State<PersonalInfo> {
             child: Text('Save', style: TextStyles.semiBold20White),
             onPressed: () {
               if (formKey.currentState!.validate()) {
-                getIt<UserCubit>().updateUserData(
-                    // username: userNameController.text,
-                    // email: emailController.text,
-                    // height: int.tryParse(heightController.text)!,
-                    // weight: int.tryParse(weightController.text)!,
-                    // gender: genderController.text,
-                    // birthDate: isoDate
-                    );
+                getIt<UserCubit>().updateUserData();
               }
             },
           ),
@@ -158,14 +142,6 @@ class _PersonalInfoState extends State<PersonalInfo> {
                         controller: cubit.emailController,
                         validator: ValidateInput.email)),
                 SizedBox(height: h * 0.025),
-                // LabelBox(
-                //     leadingIcon: Icons.lock_outline,
-                //     labelText: "Password",
-                //     child: CustomTextFormField(
-                //         hintText: "",
-                //         controller: passController,
-                //         validator: ValidateInput.password)),
-                // const SizedBox(height: 20),
                 LabelBox(
                     leadingIcon: Icons.calendar_today_outlined,
                     labelText: "Birthday",

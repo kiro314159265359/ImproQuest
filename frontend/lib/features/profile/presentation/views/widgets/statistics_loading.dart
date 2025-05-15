@@ -14,11 +14,11 @@ class StatisticsLoading extends StatelessWidget {
     var h = MediaQuery.of(context).size.height;
     final weekDays = ['Su', 'M', 'Tu', 'W', 'Th', 'F', 'Sa'];
 
-    return Skeletonizer(
-      enabled: true,
-      enableSwitchAnimation: true,
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: w * 0.04, vertical: h * 0.02),
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: w * 0.04, vertical: h * 0.02),
+      child: Skeletonizer(
+        enabled: true,
+        enableSwitchAnimation: true,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
