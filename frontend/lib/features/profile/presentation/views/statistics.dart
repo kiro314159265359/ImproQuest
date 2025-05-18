@@ -50,44 +50,49 @@ class _StatisticsState extends State<Statistics> {
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Card(
-            color: ColorManager.gunmetal,
-            child: Column(
-              children: [
-                ListTile(
-                  leading: Image.asset(AppIcons.flameIcon,
-                      width: 25, fit: BoxFit.contain),
-                  title: Text("${widget.user.streak?.current}",
-                      style: TextStyles.bold20Primary),
-                  subtitle: Text("day streak", style: TextStyles.bold8Primary),
-                ),
-                SizedBox(
-                  height: widget.height * 0.08,
-                  child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: weekDays.length,
-                      itemBuilder: (context, index) {
-                        final day = weekDays[index];
-                        final isChecked = weekStatus[day];
+          SizedBox(
+            height: widget.height * 0.2,
+            child: Card(
+              color: ColorManager.gunmetal,
+              child: Column(
+                children: [
+                  ListTile(
+                    leading: Image.asset(AppIcons.flameIcon,
+                        width: 25, fit: BoxFit.contain),
+                    title: Text("${widget.user.streak?.current}",
+                        style: TextStyles.bold20Primary),
+                    subtitle:
+                        Text("day streak", style: TextStyles.bold8Primary),
+                  ),
+                  SizedBox(
+                    height: widget.height * 0.08,
+                    child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: weekDays.length,
+                        itemBuilder: (context, index) {
+                          final day = weekDays[index];
+                          final isChecked = weekStatus[day];
 
-                        return SizedBox(
-                          width: MediaQuery.of(context).size.width / 8,
-                          child: Column(
-                            children: [
-                              Checkbox(
-                                shape: const CircleBorder(),
-                                activeColor: ColorManager.primaryColor,
-                                tristate: true,
-                                value: isChecked,
-                                onChanged: (bool? value) {},
-                              ),
-                              Text(day, style: TextStyles.semiBold12lightGrey),
-                            ],
-                          ),
-                        );
-                      }),
-                ),
-              ],
+                          return SizedBox(
+                            width: MediaQuery.of(context).size.width / 8,
+                            child: Column(
+                              children: [
+                                Checkbox(
+                                  shape: const CircleBorder(),
+                                  activeColor: ColorManager.primaryColor,
+                                  tristate: true,
+                                  value: isChecked,
+                                  onChanged: (bool? value) {},
+                                ),
+                                Text(day,
+                                    style: TextStyles.semiBold12lightGrey),
+                              ],
+                            ),
+                          );
+                        }),
+                  ),
+                ],
+              ),
             ),
           ),
           SizedBox(

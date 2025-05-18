@@ -51,13 +51,13 @@ class CustomQuestsList extends StatelessWidget {
               return Padding(
                 padding: const EdgeInsets.only(bottom: 5),
                 child: CustomQuestCard(
-                  questName: quest.name ?? "Unnamed Quest",
-                  questDesc:
-                      "${quest.xpReward ?? 0} XP • ${quest.goldReward ?? 0} Gold",
-                  questImageIcon: AppIcons.runningIcon,
-                  progress: quest.isCompleted ?? false,
+                  quest: quest, 
+                  questImageIcon: AppIcons.runningIcon, 
                   onCompleteQuest: () {
                     context.read<HomeBloc>().add(CompleteCustomQuest(questId));
+                  },
+                  onDeleteQuest: () {
+                    context.read<UserCubit>().deleteQuest(quest);
                   },
                   isLoading: isLoading,
                 ),

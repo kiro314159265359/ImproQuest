@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_2/core/utils/get_it_constants.dart';
+import 'package:flutter_application_2/features/home/data/model/user_model.dart';
 import 'package:flutter_application_2/features/home/presentation/manager/user_cubit.dart';
 import 'package:flutter_application_2/features/home/presentation/manager/user_state.dart';
 import 'package:flutter_application_2/features/settings/presentation/views/widgets/label_box.dart';
@@ -13,7 +14,14 @@ import '../../../../core/widget/custom_primary_button.dart';
 import '../../../../core/widget/custom_text_form_field.dart';
 
 class AddQuest extends StatefulWidget {
-  const AddQuest({super.key});
+  final bool isEditing;
+  final Quests? quest;
+
+  const AddQuest({
+    super.key,
+    this.isEditing = false,
+    this.quest,
+  });
 
   @override
   State<AddQuest> createState() => _AddQuestState();
@@ -35,6 +43,38 @@ class _AddQuestState extends State<AddQuest> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.isEditing && widget.quest != null) {
+      questNameController.text = widget.quest?.name ?? '';
+      questType = widget.quest!.type;
+
+      switch (widget.quest!.xpReward) {
+        case 10:
+          questDifficultyLevel = 0.0;
+          break;
+        case 20:
+          questDifficultyLevel = 1.0;
+          break;
+        case 30:
+          questDifficultyLevel = 2.0;
+          break;
+        case 40:
+          questDifficultyLevel = 3.0;
+          break;
+        case 50:
+          questDifficultyLevel = 4.0;
+          break;
+        case 60:
+          questDifficultyLevel = 5.0;
+          break;
+        default:
+          break;
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     var w = MediaQuery.of(context).size.width;
     var h = MediaQuery.of(context).size.height;
@@ -42,7 +82,10 @@ class _AddQuestState extends State<AddQuest> {
     return BlocConsumer<UserCubit, UserState>(listener: (context, state) {
       if (state is UserUpdated) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("The Quest has been added!")),
+          SnackBar(
+              content: Text(widget.isEditing
+                  ? "The Quest has been updated!"
+                  : "The Quest has been added!")),
         );
         Navigator.pushReplacementNamed(context, Routes.appLayoutScreen);
       }
@@ -57,7 +100,7 @@ class _AddQuestState extends State<AddQuest> {
             backgroundColor: ColorManager.navyColor,
             centerTitle: true,
             title: Text(
-              'Add Quest',
+              widget.isEditing ? 'Edit Quest' : 'Add Quest',
               style: TextStyles.extraBold28White,
             ),
           ),
@@ -114,19 +157,7 @@ class _AddQuestState extends State<AddQuest> {
                                     });
                                   },
                                   borderRadius: BorderRadius.circular(16),
-                                  underline: SizedBox(),
-                                  // decoration: InputDecoration(
-                                  //   filled: true,
-                                  //   fillColor:
-                                  //       ColorManager.gunmetal.withValues(alpha: .6),
-                                  //   border: OutlineInputBorder(
-                                  //     borderRadius: BorderRadius.circular(16),
-                                  //     borderSide: BorderSide.none,
-                                  //   ),
-                                  //   labelText: 'Quest Type',
-                                  //   hintStyle: const TextStyle(
-                                  //       color: ColorManager.lightGrey, fontSize: 20),
-                                  // ),
+                                  underline: const SizedBox(),
                                 ),
                               ),
                             ),
@@ -164,13 +195,24 @@ class _AddQuestState extends State<AddQuest> {
                           CustomPrimaryButton(
                               onPressed: () {
                                 if (formKey.currentState!.validate()) {
-                                  getIt<UserCubit>().addCustomQuest(
+                                  if (widget.isEditing &&
+                                      widget.quest != null) {
+                                    getIt<UserCubit>().editQuest(
+                                      widget.quest!,
                                       questNameController.text,
                                       questDifficultyLevel.toInt(),
-                                      questType!);
+                                      questType!,
+                                    );
+                                  } else {
+                                    getIt<UserCubit>().addCustomQuest(
+                                        questNameController.text,
+                                        questDifficultyLevel.toInt(),
+                                        questType!);
+                                  }
                                 }
                               },
-                              buttonText: "Add",
+                              buttonText:
+                                  widget.isEditing ? "Save Changes" : "Add",
                               height: 45,
                               isLoading: state is UserUpdating),
                         ],

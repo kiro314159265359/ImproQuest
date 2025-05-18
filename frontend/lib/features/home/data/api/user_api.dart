@@ -85,6 +85,22 @@ class UserApi extends UserRepo {
   }
 
   @override
+  Future<void> editQuest(String? qId, String questName, int questXp,
+      int questGold, String questType) async {
+    await apiService.put('/quests/mental-habit/$qId', body: {
+      'name': questName,
+      'xp_reward': questXp,
+      'gold_reward': questGold,
+      'type': questType,
+    });
+  }
+
+  @override
+  Future<void> deleteQuest(String? qId) async {
+    await apiService.delete('/quests/mental-habit/$qId');
+  }
+
+  @override
   Future<LeaderboardLevelListModel> getLeaderboardByLevelList() async {
     var response = await apiService.get(EndPoints.leaderboardByLevel);
     return LeaderboardLevelListModel.fromJson(jsonDecode(response.toString()));

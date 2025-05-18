@@ -167,6 +167,97 @@ class UserCubit extends HydratedCubit<UserState> {
     }
   }
 
+  Future<void> editQuest(Quests quest, String questName,
+      int questDifficultyLevel, String questType) async {
+    emit(UserUpdating());
+    try {
+      int questXp = 0;
+      int questGold = 0;
+
+      switch (questDifficultyLevel) {
+        case 0:
+          questXp = 10;
+          questGold = 10;
+          break;
+        case 1:
+          questXp = 20;
+          questGold = 20;
+          break;
+        case 2:
+          questXp = 30;
+          questGold = 30;
+          break;
+        case 3:
+          questXp = 40;
+          questGold = 40;
+          break;
+        case 4:
+          questXp = 50;
+          questGold = 50;
+          break;
+        case 5:
+          questXp = 60;
+          questGold = 60;
+          break;
+        default:
+          questXp = 0;
+          questGold = 0;
+          break;
+      }
+
+      await userRepo.editQuest(
+          quest.sId, questName, questXp, questGold, questType);
+
+      if (currentUser != null && currentUser!.quests != null) {
+        final questIndex =
+            currentUser!.quests!.indexWhere((q) => q.sId == quest.sId);
+        if (questIndex != -1) {
+          currentUser!.quests![questIndex].name = questName;
+          currentUser!.quests![questIndex].type = questType;
+          currentUser!.quests![questIndex].xpReward = questXp;
+          currentUser!.quests![questIndex].goldReward = questGold;
+        }
+      }
+
+      emit(UserUpdated(currentUser!));
+
+      _updateGetItRegistrations(currentUser!);
+    } catch (error) {
+      if (error is DioException) {
+        emit(UpdateError(ServerFailure.fromDioError(error)));
+      } else {
+        emit(UpdateError(ServerFailure(error.toString())));
+        if (currentUser != null) {
+          emit(UserUpdated(currentUser!));
+        }
+      }
+    }
+  }
+
+  Future<void> deleteQuest(Quests? q) async {
+    try {
+      await userRepo.deleteQuest(q?.sId);
+
+      if (currentUser != null && currentUser!.quests != null) {
+        currentUser!.quests =
+            currentUser!.quests!.where((quest) => quest.sId != q?.sId).toList();
+      }
+
+      emit(UserLoaded(currentUser!));
+
+      _updateGetItRegistrations(currentUser!);
+    } catch (error) {
+      if (error is DioException) {
+        emit(UserError(ServerFailure.fromDioError(error)));
+      } else {
+        emit(UserError(ServerFailure(error.toString())));
+        if (currentUser != null) {
+          emit(UserLoaded(currentUser!));
+        }
+      }
+    }
+  }
+
   Future<void> addCustomQuest(
       String questName, int questDifficultyLevel, String questType) async {
     emit(UserUpdating());
