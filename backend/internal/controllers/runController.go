@@ -1,12 +1,14 @@
 package controllers
 
 import (
+	"errors"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/HarDizzeR/Project/backend/internal/models" // Replace with your actual import path
+	"github.com/HarDizzeR/Project/backend/internal/models"
 )
 
 // RunController handles HTTP requests related to runs
@@ -21,189 +23,125 @@ func NewRunController(runModel *models.RunModel) *RunController {
 	}
 }
 
-// SaveRun handles requests to save run data via HTTP (alternative to WebSocket)
-func (c *RunController) SaveRun(ctx *gin.Context) {
-	var runData models.RunData
-	if err := ctx.ShouldBindJSON(&runData); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	// Ensure timestamp is set
-	if runData.Timestamp.IsZero() {
-		runData.Timestamp = time.Now()
-	}
-
-	if err := c.runModel.SaveRun(&runData); err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	ctx.JSON(http.StatusOK, gin.H{"message": "Run data saved successfully"})
-}
-
-// GetDailyHistogram handles requests for daily histogram data
-func (c *RunController) GetDailyHistogram(ctx *gin.Context) {
+// GetTodayTotalDistance handles requests for today's total run distance for a user.
+func (c *RunController) GetTodayTotalDistance(ctx *gin.Context) {
 	userID := ctx.Param("userId")
 	if userID == "" {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "userId is required"})
 		return
 	}
 
-	// Parse date range parameters
-	startDateStr := ctx.DefaultQuery("startDate", "")
-	endDateStr := ctx.DefaultQuery("endDate", "")
-
-	startDate := time.Now().AddDate(0, 0, -30) // Default to last 30 days
-	endDate := time.Now()
-
-	if startDateStr != "" {
-		parsedStartDate, err := time.Parse("2006-01-02", startDateStr)
-		if err == nil {
-			startDate = parsedStartDate
-		}
-	}
-
-	if endDateStr != "" {
-		parsedEndDate, err := time.Parse("2006-01-02", endDateStr)
-		if err == nil {
-			endDate = parsedEndDate.AddDate(0, 0, 1) // Include the end date
-		}
-	}
-
-	histogram, err := c.runModel.GetDailyHistogram(userID, startDate, endDate)
+	distance, err := c.runModel.GetTodayTotalDistance(userID)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		if errors.Is(err, models.ErrNoDataFound) {
+			ctx.JSON(http.StatusNotFound, gin.H{"error": models.ErrNoDataFound.Error()})
+		} else {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
 		return
 	}
 
-	ctx.JSON(http.StatusOK, histogram)
+	ctx.JSON(http.StatusOK, distance)
 }
 
-// GetWeeklyHistogram handles requests for weekly histogram data
-func (c *RunController) GetWeeklyHistogram(ctx *gin.Context) {
+// GetDailyDistancesForWeek handles requests for daily run distances for a specific week.
+// The week is determined by the 'date' query parameter (YYYY-MM-DD). Defaults to current week.
+func (c *RunController) GetDailyDistancesForWeek(ctx *gin.Context) {
 	userID := ctx.Param("userId")
 	if userID == "" {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "userId is required"})
 		return
 	}
 
-	// Parse date range parameters
-	startDateStr := ctx.DefaultQuery("startDate", "")
-	endDateStr := ctx.DefaultQuery("endDate", "")
+	dateStr := ctx.DefaultQuery("date", "")
+	targetDate := time.Now() // Default to today
 
-	startDate := time.Now().AddDate(0, -3, 0) // Default to last 3 months
-	endDate := time.Now()
-
-	if startDateStr != "" {
-		parsedStartDate, err := time.Parse("2006-01-02", startDateStr)
-		if err == nil {
-			startDate = parsedStartDate
+	if dateStr != "" {
+		parsedDate, err := time.Parse("2006-01-02", dateStr)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid date format. Use YYYY-MM-DD."})
+			return
 		}
+		targetDate = parsedDate
 	}
 
-	if endDateStr != "" {
-		parsedEndDate, err := time.Parse("2006-01-02", endDateStr)
-		if err == nil {
-			endDate = parsedEndDate.AddDate(0, 0, 1) // Include the end date
-		}
-	}
-
-	histogram, err := c.runModel.GetWeeklyHistogram(userID, startDate, endDate)
+	distances, err := c.runModel.GetDailyDistancesForWeek(userID, targetDate)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		if errors.Is(err, models.ErrNoDataFound) {
+			ctx.JSON(http.StatusNotFound, gin.H{"error": models.ErrNoDataFound.Error()})
+		} else {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
 		return
 	}
 
-	ctx.JSON(http.StatusOK, histogram)
+	ctx.JSON(http.StatusOK, distances)
 }
 
-// GetMonthlyHistogram handles requests for monthly histogram data
-func (c *RunController) GetMonthlyHistogram(ctx *gin.Context) {
+// GetWeeklyDistancesForMonth handles requests for weekly run distances for a specific month.
+// The month is determined by the 'date' query parameter (YYYY-MM-DD). Defaults to current month.
+func (c *RunController) GetWeeklyDistancesForMonth(ctx *gin.Context) {
 	userID := ctx.Param("userId")
 	if userID == "" {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "userId is required"})
 		return
 	}
 
-	// Parse date range parameters
-	startDateStr := ctx.DefaultQuery("startDate", "")
-	endDateStr := ctx.DefaultQuery("endDate", "")
+	dateStr := ctx.DefaultQuery("date", "")
+	targetDate := time.Now() // Default to today (current month)
 
-	startDate := time.Now().AddDate(-1, 0, 0) // Default to last year
-	endDate := time.Now()
-
-	if startDateStr != "" {
-		parsedStartDate, err := time.Parse("2006-01-02", startDateStr)
-		if err == nil {
-			startDate = parsedStartDate
+	if dateStr != "" {
+		parsedDate, err := time.Parse("2006-01-02", dateStr)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid date format. Use YYYY-MM-DD."})
+			return
 		}
+		targetDate = parsedDate
 	}
 
-	if endDateStr != "" {
-		parsedEndDate, err := time.Parse("2006-01-02", endDateStr)
-		if err == nil {
-			endDate = parsedEndDate.AddDate(0, 0, 1) // Include the end date
-		}
-	}
-
-	histogram, err := c.runModel.GetMonthlyHistogram(userID, startDate, endDate)
+	distances, err := c.runModel.GetWeeklyDistancesForMonth(userID, targetDate)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		if errors.Is(err, models.ErrNoDataFound) {
+			ctx.JSON(http.StatusNotFound, gin.H{"error": models.ErrNoDataFound.Error()})
+		} else {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
 		return
 	}
 
-	ctx.JSON(http.StatusOK, histogram)
+	ctx.JSON(http.StatusOK, distances)
 }
 
-// GetYearlyHistogram handles requests for yearly histogram data
-func (c *RunController) GetYearlyHistogram(ctx *gin.Context) {
+// GetMonthlyDistancesForYear handles requests for monthly run distances for a specific year.
+// The year is determined by the 'year' query parameter (YYYY). Defaults to current year.
+func (c *RunController) GetMonthlyDistancesForYear(ctx *gin.Context) {
 	userID := ctx.Param("userId")
 	if userID == "" {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "userId is required"})
 		return
 	}
 
-	// parse date range
-	startDateStr := ctx.DefaultQuery("startDate", "")
-	endDateStr := ctx.DefaultQuery("endDate", "")
+	yearStr := ctx.DefaultQuery("year", "")
+	targetYear := time.Now().Year() // Default to current year
 
-	// default to last 5 years
-	startDate := time.Now().AddDate(-5, 0, 0)
-	endDate := time.Now()
-
-	if startDateStr != "" {
-		if d, err := time.Parse("2006-01-02", startDateStr); err == nil {
-			startDate = d
+	if yearStr != "" {
+		parsedYear, err := strconv.Atoi(yearStr)
+		if err != nil || parsedYear < 1900 || parsedYear > 2200 { // Basic validation
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid year format or value."})
+			return
 		}
+		targetYear = parsedYear
 	}
-	if endDateStr != "" {
-		if d, err := time.Parse("2006-01-02", endDateStr); err == nil {
-			endDate = d.AddDate(0, 0, 1) // inclusive
+
+	distances, err := c.runModel.GetMonthlyDistancesForYear(userID, targetYear)
+	if err != nil {
+		if errors.Is(err, models.ErrNoDataFound) {
+			ctx.JSON(http.StatusNotFound, gin.H{"error": models.ErrNoDataFound.Error()})
+		} else {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
-	}
-
-	histogram, err := c.runModel.GetYearlyHistogram(userID, startDate, endDate)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	ctx.JSON(http.StatusOK, histogram)
-}
-
-// GetRunStatistics handles requests for user's run statistics
-func (c *RunController) GetRunStatistics(ctx *gin.Context) {
-	userID := ctx.Param("userId")
-	if userID == "" {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "userId is required"})
 		return
 	}
 
-	stats, err := c.runModel.GetTotalStats(userID)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	ctx.JSON(http.StatusOK, stats)
+	ctx.JSON(http.StatusOK, distances)
 }

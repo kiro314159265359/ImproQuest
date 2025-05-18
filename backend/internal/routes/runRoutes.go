@@ -3,8 +3,9 @@ package routes
 import (
 	"github.com/gin-gonic/gin"
 
-	"github.com/HarDizzeR/Project/backend/internal/controllers" // Replace with your actual import path
-	"github.com/HarDizzeR/Project/backend/internal/services"    // Replace with your actual import path
+	"github.com/HarDizzeR/Project/backend/internal/controllers"
+	"github.com/HarDizzeR/Project/backend/internal/middleware"
+	"github.com/HarDizzeR/Project/backend/internal/services"
 )
 
 func SetupRunRoutes(router *gin.Engine, runController *controllers.RunController, wsManager *services.WebSocketManager) {
@@ -13,19 +14,14 @@ func SetupRunRoutes(router *gin.Engine, runController *controllers.RunController
 		wsManager.HandleConnection(c)
 	})
 
-	// API routes
-	api := router.Group("/api")
 	{
-		runs := api.Group("/runs")
-		{
-			runs.POST("/", runController.SaveRun)
+		runs := router.Group("/runs")
+		runs.Use(middleware.Authenticate())
 
-			runs.GET("/users/:userId/histogram/daily", runController.GetDailyHistogram)
-			runs.GET("/users/:userId/histogram/weekly", runController.GetWeeklyHistogram)
-			runs.GET("/users/:userId/histogram/monthly", runController.GetMonthlyHistogram)
-			runs.GET("/users/:userId/histogram/yearly", runController.GetYearlyHistogram)
+		runs.GET("/:userId/distance/today", runController.GetTodayTotalDistance)
+		runs.GET("/:userId/distance/days-of-week", runController.GetDailyDistancesForWeek)     // Query: ?date=YYYY-MM-DD
+		runs.GET("/:userId/distance/weeks-of-month", runController.GetWeeklyDistancesForMonth) // Query: ?date=YYYY-MM-DD
+		runs.GET("/:userId/distance/months-of-year", runController.GetMonthlyDistancesForYear) // Query: ?year=YYYY
 
-			runs.GET("/users/:userId/stats", runController.GetRunStatistics)
-		}
 	}
 }
