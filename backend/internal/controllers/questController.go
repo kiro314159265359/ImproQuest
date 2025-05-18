@@ -32,7 +32,7 @@ type QuestRequest struct {
 
 type UpdateMentalHabitQuestRequest struct {
 	Name       *string  `json:"name,omitempty" validate:"omitempty,min=3,max=100"`
-	Goal       *float64 `json:"goal,omitempty" bson:"goal,omitempty" validate:"omitempty,gte=0"`
+	Type       *string  `json:"type,omitempty" bson:"type,omitempty" validate:"omitempty,gte=0"`
 	XPReward   *float64 `json:"xp_reward,omitempty" bson:"xp_reward,omitempty" validate:"omitempty,gte=0"`
 	GoldReward *float64 `json:"gold_reward,omitempty" bson:"gold_reward,omitempty" validate:"omitempty,gte=0"`
 }
@@ -514,8 +514,8 @@ func EditMentalOrHabitQuest() gin.HandlerFunc {
 		if upd.Name != nil {
 			updateFields["quests.$[elem].name"] = *upd.Name
 		}
-		if upd.Goal != nil {
-			updateFields["quests.$[elem].goal"] = *upd.Goal
+		if upd.Type != nil {
+			updateFields["quests.$[elem].type"] = *upd.Type
 		}
 		if upd.XPReward != nil {
 			updateFields["quests.$[elem].xp_reward"] = *upd.XPReward
