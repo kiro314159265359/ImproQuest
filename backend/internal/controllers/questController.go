@@ -431,7 +431,7 @@ func UpdateStreakHandler() gin.HandlerFunc {
 func EditMentalOrHabitQuest() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 1. Get user ID from token/context
-		userID := c.GetString("userId")
+		userID := c.GetString("id")
 		if userID == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized: missing user ID"})
 			return
@@ -525,7 +525,7 @@ func EditMentalOrHabitQuest() gin.HandlerFunc {
 func DeleteMentalOrHabitQuest() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 1. Get user ID
-		userID := c.GetString("userId")
+		userID := c.GetString("id")
 		if userID == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized: missing user ID"})
 			return
