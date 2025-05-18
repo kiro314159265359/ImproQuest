@@ -11,6 +11,7 @@ class UserModel {
   String? birthDate;
   int? weight;
   int? xp;
+  int? maxXP;
   int? level;
   int? gold;
   Streak? streak;
@@ -36,6 +37,7 @@ class UserModel {
       this.birthDate,
       this.weight,
       this.xp,
+      this.maxXP,
       this.level,
       this.gold,
       this.streak,
@@ -68,6 +70,7 @@ class UserModel {
     }
     weight = json['weight'];
     xp = json['xp'];
+    maxXP = json['maxXp'];
     level = json['level'];
     gold = json['gold'];
     streak = json['streak'] != null ? Streak.fromJson(json['streak']) : null;
@@ -108,6 +111,7 @@ class UserModel {
     data['weight'] = weight;
     data['xp'] = xp;
     data['level'] = level;
+    data['maxXp'] = maxXP;
     data['gold'] = gold;
     if (streak != null) {
       data['streak'] = streak!.toJson();

@@ -87,7 +87,7 @@ class TextStyles {
     fontWeight: FontWeight.w400,
     color: ColorManager.lightGrey,
   );
-    static TextStyle regular14primary = const TextStyle(
+  static TextStyle regular14primary = const TextStyle(
     fontSize: 14,
     fontFamily: 'PlusJakartaSans',
     fontWeight: FontWeight.w400,
@@ -105,19 +105,19 @@ class TextStyles {
     fontWeight: FontWeight.w400,
     color: ColorManager.whiteColor,
   );
-    static TextStyle regular12Gold = const TextStyle(
+  static TextStyle regular12Gold = const TextStyle(
     fontSize: 12,
     fontFamily: 'PlusJakartaSans',
     fontWeight: FontWeight.w400,
     color: ColorManager.goldColor,
   );
-    static TextStyle regular12LightGrey = const TextStyle(
+  static TextStyle regular12LightGrey = const TextStyle(
     fontSize: 12,
     fontFamily: 'PlusJakartaSans',
     fontWeight: FontWeight.w400,
     color: ColorManager.lightGrey,
   );
-      static TextStyle regular12LightBlue = const TextStyle(
+  static TextStyle regular12LightBlue = const TextStyle(
     fontSize: 12,
     fontFamily: 'PlusJakartaSans',
     fontWeight: FontWeight.w400,
@@ -358,6 +358,12 @@ class TextStyles {
     color: ColorManager.whiteColor,
   );
 
+  static TextStyle semiBold12Primary = const TextStyle(
+    fontSize: 12,
+    fontFamily: 'PlusJakartaSans',
+    fontWeight: FontWeight.w600,
+    color: ColorManager.primaryColor,
+  );
   static TextStyle semiBold16Primary = const TextStyle(
     fontSize: 16,
     fontFamily: 'PlusJakartaSans',
@@ -382,7 +388,7 @@ class TextStyles {
     fontWeight: FontWeight.w700,
     color: ColorManager.greenColor,
   );
-    static TextStyle bold10White = const TextStyle(
+  static TextStyle bold10White = const TextStyle(
     fontSize: 10,
     fontFamily: 'PlusJakartaSans',
     fontWeight: FontWeight.w700,

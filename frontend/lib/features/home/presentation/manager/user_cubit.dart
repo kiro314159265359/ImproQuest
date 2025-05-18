@@ -43,6 +43,7 @@ class UserCubit extends HydratedCubit<UserState> {
     try {
       print("Fetching fresh user data from API...");
       final freshUser = await userRepo.getUserData();
+      print("GAY: ${freshUser.toJson()}");
       print("Fetched new user data. Preserving distance: $previousDistance");
       currentUser = freshUser;
       // Emit the new state with the preserved distance.
@@ -87,7 +88,7 @@ class UserCubit extends HydratedCubit<UserState> {
           weight: int.parse(weightController.text),
           gender: genderController.text,
           birthDate: isoDate,
-          profilePicture: profilePicture); 
+          profilePicture: profilePicture);
 
       currentUser!.username = userNameController.text;
       currentUser!.email = emailController.text;
