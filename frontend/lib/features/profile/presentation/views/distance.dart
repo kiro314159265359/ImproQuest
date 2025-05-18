@@ -7,6 +7,7 @@ import 'package:flutter_application_2/features/profile/presentation/manager/dist
 import '../../../../core/theme/background_theme.dart';
 import '../../../../core/theme/color_manger.dart';
 import '../../../../core/theme/text_style.dart';
+import '../../../../core/utils/get_it_constants.dart'; // Import getIt
 
 enum ChartDataType { week, month, year }
 
@@ -25,9 +26,10 @@ class _DistanceState extends State<Distance> {
   @override
   void initState() {
     super.initState();
-    _weekDistanceCubit = context.read<DistanceCubit>()..getDistanceWeek();
-    _monthDistanceCubit = context.read<DistanceCubit>()..getDistanceMonth();
-    _yearDistanceCubit = context.read<DistanceCubit>()..getDistanceYear();
+    // Instantiate separate cubits using getIt
+    _weekDistanceCubit = getIt<DistanceCubit>()..getDistanceWeek();
+    _monthDistanceCubit = getIt<DistanceCubit>()..getDistanceMonth();
+    _yearDistanceCubit = getIt<DistanceCubit>()..getDistanceYear();
   }
 
   ({List<double> data, List<String> labels}) _prepareChartData(
@@ -167,12 +169,12 @@ class _DistanceState extends State<Distance> {
     }
 
     return BlocBuilder<DistanceCubit, DistanceState>(
-      bloc: cubit,
+      bloc: cubit, // Ensure this uses the specific cubit instance
       builder: (context, state) {
         if (state is DistanceLoading) {
           return const Center(child: CircularProgressIndicator());
         } else if (state is DistanceLoaded) {
-          final chartData = _prepareChartData(state.distanceList!, type);
+          final chartData = _prepareChartData(state.distanceList, type);
           if (chartData.data.isEmpty) {
             return Center(
                 child: Text("No data available.",

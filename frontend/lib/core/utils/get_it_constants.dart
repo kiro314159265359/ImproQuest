@@ -38,7 +38,7 @@ Future<void> setupDependencies() async {
   getIt.registerSingleton<LoginRepo>(loginRepo);
   getIt.registerSingleton<UserCubit>(UserCubit(userApi));
   getIt.registerSingleton<LeaderboardCubit>(LeaderboardCubit(userApi));
-  getIt.registerSingleton<DistanceCubit>(DistanceCubit(userApi));
+  getIt.registerFactory<DistanceCubit>(() => DistanceCubit(userApi));
 
   // Services
   if (!getIt.isRegistered<DistanceTrackingService>()) {
