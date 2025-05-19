@@ -12,6 +12,7 @@ import '../../../../core/theme/text_style.dart';
 import '../../../../core/utils/validate_input.dart';
 import '../../../../core/widget/custom_primary_button.dart';
 import '../../../../core/widget/custom_text_form_field.dart';
+import '../../../../core/widget/snackabars.dart';
 
 class AddQuest extends StatefulWidget {
   final bool isEditing;
@@ -81,18 +82,16 @@ class _AddQuestState extends State<AddQuest> {
 
     return BlocConsumer<UserCubit, UserState>(listener: (context, state) {
       if (state is UserUpdated) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(widget.isEditing
-                  ? "The Quest has been updated!"
-                  : "The Quest has been added!")),
-        );
+        Snackbars.showSuccessSnackbar(
+            context,
+            widget.isEditing
+                ? "The Quest has been updated!"
+                : "The Quest has been added!");
+
         Navigator.pushReplacementNamed(context, Routes.appLayoutScreen);
       }
       if (state is UpdateError) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(state.failure.message)),
-        );
+        Snackbars.showErrorSnackbar(context, state.failure.message);
       }
     }, builder: (context, state) {
       return Scaffold(

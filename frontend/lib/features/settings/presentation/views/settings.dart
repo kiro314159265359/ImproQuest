@@ -12,6 +12,7 @@ import '../../../../core/routes/routes.dart';
 import '../../../../core/service/cache_helper.dart';
 import '../../../../core/theme/color_manger.dart';
 import '../../../../core/theme/text_style.dart';
+import '../../../../core/widget/snackabars.dart';
 
 class Settings extends StatefulWidget {
   const Settings({super.key});
@@ -46,24 +47,12 @@ class _SettingsState extends State<Settings> {
     return BlocListener<UserCubit, UserState>(
         listener: (context, state) {
           if (state is UserDeleted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Account deleted successfully.',
-                    style: TextStyles.medium16White),
-                backgroundColor: ColorManager.primaryColor,
-              ),
-            );
+            Snackbars.showSuccessSnackbar(
+                context, "Account deleted successfully.");
             clearTokens();
             Navigator.pushReplacementNamed(context, Routes.loginScreen);
           } else if (state is UpdateError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                    'Failed to delete account: ${state.failure.message}',
-                    style: TextStyles.medium16White),
-                backgroundColor: ColorManager.errorColor,
-              ),
-            );
+            Snackbars.showErrorSnackbar(context, state.failure.message);
           }
           if (state is UserDeleting) {
             Dialogs.loadingDialog(context: context);

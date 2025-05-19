@@ -7,6 +7,7 @@ import 'package:flutter_application_2/features/profile/presentation/views/widget
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/background_theme.dart';
 import '../../../../core/widget/appbar_stats.dart';
+import '../../../../core/widget/snackabars.dart';
 import '../../../home/data/model/user_model.dart';
 import '../../../home/presentation/manager/user_cubit.dart';
 import '../../../home/presentation/manager/user_state.dart';
@@ -38,9 +39,7 @@ class _ProfileState extends State<Profile> {
                 current is UserError,
             listener: (context, state) {
               if (state is UserError) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(state.failure.message)),
-                );
+                Snackbars.showErrorSnackbar(context, state.failure.message);
               }
             },
             builder: (context, state) {
@@ -90,7 +89,7 @@ class _ProfileState extends State<Profile> {
             child: TabBarView(
 // physics: NeverScrollableScrollPhysics(),
               children: <Widget>[
-                Statistics(user: user,width: w, height: h),
+                Statistics(user: user, width: w, height: h),
                 const Achievements(),
                 const Character(),
               ],

@@ -4,6 +4,7 @@ import '../core/theme/color_manger.dart';
 import '../core/theme/text_style.dart';
 import '../core/utils/app_icons.dart';
 import '../core/utils/get_it_constants.dart';
+import '../core/widget/snackabars.dart';
 import 'logic/shop_bloc.dart';
 import 'logic/shop_event.dart';
 import 'logic/shop_state.dart';
@@ -60,21 +61,12 @@ class ShopPage extends StatelessWidget {
               child: BlocListener<ShopBloc, ShopState>(
                 listener: (context, state) {
                   if (state is ShopPurchaseSuccess) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("Purchased ${state.item.name}")),
-                    );
+                    Snackbars.showSuccessSnackbar(
+                        context, "Purchased ${state.item.name}");
                   } else if (state is ShopAlreadyOwned) {
-                    // Show a more friendly message for already owned items
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(state.message),
-                        backgroundColor: ColorManager.errorColor,
-                      ),
-                    );
+                    Snackbars.showNoticeSnackbar(context, state.message);
                   } else if (state is ShopError) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(state.message)),
-                    );
+                    Snackbars.showErrorSnackbar(context, state.message);
                   }
                 },
                 child: BlocBuilder<ShopBloc, ShopState>(

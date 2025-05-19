@@ -4,6 +4,7 @@ import 'package:flutter_application_2/core/widget/custom_button.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/theme/color_manger.dart';
 import '../../core/utils/app_icons.dart';
+import '../../core/widget/snackabars.dart';
 import '../logic/shop_bloc.dart';
 import '../logic/shop_state.dart';
 import '../models/shop_item.dart';
@@ -38,9 +39,8 @@ class _TemporaryShopPageState extends State<TemporaryShopPage> {
           listenWhen: (previous, current) => current is ShopPurchaseSuccess,
           listener: (context, state) {
             if (state is ShopPurchaseSuccess) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Purchased ${state.item.name}')),
-              );
+              Snackbars.showSuccessSnackbar(
+                  context, "Purchased ${state.item.name}");
             }
           },
         ),
@@ -48,9 +48,7 @@ class _TemporaryShopPageState extends State<TemporaryShopPage> {
           listenWhen: (previous, current) => current is ShopError,
           listener: (context, state) {
             if (state is ShopError) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.message)),
-              );
+              Snackbars.showErrorSnackbar(context, state.message);
             }
           },
         ),
@@ -58,12 +56,7 @@ class _TemporaryShopPageState extends State<TemporaryShopPage> {
           listenWhen: (previous, current) => current is ShopAlreadyOwned,
           listener: (context, state) {
             if (state is ShopAlreadyOwned) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(state.message),
-                  backgroundColor: ColorManager.errorColor,
-                ),
-              );
+              Snackbars.showNoticeSnackbar(context, state.message);
             }
           },
         ),

@@ -11,6 +11,7 @@ import '../../../../core/routes/routes.dart';
 import '../../../../core/theme/color_manger.dart';
 import '../../../../core/theme/text_style.dart';
 import '../../../../core/widget/custom_text_form_field.dart';
+import '../../../../core/widget/snackabars.dart';
 import '../manager/login_cubit/login_cubit.dart';
 import '../manager/login_cubit/login_state.dart';
 
@@ -37,9 +38,7 @@ class _LoginState extends State<Login> {
             Navigator.pushReplacementNamed(context, Routes.appLayoutScreen);
           }
           if (state is LoginErrorState) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.failure.message)),
-            );
+            Snackbars.showErrorSnackbar(context, state.failure.message);
           }
         }, builder: (context, state) {
           var cubit = context.read<LoginCubit>();

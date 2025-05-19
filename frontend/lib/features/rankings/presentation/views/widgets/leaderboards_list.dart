@@ -7,6 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import '../../../../../core/theme/background_theme.dart';
 import '../../../../../core/utils/get_it_constants.dart';
+import '../../../../../core/widget/snackabars.dart';
 import '../../../../home/data/model/leaderboard_level_model.dart';
 import '../../../../home/data/model/leaderboard_streak_model.dart';
 import '../../../../home/data/model/user_model.dart';
@@ -53,9 +54,7 @@ class _LeaderboardsListState extends State<LeaderboardsList> {
           },
           listener: (context, state) {
             if (state is LeaderboardError) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.failure.message)),
-              );
+              Snackbars.showErrorSnackbar(context, state.failure.message);
             }
           },
           builder: (context, state) {

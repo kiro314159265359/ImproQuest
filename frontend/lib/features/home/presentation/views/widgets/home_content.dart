@@ -17,6 +17,8 @@ import 'package:flutter_application_2/features/settings/presentation/views/widge
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
+import '../../../../../core/widget/snackabars.dart';
+
 class HomeContent extends StatelessWidget {
   const HomeContent({super.key});
 
@@ -36,9 +38,7 @@ class HomeContent extends StatelessWidget {
             return BlocConsumer<UserCubit, UserState>(
               listener: (context, state) {
                 if (state is UserError) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(state.failure.message)),
-                  );
+                  Snackbars.showErrorSnackbar(context, state.failure.message);
                 }
               },
               builder: (context, state) {

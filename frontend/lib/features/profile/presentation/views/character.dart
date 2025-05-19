@@ -10,6 +10,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/color_manger.dart';
 import '../../../../core/theme/text_style.dart';
 import '../../../../core/utils/app_icons.dart';
+import '../../../../core/widget/snackabars.dart';
 
 class Character extends StatefulWidget {
   const Character({super.key});
@@ -28,9 +29,7 @@ class _CharacterState extends State<Character> {
           current is UserError,
       listener: (context, state) {
         if (state is UserError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.failure.message)),
-          );
+          Snackbars.showErrorSnackbar(context, state.failure.message);
         }
       },
       builder: (context, state) {

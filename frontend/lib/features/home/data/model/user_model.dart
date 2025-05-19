@@ -21,7 +21,7 @@ class UserModel {
   List<Quests>? quests;
   Stats? stats;
   EquippedItems? equippedItems;
-  int? accumDistance;
+  double? accumDistance;
   String? rank;
   String? createdAt;
   String? updatedAt;

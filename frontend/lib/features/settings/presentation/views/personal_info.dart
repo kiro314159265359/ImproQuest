@@ -12,6 +12,7 @@ import '../../../../core/theme/color_manger.dart';
 import '../../../../core/theme/text_style.dart';
 import '../../../../core/utils/app_images.dart';
 import '../../../../core/widget/dialogs.dart';
+import '../../../../core/widget/snackabars.dart';
 import '../../../home/presentation/manager/user_cubit.dart';
 import '../../../home/presentation/manager/user_state.dart';
 
@@ -66,20 +67,18 @@ class _PersonalInfoState extends State<PersonalInfo> {
           }
           if (state is UserUpdated) {
             Navigator.pop(context);
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Profile updated successfully')),
-            );
+            Snackbars.showSuccessSnackbar(
+                context, "Profile updated successfully");
           }
           if (state is UserUpdating) {
             Dialogs.loadingDialog(context: context);
           }
           if (state is UserError || state is UpdateError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                  content: Text(state is UserError
-                      ? state.failure.message
-                      : (state as UpdateError).failure.message)),
-            );
+            Snackbars.showErrorSnackbar(
+                context,
+                state is UserError
+                    ? state.failure.message
+                    : (state as UpdateError).failure.message);
           }
         },
         builder: (context, state) {

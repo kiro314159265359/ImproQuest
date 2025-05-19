@@ -6,6 +6,7 @@ import 'package:flutter_application_2/game/models/shop_item.dart';
 import 'package:flutter_application_2/game/widgets/inventory_item_card.dart';
 import 'package:flutter_application_2/core/widget/custom_button.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../../core/widget/snackabars.dart';
 import '../../../../home/presentation/manager/user_cubit.dart';
 import '../../../../home/presentation/manager/user_state.dart';
 
@@ -32,9 +33,7 @@ class _InventoryUIState extends State<InventoryUI> {
     return BlocConsumer<UserCubit, UserState>(
       listener: (context, state) {
         if (state is UserError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.failure.message)),
-          );
+          Snackbars.showErrorSnackbar(context, state.failure.message);
         }
       },
       builder: (context, state) {
