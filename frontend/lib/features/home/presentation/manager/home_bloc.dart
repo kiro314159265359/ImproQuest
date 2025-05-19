@@ -14,6 +14,7 @@ class HomeBloc extends HydratedBloc<HomeEvent, HomeState> {
   final DistanceTrackingService distanceService;
   late StreamSubscription<UserState> _userStateSub;
   bool _distanceSent = false;
+  double _lastDistanceSent = 0.0;
   WebSocketChannel? channel;
 
   HomeBloc({
@@ -88,13 +89,22 @@ class HomeBloc extends HydratedBloc<HomeEvent, HomeState> {
     print("HomeBloc received distance update: ${event.distance}");
 
     try {
+      final newTotal = event.distance;
+      final delta = newTotal - _lastDistanceSent;
+      if (delta <= 0) {
+        print("No additional distance to send (delta: $delta)");
+        return;
+      }
+
       final now = DateTime.now().toUtc();
       final payload = {
-        'distance': event.distance,
+        'distance': delta,
         'timestamp': '${now.toIso8601String().split('.').first}Z'
       };
       final msg = 'SendRun, ${jsonEncode(payload)}';
       channel?.sink.add(msg);
+      _lastDistanceSent = newTotal;
+
       await userCubit.updateDistanceAndCheckQuests(event.distance);
       print("Updated user cubit with new distance: ${event.distance}");
     } catch (e) {
