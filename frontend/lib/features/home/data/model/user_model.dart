@@ -11,10 +11,12 @@ class UserModel {
   String? birthDate;
   int? weight;
   int? xp;
+  int? maxXP;
   int? level;
   int? gold;
   Streak? streak;
   String? inventoryId;
+  String? avatarUrl;
   // List<Null>? achievements;
   List<Quests>? quests;
   Stats? stats;
@@ -35,10 +37,12 @@ class UserModel {
       this.birthDate,
       this.weight,
       this.xp,
+      this.maxXP,
       this.level,
       this.gold,
       this.streak,
       this.inventoryId,
+      this.avatarUrl,
       // this.achievements,
       this.quests,
       this.stats,
@@ -66,10 +70,12 @@ class UserModel {
     }
     weight = json['weight'];
     xp = json['xp'];
+    maxXP = json['maxXp'];
     level = json['level'];
     gold = json['gold'];
     streak = json['streak'] != null ? Streak.fromJson(json['streak']) : null;
     inventoryId = json['inventory_id'];
+    avatarUrl = json['avatar_url'];
     // if (json['achievements'] != null) {
     //   achievements = <Null>[];
     //   json['achievements'].forEach((v) {
@@ -105,11 +111,13 @@ class UserModel {
     data['weight'] = weight;
     data['xp'] = xp;
     data['level'] = level;
+    data['maxXp'] = maxXP;
     data['gold'] = gold;
     if (streak != null) {
       data['streak'] = streak!.toJson();
     }
     data['inventory_id'] = inventoryId;
+    data['avatar_url'] = avatarUrl;
     // if (this.achievements != null) {
     //   data['achievements'] = this.achievements!.map((v) => v.toJson()).toList();
     // }
@@ -152,6 +160,7 @@ class Streak {
 class Quests {
   String? sId;
   String? name;
+  String? type;
   int? goal;
   double? progress;
   int? xpReward;
@@ -162,6 +171,7 @@ class Quests {
   Quests(
       {this.sId,
       this.name,
+      this.type,
       this.goal,
       this.progress,
       this.xpReward,
@@ -172,6 +182,7 @@ class Quests {
   Quests.fromJson(Map<String, dynamic> json) {
     sId = json['_id'];
     name = json['name'];
+    type = json['type'];
     goal = json['goal'];
     progress = json['progress'];
     xpReward = json['xp_reward'];
@@ -184,6 +195,7 @@ class Quests {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['_id'] = sId;
     data['name'] = name;
+    data['type'] = type;
     data['goal'] = goal;
     data['progress'] = progress;
     data['xp_reward'] = xpReward;

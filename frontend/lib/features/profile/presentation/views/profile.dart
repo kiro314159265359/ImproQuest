@@ -90,7 +90,7 @@ class _ProfileState extends State<Profile> {
             child: TabBarView(
 // physics: NeverScrollableScrollPhysics(),
               children: <Widget>[
-                Statistics(user: user),
+                Statistics(user: user,width: w, height: h),
                 const Achievements(),
                 const Character(),
               ],

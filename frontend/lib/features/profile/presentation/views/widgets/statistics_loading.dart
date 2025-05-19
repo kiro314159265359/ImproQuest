@@ -4,6 +4,7 @@ import '../../../../../core/theme/color_manger.dart';
 import '../../../../../core/utils/app_icons.dart';
 import '../../../../../core/theme/text_style.dart';
 import '../../../../../core/widget/appbar_stats.dart';
+import '../../../../home/presentation/views/widgets/custom_rich_text.dart';
 
 class StatisticsLoading extends StatelessWidget {
   const StatisticsLoading({super.key});
@@ -14,11 +15,11 @@ class StatisticsLoading extends StatelessWidget {
     var h = MediaQuery.of(context).size.height;
     final weekDays = ['Su', 'M', 'Tu', 'W', 'Th', 'F', 'Sa'];
 
-    return Skeletonizer(
-      enabled: true,
-      enableSwitchAnimation: true,
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: w * 0.04, vertical: h * 0.02),
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: w * 0.04, vertical: h * 0.02),
+      child: Skeletonizer(
+        enabled: true,
+        enableSwitchAnimation: true,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -76,25 +77,37 @@ class StatisticsLoading extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 50),
-            Expanded(
-              child: Container(
-                color: Colors.transparent,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: List.generate(6, (index) {
-                    return Container(
-                      width: 25,
-                      height: 100 + (index * 30) % 150,
-                      decoration: const BoxDecoration(
-                        color: ColorManager.primaryColor,
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(25),
-                          topRight: Radius.circular(25),
+            SizedBox(
+              height: h * 0.2,
+              child: Card(
+                color: ColorManager.gunmetal,
+                child: ListTile(
+                  title: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("Distance", style: TextStyles.semiBold16White),
+                            Text("Last 7 days",
+                                style: TextStyles.semiBold12lightGrey)
+                          ],
                         ),
-                      ),
-                    );
-                  }),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            CustomRichText(
+                              text1: "0.00",
+                              textStyle1: TextStyles.semiBold16Primary,
+                              text2: "m",
+                              textStyle2: TextStyles.semiBold12Primary,
+                            ),
+                            Text("Today", style: TextStyles.semiBold12Primary),
+                          ],
+                        ),
+                      ]),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 30),
                 ),
               ),
             )

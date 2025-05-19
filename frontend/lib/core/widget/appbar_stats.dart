@@ -64,9 +64,9 @@ class _AppBarStatsState extends State<AppBarStats> {
                 child: LinearPercentIndicator(
                   width: w * 0.3,
                   lineHeight: 25,
-                  percent: (user.xp! / 1959541954191981),
+                  percent: (user.xp! / (user.level!*100)),
                   center: CustomRichText(
-                    text1: "${user.xp}/240",
+                    text1: "${user.xp}/${(user.level!*100)}",
                     textStyle1: TextStyles.medium12White,
                     text2: "XP",
                     textStyle2: TextStyles.medium8White,
@@ -81,7 +81,9 @@ class _AppBarStatsState extends State<AppBarStats> {
                 backgroundColor: ColorManager.primaryColor,
                 child: CircleAvatar(
                   radius: 26,
-                  backgroundImage: const AssetImage(AppImages.profilePhoto),
+                  backgroundImage: user.avatarUrl == null
+                      ? const AssetImage(AppImages.profilePhoto)
+                      : NetworkImage(user.avatarUrl!),
                   child: Transform.translate(
                     offset: const Offset(0, 28),
                     child: Container(

@@ -1,5 +1,6 @@
 class AppImages {
-    static const String facebookLogo = 'assets/images/facebook.png';
+  static const String improquestLogo = 'assets/images/ImproQuest_Logo.png';
+  static const String facebookLogo = 'assets/images/facebook.png';
   static const String googleLogo = 'assets/images/google.png';
   static const String appleLogo = 'assets/images/Social_Icons.png';
   static const String profilePhoto = 'assets/images/ProfilePhoto.png';
@@ -9,5 +10,4 @@ class AppImages {
   static const String armorPhoto = 'assets/images/ArmorPhoto.png';
   static const String glovesPhoto = 'assets/images/GlovesPhoto.png';
   static const String bootsPhoto = 'assets/images/BootsPhoto.png';
-
 }

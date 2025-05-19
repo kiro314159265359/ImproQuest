@@ -13,3 +13,23 @@ class EmailErrorState extends ForgetPasswordState {
 
   EmailErrorState(this.failure);
 }
+
+final class OTPSuccessState extends ForgetPasswordState {}
+
+final class OTPSendingState extends ForgetPasswordState {}
+
+class OTPErrorState extends ForgetPasswordState {
+  Failure failure;
+
+  OTPErrorState(this.failure);
+}
+
+final class ResetPasswordSuccessState extends ForgetPasswordState {}
+
+final class ResetPasswordSendingState extends ForgetPasswordState {}
+
+class ResetPasswordErrorState extends ForgetPasswordState {
+  Failure failure;
+
+  ResetPasswordErrorState(this.failure);
+}

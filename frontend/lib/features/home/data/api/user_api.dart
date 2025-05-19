@@ -1,4 +1,7 @@
 import 'dart:convert';
+import 'package:dio/dio.dart';
+import 'package:flutter_application_2/features/home/data/model/distance_model.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter_application_2/features/home/data/model/inventory_model.dart';
 import 'package:flutter_application_2/features/home/data/model/leaderboard_level_model.dart';
 import 'package:flutter_application_2/features/home/data/model/leaderboard_streak_model.dart';
@@ -27,15 +30,36 @@ class UserApi extends UserRepo {
       required int height,
       required int weight,
       required String gender,
-      required String birthDate}) async {
-    await apiService.patch('/users/${user.sId}', body: {
+      required String birthDate,
+      XFile? profilePicture}) async {
+    Map<String, dynamic> fields = {
       "username": username,
       "email": email,
       "height": height,
       "weight": weight,
       "gender": gender,
       "birth_date": birthDate,
-    });
+    };
+
+    FormData formData = FormData.fromMap(fields);
+
+    if (profilePicture != null) {
+      formData.files.add(MapEntry(
+        "avatar",
+        await MultipartFile.fromFile(profilePicture.path,
+            filename: profilePicture.name),
+      ));
+    }
+
+    await apiService.patch('/users/${user.sId}', body: formData);
+
+    user.username = username;
+    user.email = email;
+    user.height = height;
+    user.weight = weight;
+    user.gender = gender;
+    user.birthDate = birthDate;
+
     return user;
   }
 
@@ -58,6 +82,22 @@ class UserApi extends UserRepo {
       'gold_reward': questGold,
       'type': questType,
     });
+  }
+
+  @override
+  Future<void> editQuest(String? qId, String questName, int questXp,
+      int questGold, String questType) async {
+    await apiService.put('/quests/mental-habit/$qId', body: {
+      'name': questName,
+      'xp_reward': questXp,
+      'gold_reward': questGold,
+      'type': questType,
+    });
+  }
+
+  @override
+  Future<void> deleteQuest(String? qId) async {
+    await apiService.delete('/quests/mental-habit/$qId');
   }
 
   @override
@@ -97,5 +137,51 @@ class UserApi extends UserRepo {
   Future<InventoryModel> getUserItems() async {
     var response = await apiService.get(EndPoints.userItems);
     return InventoryModel.fromJson(jsonDecode(response.toString()));
+  }
+
+  @override
+  Future<double> getDistanceToday(UserModel user) async {
+    var response = await apiService.get("/runs/${user.sId}/distance/today");
+    var data = jsonDecode(response.toString());
+    if (data['totalDistance'] == null) {
+      return 0.0;
+    }
+    return double.parse(data['totalDistance'].toString());
+  }
+
+  List<DistanceModel> _parseDistanceListModels(dynamic responseData) {
+    List<dynamic> listPayload;
+    if (responseData is String) {
+      listPayload = jsonDecode(responseData) as List<dynamic>;
+    } else if (responseData is List) {
+      listPayload = responseData;
+    } else {
+      throw Exception(
+          "Invalid response type for distance list: ${responseData.runtimeType}. Expected String or List.");
+    }
+    return listPayload
+        .map((item) => DistanceModel.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  @override
+  Future<List<DistanceModel>> getDistanceWeek(UserModel user) async {
+    var response =
+        await apiService.get("/runs/${user.sId}/distance/days-of-week");
+    return _parseDistanceListModels(response.data);
+  }
+
+  @override
+  Future<List<DistanceModel>> getDistanceMonth(UserModel user) async {
+    var response =
+        await apiService.get("/runs/${user.sId}/distance/weeks-of-month");
+    return _parseDistanceListModels(response.data);
+  }
+
+  @override
+  Future<List<DistanceModel>> getDistanceYear(UserModel user) async {
+    var response =
+        await apiService.get("/runs/${user.sId}/distance/months-of-year");
+    return _parseDistanceListModels(response.data);
   }
 }

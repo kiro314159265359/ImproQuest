@@ -85,13 +85,13 @@ class HomeContent extends StatelessWidget {
 
   Widget _buildHomeContent(BuildContext context, UserModel user,
       double screenWidth, double screenHeight) {
-    return Skeletonizer(
-      enabled: context.read<UserCubit>().state is UserLoading,
-      enableSwitchAnimation: true,
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.symmetric(
-              horizontal: screenWidth * 0.04, vertical: screenHeight * 0.02),
+    return SingleChildScrollView(
+      child: Padding(
+        padding: EdgeInsets.symmetric(
+            horizontal: screenWidth * 0.04, vertical: screenHeight * 0.02),
+        child: Skeletonizer(
+          enabled: context.read<UserCubit>().state is UserLoading,
+          enableSwitchAnimation: true,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

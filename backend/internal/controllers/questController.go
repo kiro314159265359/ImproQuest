@@ -335,7 +335,7 @@ func CompleteQuest() gin.HandlerFunc {
 		// Update rank if user leveled up
 		if levelUps > 0 {
 			newRank := helpers.GetRankForLevel(user.Level)
-			user.Rank = newRank
+			const pointsPerLevel = 5
 
 			_, err := collection.UpdateOne(
 				ctx,

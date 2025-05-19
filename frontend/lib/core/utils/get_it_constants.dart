@@ -7,6 +7,7 @@ import 'package:flutter_application_2/features/home/data/model/user_model.dart';
 import 'package:flutter_application_2/features/home/presentation/manager/home_bloc.dart';
 import 'package:flutter_application_2/features/home/presentation/manager/user_cubit.dart';
 import 'package:flutter_application_2/core/network/dio_interceptor.dart';
+import 'package:flutter_application_2/features/profile/presentation/manager/distance_cubit.dart';
 import 'package:flutter_application_2/game/logic/shop_bloc.dart';
 import 'package:flutter_application_2/game/services/shop_api.dart';
 import 'package:flutter_application_2/features/rankings/presentation/manager/leaderboard_cubit.dart';
@@ -37,6 +38,7 @@ Future<void> setupDependencies() async {
   getIt.registerSingleton<LoginRepo>(loginRepo);
   getIt.registerSingleton<UserCubit>(UserCubit(userApi));
   getIt.registerSingleton<LeaderboardCubit>(LeaderboardCubit(userApi));
+  getIt.registerFactory<DistanceCubit>(() => DistanceCubit(userApi));
 
   // Services
   if (!getIt.isRegistered<DistanceTrackingService>()) {

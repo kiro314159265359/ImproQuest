@@ -58,8 +58,10 @@ dependencies:
   skeletonizer:
   flutter_native_splash: ^2.4.4
   flutter_launcher_icons: ^0.14.3
+  image_picker: ^1.1.2
+  web_socket_channel: ^3.0.3
+  flutter_slidable: ^4.0.0
   
-  # image_picker:
 dev_dependencies:
   flutter_test:
     sdk: flutter

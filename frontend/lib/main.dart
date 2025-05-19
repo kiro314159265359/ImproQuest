@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_2/core/routes/app_routes.dart';
 import 'package:flutter_application_2/core/services/permission_manager.dart';
 import 'package:flutter_application_2/core/theme/app_theme.dart';
+import 'package:flutter_application_2/features/auth/presentation/manager/forget_password_cubit/forget_password_cubit.dart';
+import 'package:flutter_application_2/features/profile/presentation/manager/distance_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_application_2/features/auth/domain/repo/login_repo.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
@@ -53,8 +55,14 @@ class MyApp extends StatelessWidget {
         BlocProvider<RegisterCubit>.value(
           value: RegisterCubit(RegisterApi()),
         ),
+        BlocProvider<ForgetPasswordCubit>.value(
+          value: ForgetPasswordCubit(getIt<LoginRepo>()),
+        ),
         BlocProvider<UserCubit>.value(
           value: getIt<UserCubit>(),
+        ),
+        BlocProvider<DistanceCubit>.value(
+          value: getIt<DistanceCubit>(),
         ),
         BlocProvider<LeaderboardCubit>.value(
           value: getIt<LeaderboardCubit>(),
