@@ -121,6 +121,7 @@ class _PersonalInfoState extends State<PersonalInfo> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 CircleAvatar(
+                  backgroundColor: ColorManager.primaryColor,
                   radius: 85,
                   backgroundImage: backgroundImageProvider,
                   child: Align(

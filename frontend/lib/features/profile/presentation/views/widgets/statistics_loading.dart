@@ -76,7 +76,7 @@ class StatisticsLoading extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 50),
+            SizedBox(height: h * 0.05),
             SizedBox(
               height: h * 0.2,
               child: Card(
