@@ -90,7 +90,7 @@ flutter:
     - assets/images/sprites/backgrounds/nature_3/
     - assets/images/sprites/character/Shinobi/
     - assets/images/sprites/character/Fighter/
-    - assets/images/sprites/backgrounds/Vertical/
+    - assets/images/sprites/backgrounds/vertical/
     - assets/audio/music/
     - assets/audio/sfx/
   #   - images/a_dot_ham.jpeg

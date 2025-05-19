@@ -331,20 +331,23 @@ func CompleteQuest() gin.HandlerFunc {
 		// Update rank if user leveled up
 		if levelUps > 0 {
 			newRank := helpers.GetRankForLevel(user.Level)
-			user.Rank = newRank
+			const pointsPerLevel = 5
 
-			_, err := collection.UpdateOne(
-				ctx,
-				bson.M{"_id": userOID},
-				bson.M{"$set": bson.M{
-					"xp":    user.XP,
-					"level": user.Level,
-					"rank":  user.Rank,
-				}},
-			)
+			updateFields := bson.M{
+				"xp":    user.XP,
+				"level": user.Level,
+				"rank":  newRank,
+			}
+			updateRankAndPoints := bson.M{
+				"$set": updateFields,
+				"$inc": bson.M{"skillpoints": pointsPerLevel},
+			}
+
+			_, err := collection.UpdateOne(ctx, bson.M{"_id": userOID}, updateRankAndPoints)
 			if helpers.HandleError(c, err) {
 				return
 			}
+			user.Rank = newRank
 		}
 
 		// 6. Send response
