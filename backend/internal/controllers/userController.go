@@ -362,6 +362,7 @@ func UpdateUser() gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not fetch updated user"})
 			return
 		}
+		// If any updated fields (e.g. AccumDistance if it were part of this update) trigger achievements:
 		c.JSON(http.StatusOK, gin.H{
 			"message": "User updated successfully",
 			"user":    updated,
@@ -540,116 +541,6 @@ func UpdateUserStats() gin.HandlerFunc {
 		})
 	}
 
-}
-
-func UpdateRunningQuestProgress() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		// Get user ID from context (set by auth middleware)
-		userID := c.GetString("id")
-		if userID == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "user ID not found in context"})
-			return
-		}
-
-		// Parse request body
-		var requestData struct {
-			Progress float64 `json:"progress" binding:"required,gte=0"`
-		}
-		if err := c.ShouldBindJSON(&requestData); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request data: " + err.Error()})
-			return
-		}
-
-		// Convert user ID to ObjectID
-		userOID, err := bson.ObjectIDFromHex(userID)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID format"})
-			return
-		}
-
-		// Get database collections
-		userCollection := database.Users()
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-
-		// Find user and their quests
-		var user models.User
-		err = userCollection.FindOne(ctx, bson.M{"_id": userOID}).Decode(&user)
-		if err != nil {
-			if err == mongo.ErrNoDocuments {
-				c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
-			} else {
-				logger.Errorf("Error fetching user: %v", err)
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "database error"})
-			}
-			return
-		}
-
-		// Check if user has any quests
-		if len(user.CurrentQuests) == 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "user has no active quests"})
-			return
-		}
-
-		// Find the running quest
-		var runningQuest *models.Quest
-		for i, quest := range user.CurrentQuests {
-			if quest.Type != nil && *quest.Type == "Running" {
-				runningQuest = &user.CurrentQuests[i]
-				break
-			}
-		}
-
-		if runningQuest == nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": "no running quest found"})
-			return
-		}
-
-		// Check if quest is already completed
-		if runningQuest.IsCompleted {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "quest is already completed"})
-			return
-		}
-
-		// Update progress
-		progress := requestData.Progress
-		runningQuest.Progress = &progress
-
-		// Check if quest goal has been met and set as completed if so
-		if runningQuest.Goal != nil && progress >= *runningQuest.Goal {
-			runningQuest.Progress = runningQuest.Goal
-			runningQuest.IsCompleted = true
-		}
-
-		// Update in database using the $ positional operator to update the specific quest in the array
-		updateResult, err := userCollection.UpdateOne(
-			ctx,
-			bson.M{"_id": userOID, "quests._id": runningQuest.ID},
-			bson.M{
-				"$set": bson.M{
-					"quests.$.progress":     progress,
-					"quests.$.is_completed": runningQuest.IsCompleted,
-				},
-			},
-		)
-
-		if err != nil {
-			logger.Errorf("Error updating quest progress: %v", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update quest progress"})
-			return
-		}
-
-		if updateResult.MatchedCount == 0 {
-			c.JSON(http.StatusNotFound, gin.H{"error": "quest not found"})
-			return
-		}
-
-		// Return success response with updated quest
-		c.JSON(http.StatusOK, gin.H{
-			"message": "Quest progress updated successfully",
-			"quest":   runningQuest,
-		})
-	}
 }
 
 func CreateCustomQuest() gin.HandlerFunc {
@@ -1127,12 +1018,12 @@ func AddStatsWithSkillPoints() gin.HandlerFunc {
 		}
 
 		// 10. Execute the update.
-		result, err := collection.UpdateOne(ctx, bson.M{"_id": userOID}, update)
+		updateResult, err := collection.UpdateOne(ctx, bson.M{"_id": userOID}, update) // Renamed result to updateResult
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update stats", "details": err.Error()})
 			return
 		}
-		if result.ModifiedCount == 0 {
+		if updateResult.ModifiedCount == 0 { // Used updateResult
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "no changes were made; please check the request"})
 			return
 		}
