@@ -332,33 +332,33 @@ func CompleteQuest() gin.HandlerFunc {
 			}
 		}
 
-		// Update rank if user leveled up
 		if levelUps > 0 {
 			newRank := helpers.GetRankForLevel(user.Level)
 			const pointsPerLevel = 5
 
-			_, err := collection.UpdateOne(
-				ctx,
-				bson.M{"_id": userOID},
-				bson.M{"$set": bson.M{
-					"xp":         user.XP,
-					"level":      user.Level,
-					"rank":       user.Rank,
-					"updated_at": time.Now(),
-				}},
-			)
+			updateFields := bson.M{
+				"xp":    user.XP,
+				"level": user.Level,
+				"rank":  newRank,
+			}
+			updateRankAndPoints := bson.M{
+				"$set": updateFields,
+				"$inc": bson.M{"skillpoints": pointsPerLevel},
+			}
+
+			_, err := collection.UpdateOne(ctx, bson.M{"_id": userOID}, updateRankAndPoints)
 			if helpers.HandleError(c, err) {
 				return
 			}
-			// Fetch user again if level up happened to have latest data for achievements
-			if levelUps > 0 {
-				err = collection.FindOne(ctx, bson.M{"_id": userOID}).Decode(&user)
-				if helpers.HandleError(c, err) {
-					return
-				}
+			user.Rank = newRank
+
+		}
+		if levelUps > 0 {
+			err = collection.FindOne(ctx, bson.M{"_id": userOID}).Decode(&user)
+			if helpers.HandleError(c, err) {
+				return
 			}
 		}
-
 		// Check for achievements after all updates
 		go services.AwardAchievements(context.Background(), userOID) // Run in a goroutine if it can be slow
 
