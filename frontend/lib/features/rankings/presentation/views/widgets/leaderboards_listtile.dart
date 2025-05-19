@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../../core/theme/color_manger.dart';
 import '../../../../../core/theme/text_style.dart';
+import '../../../../../core/utils/app_images.dart';
 
 class LeaderboardsListTile extends StatefulWidget {
   final int? playerPlace;
@@ -34,8 +35,11 @@ class _LeaderboardsListTileState extends State<LeaderboardsListTile> {
               Padding(
                 padding: const EdgeInsets.only(right: 7),
                 child: CircleAvatar(
+                  backgroundColor: ColorManager.primaryColor,
                   radius: 24,
-                  backgroundImage: AssetImage(widget.playerImage!),
+                  backgroundImage: widget.playerImage == null
+                      ? const AssetImage(AppImages.profilePhoto)
+                      : NetworkImage(widget.playerImage!),
                 ),
               ),
               Text(widget.isUser ? "You" : widget.playerName!,

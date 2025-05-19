@@ -118,11 +118,7 @@ class _StatisticsState extends State<Statistics> {
                     BlocBuilder<DistanceCubit, DistanceState>(
                       builder: (context, state) {
                         if (state is DistanceLoading) {
-                          return const Center(
-                              child: SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator()));
+                          return const CircularProgressIndicator();
                         } else if (state is DistanceTodayLoaded) {
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -139,9 +135,6 @@ class _StatisticsState extends State<Statistics> {
                                   style: TextStyles.semiBold12Primary),
                             ],
                           );
-                        } else if (state is DistanceError) {
-                          return Text("Error",
-                              style: TextStyles.semiBold12Primary);
                         }
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,

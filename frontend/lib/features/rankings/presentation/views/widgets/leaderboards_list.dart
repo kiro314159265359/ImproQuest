@@ -6,7 +6,6 @@ import 'package:flutter_application_2/features/rankings/presentation/views/widge
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import '../../../../../core/theme/background_theme.dart';
-import '../../../../../core/utils/app_images.dart';
 import '../../../../../core/utils/get_it_constants.dart';
 import '../../../../home/data/model/leaderboard_level_model.dart';
 import '../../../../home/data/model/leaderboard_streak_model.dart';
@@ -89,7 +88,7 @@ class _LeaderboardsListState extends State<LeaderboardsList> {
                   leaderboardItem?.sId == getIt<UserModel>().sId;
 
               return LeaderboardsListTile(
-                playerImage: AppImages.profilePhoto,
+                playerImage: leaderboardItem?.avatarUrl,
                 playerPlace: index,
                 playerName: leaderboardItem?.username,
                 playerPoints: leaderboardItem?.level ?? 0,
@@ -109,7 +108,7 @@ class _LeaderboardsListState extends State<LeaderboardsList> {
                   leaderboardItem?.sId == getIt<UserModel>().sId;
 
               return LeaderboardsListTile(
-                playerImage: AppImages.profilePhoto,
+                playerImage: leaderboardItem?.avatarUrl,
                 playerPlace: index,
                 playerName: leaderboardItem?.username,
                 playerPoints: leaderboardItem?.highestStreak ?? 0,
@@ -135,7 +134,7 @@ class _LeaderboardsListState extends State<LeaderboardsList> {
         itemCount: 10,
         itemBuilder: (context, index) {
           return const LeaderboardsListTile(
-            playerImage: AppImages.profilePhoto,
+            playerImage: null,
             playerPlace: 0,
             playerName: "Loading...",
             playerPoints: 0,

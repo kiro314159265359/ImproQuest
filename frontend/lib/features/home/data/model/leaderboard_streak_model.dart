@@ -29,6 +29,7 @@ class LeaderboardStreakListModel {
 
 class LeaderboardStreakModel {
   String? sId;
+  String? avatarUrl;
   int? currentStreak;
   int? highestStreak;
   String? rank;
@@ -36,6 +37,7 @@ class LeaderboardStreakModel {
 
   LeaderboardStreakModel(
       {this.sId,
+      this.avatarUrl,
       this.currentStreak,
       this.highestStreak,
       this.rank,
@@ -43,6 +45,7 @@ class LeaderboardStreakModel {
 
   LeaderboardStreakModel.fromJson(Map<String, dynamic> json) {
     sId = json['_id'];
+    avatarUrl = json['avatar_url'];
     currentStreak = json['current_streak'];
     highestStreak = json['highest_streak'];
     rank = json['rank'];
@@ -52,6 +55,7 @@ class LeaderboardStreakModel {
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['_id'] = sId;
+    data['avatar_url'] = avatarUrl;
     data['current_streak'] = currentStreak;
     data['highest_streak'] = highestStreak;
     data['rank'] = rank;

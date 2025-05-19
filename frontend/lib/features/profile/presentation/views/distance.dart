@@ -34,37 +34,100 @@ class _DistanceState extends State<Distance> {
 
   ({List<double> data, List<String> labels}) _prepareChartData(
       List<DistanceModel> distancePoints, ChartDataType type) {
-    List<double> data = [];
-    List<String> labels = [];
+    List<double> resultData = [];
+    List<String> resultLabels = [];
 
-    if (distancePoints.isEmpty) {
-      return (data: [], labels: []);
-    }
+    switch (type) {
+      case ChartDataType.week:
+        resultLabels.addAll(["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]);
+        resultData.addAll(List.filled(7, 0.0));
 
-    for (var point in distancePoints) {
-      data.add(point.distance ?? 0.0);
-      String label = '';
-      switch (type) {
-        case ChartDataType.week:
-          label = point.weekday?.substring(0, 2) ?? // "Mo", "Tu"
-              (point.date != null && point.date!.length >= 5
-                  ? point.date!.substring(5, 10) // MM-DD
-                  : 'Day');
-          break;
-        case ChartDataType.month: // Assuming API returns data per week
-          label = (point.date != null && point.date!.length >= 10
-                  ? point.date!.substring(5, 10) // Start date of week as MM-DD
-                  : 'Week') +
-              (point.weekday != null
-                  ? " (${point.weekday})"
-                  : ""); // Optional: if weekday has week number
-          break;
-        case ChartDataType.year: // Assuming API returns data per month
-          if (point.date != null && point.date!.length >= 7) {
-            // Try to get month name or number
+        const Map<String, int> dayNameToIndex = {
+          "mo": 0,
+          "mon": 0,
+          "monday": 0,
+          "tu": 1,
+          "tue": 1,
+          "tuesday": 1,
+          "we": 2,
+          "wed": 2,
+          "wednesday": 2,
+          "th": 3,
+          "thu": 3,
+          "thursday": 3,
+          "fr": 4,
+          "fri": 4,
+          "friday": 4,
+          "sa": 5,
+          "sat": 5,
+          "saturday": 5,
+          "su": 6,
+          "sun": 6,
+          "sunday": 6,
+        };
+
+        for (var point in distancePoints) {
+          int? dayIndex;
+          if (point.weekday != null) {
+            String cleanedWeekday = point.weekday!.toLowerCase();
+            if (dayNameToIndex.containsKey(cleanedWeekday)) {
+              dayIndex = dayNameToIndex[cleanedWeekday];
+            } else if (cleanedWeekday.length >= 2) {
+              String firstTwo = cleanedWeekday.substring(0, 2);
+              if (dayNameToIndex.containsKey(firstTwo)) {
+                dayIndex = dayNameToIndex[firstTwo];
+              }
+            }
+          }
+
+          if (dayIndex == null && point.date != null) {
             try {
               DateTime parsedDate = DateTime.parse(point.date!);
-              // Basic month name mapping, can be improved with intl package
+              dayIndex = parsedDate.weekday -
+                  1; // DateTime.monday == 1 ... sunday == 7
+            } catch (e) {
+              // Ignore date parsing errors for label determination
+            }
+          }
+
+          if (dayIndex != null && dayIndex >= 0 && dayIndex < 7) {
+            resultData[dayIndex] = point.distance ?? 0.0;
+          }
+        }
+        break;
+
+      case ChartDataType.month:
+        int weekCounter = 1; // Fallback counter
+        for (var point in distancePoints) {
+          resultData.add(point.distance ?? 0.0);
+          String label;
+          if (point.date != null && point.date!.length >= 10) {
+            try {
+              // Assuming date is in ISO8601 format or at least YYYY-MM-DD...
+              // Extracts MM-DD from YYYY-MM-DD...
+              String mm = point.date!.substring(5, 7);
+              String dd = point.date!.substring(8, 10);
+              label = "$mm-$dd";
+            } catch (e) {
+              // Fallback if date string is not as expected (e.g., too short, wrong format)
+              label = "W$weekCounter";
+            }
+          } else {
+            // Fallback if date is null or too short
+            label = "W$weekCounter";
+          }
+          resultLabels.add(label);
+          weekCounter++;
+        }
+        break;
+
+      case ChartDataType.year:
+        for (var point in distancePoints) {
+          resultData.add(point.distance ?? 0.0);
+          String label = '';
+          if (point.date != null && point.date!.length >= 7) {
+            try {
+              DateTime parsedDate = DateTime.parse(point.date!);
               const monthNames = [
                 "Jan",
                 "Feb",
@@ -84,16 +147,15 @@ class _DistanceState extends State<Distance> {
               label = point.date!.substring(5, 7); // MM
             }
           } else if (point.weekday != null) {
-            // if weekday field contains month name
             label = point.weekday!;
           } else {
             label = 'Month';
           }
-          break;
-      }
-      labels.add(label);
+          resultLabels.add(label);
+        }
+        break;
     }
-    return (data: data, labels: labels);
+    return (data: resultData, labels: resultLabels);
   }
 
   @override
@@ -175,7 +237,9 @@ class _DistanceState extends State<Distance> {
           return const Center(child: CircularProgressIndicator());
         } else if (state is DistanceLoaded) {
           final chartData = _prepareChartData(state.distanceList, type);
-          if (chartData.data.isEmpty) {
+          // For week, _prepareChartData always returns 7 labels & data points.
+          // For month/year, if distancePoints is empty, chartData.labels will be empty.
+          if (type != ChartDataType.week && chartData.labels.isEmpty) {
             return Center(
                 child: Text("No data available.",
                     style: TextStyles.regular16White));
@@ -183,16 +247,29 @@ class _DistanceState extends State<Distance> {
           return _buildSmallBarChart(
             data: chartData.data,
             unit: "Km",
-            labels: chartData.labels,
+            labels: chartData.labels, // Will have 7 day labels for week type
             width: w,
             height: h * 0.28,
           );
-        } else if (state is DistanceError) {
-          return Center(
-              child: Text("Error: ${state.failure.message}",
-                  style: TextStyles.regular16White));
         }
-        return const Center(child: Text("Select a tab"));
+        if (type == ChartDataType.week) {
+          return _buildSmallBarChart(
+            data: List.filled(7, 0.0), // Empty bars
+            unit: "Km",
+            labels: ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"], // Week labels
+            width: w,
+            height: h * 0.28,
+          );
+        } else {
+          // Month or Year error
+          return _buildSmallBarChart(
+            data: [], // Empty bars
+            unit: "Km",
+            labels: [], // No labels
+            width: w,
+            height: h * 0.28,
+          );
+        }
       },
     );
   }
