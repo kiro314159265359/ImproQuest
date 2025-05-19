@@ -12,11 +12,11 @@ func AchievementRoutes(router *gin.Engine) {
 
 	// admin routes
 	achievements.POST("/create", middleware.CheckUserType("Admin"), controllers.CreateAchievement)
-	achievements.POST("/add/:id", controllers.AddAchievement)
+	achievements.POST("/add/:achievement_id", middleware.CheckUserType("Admin"), controllers.AddAchievement) // Assuming Admin adds to current user or needs user_id param
 	achievements.GET("/", controllers.GetAllAchievements)
-	achievements.GET("/:id", controllers.GetAchievementByID)
-	achievements.PUT("/:id", middleware.CheckUserType("Admin"), controllers.UpdateAchievement)
-	achievements.DELETE("/:id", middleware.CheckUserType("Admin"), controllers.DeleteAchievement)
+	achievements.GET("/:id", controllers.GetAchievementByID)                                      // :id is achievement_id
+	achievements.PUT("/:id", middleware.CheckUserType("Admin"), controllers.UpdateAchievement)    // :id is achievement_id
+	achievements.DELETE("/:id", middleware.CheckUserType("Admin"), controllers.DeleteAchievement) // :id is achievement_id
 	achievements.DELETE("/remove/:achievement_id", middleware.CheckUserType("Admin"), controllers.RemoveAchievement)
 
 }

@@ -18,6 +18,7 @@ import (
 	"github.com/HarDizzeR/Project/backend/internal/helpers"
 	"github.com/HarDizzeR/Project/backend/internal/logger"
 	"github.com/HarDizzeR/Project/backend/internal/models"
+	"github.com/HarDizzeR/Project/backend/internal/services"
 )
 
 var questCollection *mongo.Collection = database.Quests()
@@ -285,11 +286,13 @@ func CompleteQuest() gin.HandlerFunc {
 		}
 		update := bson.M{
 			"$inc": bson.M{
-				"xp":   *quest.XPReward,
-				"gold": *quest.GoldReward,
+				"xp":                     *quest.XPReward,
+				"gold":                   *quest.GoldReward,
+				"completed_quests_count": 1, // Increment completed quests count
 			},
 			"$set": bson.M{
 				"quests.$[elem].is_completed": true,
+				"updated_at":                  time.Now(), // Also update user's updated_at
 			},
 		}
 
@@ -305,11 +308,11 @@ func CompleteQuest() gin.HandlerFunc {
 			return
 		}
 		if result.ModifiedCount == 0 {
-			c.JSON(http.StatusConflict, gin.H{"error": "quest completion failed"})
+			c.JSON(http.StatusConflict, gin.H{"error": "quest completion failed or already completed"}) // Adjusted message
 			return
 		}
 
-		// 4. Fetch updated user to get the new XP total
+		// 4. Fetch updated user to get the new XP total and other stats for achievement check
 		err = collection.FindOne(ctx, bson.M{"_id": userOID}).Decode(&user)
 		if helpers.HandleError(c, err) {
 			return
@@ -338,15 +341,26 @@ func CompleteQuest() gin.HandlerFunc {
 				ctx,
 				bson.M{"_id": userOID},
 				bson.M{"$set": bson.M{
-					"xp":    user.XP,
-					"level": user.Level,
-					"rank":  user.Rank,
+					"xp":         user.XP,
+					"level":      user.Level,
+					"rank":       user.Rank,
+					"updated_at": time.Now(),
 				}},
 			)
 			if helpers.HandleError(c, err) {
 				return
 			}
+			// Fetch user again if level up happened to have latest data for achievements
+			if levelUps > 0 {
+				err = collection.FindOne(ctx, bson.M{"_id": userOID}).Decode(&user)
+				if helpers.HandleError(c, err) {
+					return
+				}
+			}
 		}
+
+		// Check for achievements after all updates
+		go services.AwardAchievements(context.Background(), userOID) // Run in a goroutine if it can be slow
 
 		// 6. Send response
 		c.JSON(http.StatusOK, gin.H{
@@ -415,12 +429,15 @@ func UpdateStreakHandler() gin.HandlerFunc {
 		}
 
 		// 5. Save the updated streak back to the database
-		update := bson.M{"$set": bson.M{"streak": user.Streak}}
+		update := bson.M{"$set": bson.M{"streak": user.Streak, "updated_at": time.Now()}}
 		_, err = collection.UpdateOne(ctx, bson.M{"_id": userOID}, update)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update streak"})
 			return
 		}
+
+		// Check for achievements after streak update
+		go services.AwardAchievements(context.Background(), userOID) // Run in a goroutine
 
 		// 6. Respond with success and the updated streak information
 		c.JSON(http.StatusOK, gin.H{
