@@ -19,4 +19,7 @@ func AchievementRoutes(router *gin.Engine) {
 	achievements.DELETE("/:id", middleware.CheckUserType("Admin"), controllers.DeleteAchievement) // :id is achievement_id
 	achievements.DELETE("/remove/:achievement_id", middleware.CheckUserType("Admin"), controllers.RemoveAchievement)
 
+	// user-specific lists
+	achievements.GET("/unlocked", controllers.GetUserUnlockedAchievements())
+	achievements.GET("/locked", controllers.GetUserLockedAchievements())
 }

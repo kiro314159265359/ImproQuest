@@ -319,3 +319,124 @@ func DeleteAchievement(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "achievement deleted successfully and removed from users"})
 }
+
+// GetUserUnlockedAchievements returns achievements the current user has earned.
+func GetUserUnlockedAchievements() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		uid := c.GetString("id")
+		if uid == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "user ID missing"})
+			return
+		}
+		userOID, err := bson.ObjectIDFromHex(uid)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID"})
+			return
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		var user models.User
+		if err := database.Users().
+			FindOne(ctx, bson.M{"_id": userOID}).
+			Decode(&user); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch user"})
+			return
+		}
+
+		// nothing earned
+		if len(user.UserAchievements) == 0 {
+			c.JSON(http.StatusOK, []gin.H{})
+			return
+		}
+
+		ids := make([]bson.ObjectID, len(user.UserAchievements))
+		for i, ua := range user.UserAchievements {
+			ids[i] = ua.AchievementID
+		}
+
+		cursor, err := database.Achievements().Find(ctx, bson.M{"_id": bson.M{"$in": ids}})
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch achievements"})
+			return
+		}
+		defer cursor.Close(ctx)
+
+		var defs []models.Achievement
+		if err := cursor.All(ctx, &defs); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to decode achievements"})
+			return
+		}
+
+		// map defs by ID
+		defMap := make(map[bson.ObjectID]models.Achievement, len(defs))
+		for _, d := range defs {
+			defMap[d.ID] = d
+		}
+
+		out := make([]gin.H, 0, len(user.UserAchievements))
+		for _, ua := range user.UserAchievements {
+			if d, ok := defMap[ua.AchievementID]; ok {
+				out = append(out, gin.H{
+					"achievement": d,
+					"date_earned": ua.DateEarned,
+				})
+			}
+		}
+		c.JSON(http.StatusOK, out)
+	}
+}
+
+// GetUserLockedAchievements returns achievements the current user has not yet earned.
+func GetUserLockedAchievements() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		uid := c.GetString("id")
+		if uid == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "user ID missing"})
+			return
+		}
+		userOID, err := bson.ObjectIDFromHex(uid)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID"})
+			return
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		var user models.User
+		if err := database.Users().
+			FindOne(ctx, bson.M{"_id": userOID}).
+			Decode(&user); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch user"})
+			return
+		}
+
+		earned := make(map[bson.ObjectID]struct{}, len(user.UserAchievements))
+		for _, ua := range user.UserAchievements {
+			earned[ua.AchievementID] = struct{}{}
+		}
+
+		cursor, err := database.Achievements().Find(ctx, bson.M{})
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch achievements"})
+			return
+		}
+		defer cursor.Close(ctx)
+
+		var all []models.Achievement
+		if err := cursor.All(ctx, &all); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to decode achievements"})
+			return
+		}
+
+		locked := make([]models.Achievement, 0, len(all))
+		for _, a := range all {
+			if _, ok := earned[a.ID]; !ok {
+				locked = append(locked, a)
+			}
+		}
+		c.JSON(http.StatusOK, locked)
+	}
+}
