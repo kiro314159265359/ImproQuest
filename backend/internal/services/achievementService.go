@@ -72,8 +72,10 @@ func AwardAchievements(ctx context.Context, userID bson.ObjectID) {
 	}
 
 	upd := bson.M{
-		"$push": bson.M{"userachievements": bson.M{"$each": toAdd}},
-		"$set":  bson.M{"updated_at": time.Now()},
+		"$addToSet": bson.M{ // use addToSet instead of push
+			"user_achievements": bson.M{"$each": toAdd}, // correct field name
+		},
+		"$set": bson.M{"updated_at": time.Now()},
 	}
 	if _, err := userColl.UpdateOne(ctx, bson.M{"_id": userID}, upd); err != nil {
 		logger.Errorf("AwardAchievements: update user %s: %v", userID.Hex(), err)
