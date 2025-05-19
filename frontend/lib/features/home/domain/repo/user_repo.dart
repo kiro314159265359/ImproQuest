@@ -17,6 +17,9 @@ abstract class UserRepo {
       required String birthDate,
       XFile? profilePicture});
   Future<void> completeQuest(String? qId);
+  Future<void> editQuest(
+      String? qId, String questName, int questXp, int questGold, String questType);
+  Future<void> deleteQuest(String? qId);
   Future<void> completeStreak();
   Future<void> addCustomQuest(
       String questName, int questXp, int questGold, String questType);
