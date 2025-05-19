@@ -91,6 +91,7 @@ class HomeBloc extends HydratedBloc<HomeEvent, HomeState> {
     try {
       final newTotal = event.distance;
       final delta = newTotal - _lastDistanceSent;
+      print(_lastDistanceSent);
       if (delta <= 0) {
         print("No additional distance to send (delta: $delta)");
         return;
@@ -101,6 +102,7 @@ class HomeBloc extends HydratedBloc<HomeEvent, HomeState> {
         'distance': delta,
         'timestamp': '${now.toIso8601String().split('.').first}Z'
       };
+      print(payload);
       final msg = 'SendRun, ${jsonEncode(payload)}';
       channel?.sink.add(msg);
       _lastDistanceSent = newTotal;
