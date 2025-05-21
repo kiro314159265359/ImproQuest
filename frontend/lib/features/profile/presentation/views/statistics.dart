@@ -76,8 +76,12 @@ class _StatisticsState extends State<Statistics> {
                           return SizedBox(
                             width: MediaQuery.of(context).size.width / 8,
                             child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Checkbox(
+                                  visualDensity: VisualDensity.compact,
+                                  materialTapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
                                   shape: const CircleBorder(),
                                   activeColor: ColorManager.primaryColor,
                                   tristate: true,

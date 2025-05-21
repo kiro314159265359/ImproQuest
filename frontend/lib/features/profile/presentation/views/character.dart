@@ -31,6 +31,9 @@ class _CharacterState extends State<Character> {
         if (state is UserError) {
           Snackbars.showErrorSnackbar(context, state.failure.message);
         }
+        if (state is UpdateError) {
+          Snackbars.showErrorSnackbar(context, state.failure.message);
+        }
       },
       builder: (context, state) {
         if (state is UserLoaded) {
@@ -136,31 +139,13 @@ class _CharacterState extends State<Character> {
               ),
             ],
           ),
-          ListTile(
-            title: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text("FATIGUE", style: TextStyles.semiBold12White),
-                Text("24/100", style: TextStyles.semiBold8White),
-              ],
-            ),
-            subtitle: const SizedBox(
-              width: 230,
-              height: 12,
-              child: LinearProgressIndicator(
-                borderRadius: BorderRadius.all(Radius.circular(64)),
-                color: ColorManager.primaryColor,
-                value: 0.5,
-                backgroundColor: ColorManager.containerBackGround,
-              ),
-            ),
-          ),
+          SizedBox(height: h * 0.025),
           Card(
             color: ColorManager.gunmetal,
             child: Column(
               children: [
                 Text(
-                  "SKILL POINTS : 1",
+                  "SKILL POINTS : ${user.skillPoints ?? 0}",
                   style: TextStyles.bold18White,
                 ),
                 StatsListTile(

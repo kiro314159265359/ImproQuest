@@ -1,4 +1,5 @@
 import 'dart:ui';
+// import 'package:device_preview/device_preview.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_2/core/routes/app_routes.dart';
 import 'package:flutter_application_2/core/services/permission_manager.dart';
@@ -40,6 +41,10 @@ Future<void> main() async {
 
   final initialRoute = await determineInitialRoute(getIt<LoginRepo>());
   runApp(WithForegroundTask(child: MyApp(initialRoute: initialRoute)));
+  // runApp(DevicePreview(
+  //   builder: (context) =>
+  //       WithForegroundTask(child: MyApp(initialRoute: initialRoute)),
+  // ));
 }
 
 class MyApp extends StatelessWidget {

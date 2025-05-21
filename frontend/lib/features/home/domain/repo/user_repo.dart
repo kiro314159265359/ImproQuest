@@ -33,6 +33,7 @@ abstract class UserRepo {
   Future<List<DistanceModel>> getDistanceMonth(UserModel user);
   Future<List<DistanceModel>> getDistanceYear(UserModel user);
   Future<InventoryModel> getUserItems();
+  Future<void> skillPoints(String? stats, int? points);
   Future<void> equipItem(String? itemId, String? slot);
   Future<void> unequipItem(String? itemId, String? slot);
   Future<void> deleteAccount(UserModel user);

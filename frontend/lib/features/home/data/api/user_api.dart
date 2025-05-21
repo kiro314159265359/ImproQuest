@@ -197,4 +197,9 @@ class UserApi extends UserRepo {
         .map((item) => AchievementModel.fromJson(item as Map<String, dynamic>))
         .toList();
   }
+
+  @override
+  Future<void> skillPoints(String? stats, int? points) async {
+    await apiService.post('/users/stats/$stats/$points');
+  }
 }

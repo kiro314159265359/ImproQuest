@@ -23,6 +23,7 @@ class UserModel {
   EquippedItems? equippedItems;
   double? accumDistance;
   String? rank;
+  int? skillPoints;
   String? createdAt;
   String? updatedAt;
 
@@ -49,6 +50,7 @@ class UserModel {
       this.equippedItems,
       this.accumDistance,
       this.rank,
+      this.skillPoints,
       this.createdAt,
       this.updatedAt});
 
@@ -94,6 +96,7 @@ class UserModel {
         : null;
     accumDistance = json['accum_distance'];
     rank = json['rank'];
+    skillPoints = json['skill_points'];
     createdAt = json['created_at'];
     updatedAt = json['updated_at'];
   }
@@ -129,6 +132,7 @@ class UserModel {
     }
     data['accum_distance'] = accumDistance;
     data['rank'] = rank;
+    data['skill_points'] = skillPoints;
     data['created_at'] = createdAt;
     data['updated_at'] = updatedAt;
     return data;

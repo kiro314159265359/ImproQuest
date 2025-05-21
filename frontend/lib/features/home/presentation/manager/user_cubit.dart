@@ -385,6 +385,30 @@ class UserCubit extends HydratedCubit<UserState> {
     }
   }
 
+  Future<void> skillPoints(String? stats, int? points) async {
+    emit(UserUpdating());
+    try {
+      await userRepo.skillPoints(stats, points);
+
+      currentUser = await userRepo.getUserData();
+
+      emit(UserLoaded(currentUser!, totalDistance: _currentDistance));
+      emit(UserUpdated(currentUser!));
+
+      _updateGetItRegistrations(currentUser!);
+    } catch (error) {
+      if (error is DioException) {
+        emit(UpdateError(ServerFailure.fromDioError(error)));
+      } else {
+        emit(UpdateError(ServerFailure(error.toString())));
+        if (currentUser != null) {
+          emit(UserLoaded(currentUser!, totalDistance: _currentDistance));
+          emit(UserUpdated(currentUser!));
+        }
+      }
+    }
+  }
+
   void updateDistance(double distance) {
     if (state is UserLoaded) {
       final currentState = state as UserLoaded;
