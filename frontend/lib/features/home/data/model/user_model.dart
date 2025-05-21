@@ -17,7 +17,6 @@ class UserModel {
   Streak? streak;
   String? inventoryId;
   String? avatarUrl;
-  // List<Null>? achievements;
   List<Quests>? quests;
   Stats? stats;
   EquippedItems? equippedItems;
@@ -44,7 +43,6 @@ class UserModel {
       this.streak,
       this.inventoryId,
       this.avatarUrl,
-      // this.achievements,
       this.quests,
       this.stats,
       this.equippedItems,
@@ -78,12 +76,6 @@ class UserModel {
     streak = json['streak'] != null ? Streak.fromJson(json['streak']) : null;
     inventoryId = json['inventory_id'];
     avatarUrl = json['avatar_url'];
-    // if (json['achievements'] != null) {
-    //   achievements = <Null>[];
-    //   json['achievements'].forEach((v) {
-    //     achievements!.add( Null.fromJson(v));
-    //   });
-    // }
     if (json['quests'] != null) {
       quests = <Quests>[];
       json['quests'].forEach((v) {
@@ -94,7 +86,15 @@ class UserModel {
     equippedItems = json['equipped_items'] != null
         ? EquippedItems.fromJson(json['equipped_items'])
         : null;
-    accumDistance = json['accum_distance'];
+    if (json['accum_distance'] != null) {
+      if (json['accum_distance'] is int) {
+        accumDistance = (json['accum_distance'] as int).toDouble();
+      } else {
+        accumDistance = json['accum_distance'];
+      }
+    } else {
+      accumDistance = null;
+    }
     rank = json['rank'];
     skillPoints = json['skill_points'];
     createdAt = json['created_at'];
@@ -121,9 +121,6 @@ class UserModel {
     }
     data['inventory_id'] = inventoryId;
     data['avatar_url'] = avatarUrl;
-    // if (this.achievements != null) {
-    //   data['achievements'] = this.achievements!.map((v) => v.toJson()).toList();
-    // }
     if (quests != null) {
       data['quests'] = quests!.map((v) => v.toJson()).toList();
     }

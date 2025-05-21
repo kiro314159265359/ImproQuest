@@ -9,7 +9,6 @@ import 'package:flutter_application_2/features/settings/presentation/views/widge
 import 'package:flutter_application_2/game/services/audio_manager.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/routes/routes.dart';
-import '../../../../core/service/cache_helper.dart';
 import '../../../../core/theme/color_manger.dart';
 import '../../../../core/theme/text_style.dart';
 import '../../../../core/widget/snackabars.dart';
@@ -47,9 +46,6 @@ class _SettingsState extends State<Settings> {
     return BlocListener<UserCubit, UserState>(
         listener: (context, state) {
           if (state is UserDeleted) {
-            Snackbars.showSuccessSnackbar(
-                context, "Account deleted successfully.");
-            clearTokens();
             Navigator.pushReplacementNamed(context, Routes.loginScreen);
           } else if (state is UpdateError) {
             Snackbars.showErrorSnackbar(context, state.failure.message);
@@ -244,9 +240,8 @@ class _SettingsState extends State<Settings> {
                                   title: 'Logout',
                                   content: 'Are you sure you want to logout?',
                                   onPressed: () {
-                                    clearTokens();
-                                    Navigator.pushReplacementNamed(
-                                        context, Routes.loginScreen);
+                                    Navigator.of(context).pop();
+                                    context.read<UserCubit>().logout();
                                   },
                                 );
                               },

@@ -6,6 +6,7 @@ import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:flutter_application_2/features/home/presentation/manager/user_state.dart';
 import 'package:image_picker/image_picker.dart'; // Added for XFile
 import '../../../../core/error/failure.dart';
+import '../../../../core/service/cache_helper.dart';
 import '../../../../core/utils/get_it_constants.dart';
 import '../../../../game/logic/shop_bloc.dart';
 import '../../data/model/user_model.dart';
@@ -467,8 +468,9 @@ class UserCubit extends HydratedCubit<UserState> {
       await userRepo.deleteAccount(currentUser!);
 
       currentUser = null;
-      emit(UserDeleted());
       await clear();
+      clearTokens();
+      emit(UserDeleted());
 
       if (getIt.isRegistered<UserModel>()) {
         getIt.unregister<UserModel>();
@@ -483,6 +485,27 @@ class UserCubit extends HydratedCubit<UserState> {
       } else {
         emit(UpdateError(ServerFailure(error.toString())));
       }
+    }
+  }
+
+  Future<void> logout() async {
+    emit(UserDeleting());
+    try {
+      currentUser = null;
+      await clear();
+      clearTokens();
+
+      emit(UserDeleted());
+
+      if (getIt.isRegistered<UserModel>()) {
+        getIt.unregister<UserModel>();
+      }
+
+      if (getIt.isRegistered<ShopBloc>()) {
+        getIt.unregister<ShopBloc>();
+      }
+    } catch (error) {
+      emit(UpdateError(ServerFailure(error.toString())));
     }
   }
 
