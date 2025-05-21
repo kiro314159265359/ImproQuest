@@ -1,5 +1,4 @@
 import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_application_2/core/routes/app_routes.dart';
 import 'package:flutter_application_2/core/services/permission_manager.dart';
@@ -16,7 +15,7 @@ import 'features/home/presentation/manager/user_cubit.dart';
 import 'core/utils/auth_helpers.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:path_provider/path_provider.dart';
-
+import 'features/profile/presentation/manager/achievement_cubit.dart';
 import 'features/rankings/presentation/manager/leaderboard_cubit.dart';
 
 Future<void> main() async {
@@ -60,6 +59,9 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider<UserCubit>.value(
           value: getIt<UserCubit>(),
+        ),
+        BlocProvider<AchievementCubit>.value(
+          value: getIt<AchievementCubit>(),
         ),
         BlocProvider<DistanceCubit>.value(
           value: getIt<DistanceCubit>(),

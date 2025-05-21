@@ -8,6 +8,10 @@ class EndPoints {
 
   static const String register = "/users/signup";
 
+  static const String forgetPassword = "/users/forgot-password";
+  static const String verifyOTP = "/users/verify-otp";
+  static const String resetPassword = "/users/reset-password";
+
   static const String refreshToken = "/users/refresh";
 
   static const String userData = "/users/mydata";
@@ -20,22 +24,18 @@ class EndPoints {
 
   static const String questProgress = "/users/updateQuestProgress";
 
-  static const String leaderboardByStreak = "/leaderboard/streak";
-  static const String leaderboardByLevel = "/leaderboard/level";
+  static const String achievementsUnlocked = "/achievements/unlocked";
+  static const String achievementsLocked = "/achievements/locked";
 
   static const String userItems = "/users/inventory/items";
   static const String equipItems = "/users/equip";
   static const String unequipItems = "/users/unequip";
 
+  static const String leaderboardByStreak = "/leaderboard/streak";
+  static const String leaderboardByLevel = "/leaderboard/level";
+
   // Shop endpoints
   static const String permanentShop = "/shop/permanent";
   static const String purchaseItem = "/shop/buy";
   static const String temporaryShop = "/shop/consumables";
-
-  static const String forgetPassword = "/users/forgot-password";
-  static const String verifyOTP = "/users/verify-otp";
-  static const String resetPassword = "/users/reset-password";
-
-  //
-  // static const String profileData = "/profile/";
 }

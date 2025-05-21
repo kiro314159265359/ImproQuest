@@ -13,6 +13,8 @@ import 'package:flutter_application_2/game/services/shop_api.dart';
 import 'package:flutter_application_2/features/rankings/presentation/manager/leaderboard_cubit.dart';
 import 'package:get_it/get_it.dart';
 
+import '../../features/profile/presentation/manager/achievement_cubit.dart';
+
 final getIt = GetIt.instance;
 
 Future<void> setupDependencies() async {
@@ -38,6 +40,7 @@ Future<void> setupDependencies() async {
   getIt.registerSingleton<LoginRepo>(loginRepo);
   getIt.registerSingleton<UserCubit>(UserCubit(userApi));
   getIt.registerSingleton<LeaderboardCubit>(LeaderboardCubit(userApi));
+  getIt.registerSingleton<AchievementCubit>(AchievementCubit(userApi));
   getIt.registerFactory<DistanceCubit>(() => DistanceCubit(userApi));
 
   // Services
