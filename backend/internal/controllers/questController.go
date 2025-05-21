@@ -418,7 +418,7 @@ func UpdateStreakHandler() gin.HandlerFunc {
 			if helpers.SameDay(user.Streak.LastCompleted, yesterday) {
 				user.Streak.Current++ // Increment streak if completed yesterday
 			} else {
-				user.Streak.Current = 1 // Reset streak if a day was skipped
+				user.Streak.Current = 0 // Reset streak if a day was skipped
 			}
 			user.Streak.LastCompleted = today
 
