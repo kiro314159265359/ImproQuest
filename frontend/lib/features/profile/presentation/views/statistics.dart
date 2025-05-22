@@ -25,15 +25,7 @@ class Statistics extends StatefulWidget {
 }
 
 class _StatisticsState extends State<Statistics> {
-  final Map<String, dynamic> weekStatus = {
-    'Su': true,
-    'M': false,
-    'Tu': true,
-    'W': false,
-    'Th': null,
-    'F': false,
-    'Sa': true,
-  };
+  final List<String> weekDays = ['Su', 'M', 'Tu', 'W', 'Th', 'F', 'Sa'];
 
   @override
   void initState() {
@@ -43,8 +35,6 @@ class _StatisticsState extends State<Statistics> {
 
   @override
   Widget build(BuildContext context) {
-    final weekDays = weekStatus.keys.toList();
-
     return SingleChildScrollView(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
@@ -71,7 +61,20 @@ class _StatisticsState extends State<Statistics> {
                         itemCount: weekDays.length,
                         itemBuilder: (context, index) {
                           final day = weekDays[index];
-                          final isChecked = weekStatus[day];
+                          final bool? weeklyStatus =
+                              (widget.user.weeklyDisplay != null &&
+                                      index < widget.user.weeklyDisplay!.length)
+                                  ? widget.user.weeklyDisplay![index]
+                                  : null;
+
+                          bool? checkboxValue;
+                          if (weeklyStatus == true) {
+                            checkboxValue = true;
+                          } else if (weeklyStatus == false) {
+                            checkboxValue = null;
+                          } else {
+                            checkboxValue = false;
+                          }
 
                           return SizedBox(
                             width: MediaQuery.of(context).size.width / 8,
@@ -85,7 +88,7 @@ class _StatisticsState extends State<Statistics> {
                                   shape: const CircleBorder(),
                                   activeColor: ColorManager.primaryColor,
                                   tristate: true,
-                                  value: isChecked,
+                                  value: checkboxValue,
                                   onChanged: (bool? value) {},
                                 ),
                                 Text(day,

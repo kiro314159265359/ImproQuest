@@ -25,6 +25,7 @@ class UserModel {
   int? skillPoints;
   String? createdAt;
   String? updatedAt;
+  List<bool?>? weeklyDisplay;
 
   UserModel(
       {this.sId,
@@ -50,7 +51,8 @@ class UserModel {
       this.rank,
       this.skillPoints,
       this.createdAt,
-      this.updatedAt});
+      this.updatedAt,
+      this.weeklyDisplay});
 
   UserModel.fromJson(Map<String, dynamic> json) {
     sId = json['_id'];
@@ -99,6 +101,17 @@ class UserModel {
     skillPoints = json['skill_points'];
     createdAt = json['created_at'];
     updatedAt = json['updated_at'];
+    if (json['weekly_display'] != null) {
+      weeklyDisplay =
+          List<bool?>.from((json['weekly_display'] as List).map((item) {
+        if (item is bool) {
+          return item;
+        }
+        return null;
+      }));
+    } else {
+      weeklyDisplay = null;
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -132,6 +145,7 @@ class UserModel {
     data['skill_points'] = skillPoints;
     data['created_at'] = createdAt;
     data['updated_at'] = updatedAt;
+    data['weekly_display'] = weeklyDisplay;
     return data;
   }
 }
