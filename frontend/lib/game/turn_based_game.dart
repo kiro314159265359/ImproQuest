@@ -62,11 +62,20 @@ class GameCharacter extends SpriteAnimationComponent with HasGameRef {
   }
 
   StatusContainer createStatusContainer() {
-    final xOffset = (characterType == "hero") ? 85 : -250;
+    final statusContainerWidth = gameRef.size.x * 0.48;
+    final statusContainerHeight = gameRef.size.y * 0.14;
+
+    final xOffsetValue = characterType == "hero"
+        ? size.x * 0.25
+        : -(statusContainerWidth + size.x * 0.15);
+
+    const downwardShiftFactor = 0.23;
+    final yPositionShift = size.y * downwardShiftFactor;
+    final yOffsetValue = yPositionShift - (statusContainerHeight / 2);
 
     return StatusContainer(
-      position: Vector2(position.x + xOffset, position.y),
-      size: Vector2(200, 100),
+      position: Vector2(position.x + xOffsetValue, position.y + yOffsetValue),
+      size: Vector2(statusContainerWidth, statusContainerHeight),
       nameText: TextComponent(
         text: 'SUNG JINWOO',
         textRenderer: TextPaint(style: TextStyles.regular14primary),
@@ -85,8 +94,6 @@ class GameCharacter extends SpriteAnimationComponent with HasGameRef {
       ),
       hpBar: SimpleProgressBar(
         progress: 1.0,
-        size: Vector2(180, 8),
-        position: Vector2(10, 25),
         foregroundColor: ColorManager.greenColor,
         backgroundColor: ColorManager.redColor,
       ),
@@ -100,7 +107,6 @@ class GameCharacter extends SpriteAnimationComponent with HasGameRef {
       ),
       initBar: SimpleProgressBar(
         progress: 0.0,
-        size: Vector2(180, 8),
         foregroundColor: ColorManager.blueColor,
         backgroundColor: ColorManager.greyColor,
       ),
@@ -229,11 +235,13 @@ class TurnBasedGame extends FlameGame {
     required Vector2 position,
     required bool isFlipped,
   }) async {
+    final characterDimension = size.x * 0.55;
+    final characterSize = Vector2(characterDimension, characterDimension);
     final character = GameCharacter(
       characterType: type,
       idlePath: idlePath,
       attackPath: attackPath,
-      size: Vector2(256, 256),
+      size: characterSize,
       position: position,
       isFlipped: isFlipped,
     );
@@ -276,7 +284,7 @@ class TurnBasedGame extends FlameGame {
       type: "hero",
       idlePath: 'sprites/character/Shinobi/Idle.png',
       attackPath: 'sprites/character/Shinobi/Attack_1.png',
-      position: Vector2(100, size.y - 300),
+      position: Vector2(size.x * 0.20, size.y * 0.65),
       isFlipped: false,
     );
 
@@ -284,7 +292,7 @@ class TurnBasedGame extends FlameGame {
       type: "enemy",
       idlePath: 'sprites/character/Fighter/Idle.png',
       attackPath: 'sprites/character/Fighter/Attack_1.png',
-      position: Vector2(size.x - 100, 180),
+      position: Vector2(size.x * 0.80, size.y * 0.30),
       isFlipped: true,
     );
   }
@@ -328,16 +336,19 @@ class TurnBasedGame extends FlameGame {
 
     if (enemyObj != null && enemyObj.isBoss) {
       // Could use different sprites for boss enemies
-      enemyIdlePath = 'sprites/character/Fighter/Idle.png';
-      enemyAttackPath = 'sprites/character/Fighter/Attack_1.png';
+      // Example:
+      // enemyIdlePath = 'sprites/character/BossFighter/Idle.png';
+      // enemyAttackPath = 'sprites/character/BossFighter/Attack_1.png';
     }
 
+    final characterDimension = size.x * 0.55;
+    final characterSize = Vector2(characterDimension, characterDimension);
     enemy = GameCharacter(
       characterType: "enemy",
       idlePath: enemyIdlePath,
       attackPath: enemyAttackPath,
-      size: Vector2(256, 256),
-      position: Vector2(size.x - 100, 180),
+      size: characterSize,
+      position: Vector2(size.x * 0.80, size.y * 0.30),
       isFlipped: true,
     );
     add(enemy!);

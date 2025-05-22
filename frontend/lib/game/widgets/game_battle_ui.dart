@@ -37,6 +37,9 @@ class GameBattleUI extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Stack(
       children: [
         Positioned.fill(
@@ -77,7 +80,7 @@ class GameBattleUI extends StatelessWidget {
           left: 20,
           right: 20,
           child: Container(
-            padding: const EdgeInsets.all(8),
+            padding: EdgeInsets.all(screenWidth * 0.025),
             decoration: BoxDecoration(
               color: ColorManager.blackColor,
               borderRadius: BorderRadius.circular(8),
@@ -91,7 +94,7 @@ class GameBattleUI extends StatelessWidget {
         ),
 
         // Show action buttons when inventory is closed
-        if (!state.inventoryOpen) _buildActionButtons(),
+        if (!state.inventoryOpen) _buildActionButtons(context),
 
         // Show inventory UI when inventory is open
         if (state.inventoryOpen) TemporaryInventoryUi(viewModel: viewModel),
@@ -101,8 +104,8 @@ class GameBattleUI extends StatelessWidget {
             child: GameButton(
               text: "Restart",
               onPressed: onRestart,
-              width: 320,
-              height: 50,
+              width: screenWidth * 0.7,
+              height: screenHeight * 0.065,
             ),
           ),
       ],
@@ -118,12 +121,10 @@ class GameBattleUI extends StatelessWidget {
           previous.playerInitiative != current.playerInitiative ||
           previous.enemyInitiative != current.enemyInitiative ||
           previous.lastAttackActor != current.lastAttackActor ||
-          // Add this condition to detect enemy changes between stages
           previous.enemy.name != current.enemy.name ||
           previous.currentAnte != current.currentAnte ||
           previous.currentBlind != current.currentBlind,
       listener: (context, state) {
-        // Update the enemy sprite when state changes (especially between stages)
         if (!state.inFightMenu && !state.gameOver) {
           print(
               'Battle UI detected new enemy: ${state.enemy.name}, Ante: ${state.currentAnte}, Blind: ${state.currentBlind}');
@@ -142,23 +143,24 @@ class GameBattleUI extends StatelessWidget {
           });
         }
 
-        // Always call onBattleEnd to set up pending transitions
         onBattleEnd(state);
       },
       child: Container(),
     );
   }
 
-  Widget _buildActionButtons() {
+  Widget _buildActionButtons(BuildContext context) {
     final bool canAct = state.currentTurn == Turn.player && !state.gameOver;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
 
     return Positioned(
-      bottom: 20,
-      left: 0,
-      right: 0,
+      bottom: screenHeight * 0.03,
+      left: screenWidth * 0.05,
+      right: screenWidth * 0.05,
       child: Container(
         color: Colors.transparent,
-        padding: const EdgeInsets.only(bottom: 16),
+        padding: EdgeInsets.only(bottom: screenHeight * 0.015),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -172,8 +174,8 @@ class GameBattleUI extends StatelessWidget {
                           viewModel.attack();
                         }
                       : null,
-                  width: 140,
-                  height: 50,
+                  width: screenWidth * 0.38,
+                  height: screenHeight * 0.065,
                 ),
                 GameButton(
                   text: "Defend",
@@ -182,12 +184,12 @@ class GameBattleUI extends StatelessWidget {
                           viewModel.defend();
                         }
                       : null,
-                  width: 140,
-                  height: 50,
+                  width: screenWidth * 0.38,
+                  height: screenHeight * 0.065,
                 ),
               ],
             ),
-            const SizedBox(height: 25),
+            SizedBox(height: screenHeight * 0.02),
             GameButton(
               text: "Inventory",
               onPressed: canAct
@@ -195,8 +197,8 @@ class GameBattleUI extends StatelessWidget {
                       viewModel.openInventory();
                     }
                   : null,
-              width: 320,
-              height: 50,
+              width: screenWidth * 0.8,
+              height: screenHeight * 0.065,
             ),
           ],
         ),

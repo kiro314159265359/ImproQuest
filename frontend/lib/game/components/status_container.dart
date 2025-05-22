@@ -37,16 +37,32 @@ class StatusContainer extends PositionComponent {
 
   @override
   Future<void> onLoad() async {
-    nameText.position = Vector2(10, 5);
-    levelText.position = Vector2(size.x - 65, 5);
+    final padding = size.x * 0.05;
+    final verticalPadding = size.y * 0.05;
+    final barHeight = size.y * 0.08;
+    final barWidth = size.x - (2 * padding);
+    final labelGroupSpacing = size.y * 0.30;
+    final textBarSpacing = size.y * 0.05;
 
-    hpLabelText.position = Vector2(10, 30);
-    hpValueText.position = Vector2(size.x - 60, 30);
-    hpBar.position = Vector2(10, 45);
+    nameText.position = Vector2(padding, verticalPadding);
+    levelText.anchor = Anchor.topRight;
+    levelText.position = Vector2(size.x - padding, verticalPadding);
 
-    initLabelText.position = Vector2(10, 65);
-    initValueText.position = Vector2(size.x - 50, 65);
-    initBar.position = Vector2(10, 80);
+    final hpLabelY = verticalPadding + size.y * 0.25;
+    hpLabelText.position = Vector2(padding, hpLabelY);
+    hpValueText.anchor = Anchor.topRight;
+    hpValueText.position = Vector2(size.x - padding, hpLabelY);
+    hpBar.position =
+        Vector2(padding, hpLabelY + textBarSpacing + size.y * 0.05);
+    hpBar.size = Vector2(barWidth, barHeight);
+
+    final initLabelY = hpBar.position.y + barHeight + labelGroupSpacing * 0.5;
+    initLabelText.position = Vector2(padding, initLabelY);
+    initValueText.anchor = Anchor.topRight;
+    initValueText.position = Vector2(size.x - padding, initLabelY);
+    initBar.position =
+        Vector2(padding, initLabelY + textBarSpacing + size.y * 0.05);
+    initBar.size = Vector2(barWidth, barHeight);
 
     add(nameText);
     add(levelText);

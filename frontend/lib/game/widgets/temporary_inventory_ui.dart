@@ -22,12 +22,14 @@ class TemporaryInventoryUi extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
     return Container(
       color: ColorManager.blackColor.withOpacity(0.8),
       child: Center(
         child: Container(
-          width: MediaQuery.of(context).size.width * 0.8,
-          height: MediaQuery.of(context).size.height * 0.6,
+          width: screenWidth * 0.8,
+          height: screenHeight * 0.6,
           decoration: BoxDecoration(
             color: ColorManager.gunmetal,
             borderRadius: BorderRadius.circular(12),
@@ -40,7 +42,7 @@ class TemporaryInventoryUi extends StatelessWidget {
                 child: _buildConsumableList(context),
               ),
               Padding(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.all(screenWidth * 0.04),
                 child: CustomButton(
                   fillColor: ColorManager.primaryColor,
                   buttonText: "Close Inventory",
@@ -57,9 +59,10 @@ class TemporaryInventoryUi extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(screenWidth * 0.04),
       decoration: const BoxDecoration(
         border: Border(
           bottom: BorderSide(color: ColorManager.neonBlue, width: 2),
@@ -106,7 +109,7 @@ class TemporaryInventoryUi extends StatelessWidget {
         }
 
         return ListView.builder(
-          padding: const EdgeInsets.all(12),
+          padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.03),
           itemCount: consumables.length,
           itemBuilder: (context, index) {
             final inventoryItem = consumables[index];

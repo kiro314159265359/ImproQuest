@@ -4,6 +4,7 @@ import '../core/theme/color_manger.dart';
 import '../core/theme/text_style.dart';
 import '../core/utils/app_icons.dart';
 import '../core/utils/get_it_constants.dart';
+import '../core/widget/custom_button.dart';
 import '../core/widget/snackabars.dart';
 import 'logic/shop_bloc.dart';
 import 'logic/shop_event.dart';
@@ -16,6 +17,8 @@ class ShopPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     // Use the ShopBloc with the PermanentItemsEvent
     final shopBloc = getIt<ShopBloc>()..add(FetchPermanentItemsEvent());
 
@@ -45,7 +48,7 @@ class ShopPage extends StatelessWidget {
                     child: Row(
                       children: [
                         Image.asset(AppIcons.coinsIcon, width: 24, height: 24),
-                        const SizedBox(width: 4),
+                        SizedBox(width: screenWidth * 0.01),
                         Text('$gold', style: TextStyles.bold18Gold),
                       ],
                     ),
@@ -124,10 +127,13 @@ class PermanentItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: EdgeInsets.symmetric(
+          horizontal: screenWidth * 0.04, vertical: screenWidth * 0.02),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(screenWidth * 0.04),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -136,44 +142,41 @@ class PermanentItemCard extends StatelessWidget {
               children: [
                 Text(
                   item.name,
-                  style: TextStyles.styleBold(
-                    context,
-                    fontSize: 18,
-                    color: _getTierColor(item.tier),
-                  ),
+                  style: TextStyles.styleBold(context,
+                      fontSize: 18, color: _getTierColor(item.tier)),
                 ),
                 Text("Slot: ${item.slot ?? 'None'}",
                     style: TextStyles.regular14Grey),
               ],
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: screenWidth * 0.02),
             Text(item.description),
 
             // Show permanent stat bonuses
             if (item.statBonuses.isNotEmpty) ...[
-              const SizedBox(height: 8),
+              SizedBox(height: screenWidth * 0.02),
               Text("Permanent Bonuses:", style: TextStyles.bold12White),
               ...item.statBonuses.entries.map((entry) =>
                   Text("• ${_formatStatName(entry.key)}: +${entry.value}")),
             ],
 
-            const SizedBox(height: 16),
+            SizedBox(height: screenWidth * 0.04),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Row(
                   children: [
                     Image.asset(AppIcons.coinsIcon, width: 20, height: 20),
-                    const SizedBox(width: 4),
+                    SizedBox(width: screenWidth * 0.01),
                     Text("${item.price}", style: TextStyles.bold16White),
                   ],
                 ),
-                ElevatedButton(
+                CustomButton(
+                  width: null,
+                  height: null,
+                  fillColor: ColorManager.primaryColor,
+                  buttonText: "Buy",
                   onPressed: () => viewModel.buyPermanentItem(item),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: ColorManager.primaryColor,
-                  ),
-                  child: const Text("Buy"),
                 ),
               ],
             ),
