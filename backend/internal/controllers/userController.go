@@ -145,16 +145,20 @@ func GetMyData() gin.HandlerFunc {
 			return
 		}
 
-		// 4. Build response with computed maxXp
+		// 4. Generate weekly display
+		currentTime := time.Now()
+		weeklyDisplay := helpers.GenerateSunToSatWeeklyDisplay(user.DailyCompletions, currentTime)
+
+		// 5. Build response with weekly_display
 		resp := struct {
 			models.User
-			MaxXp int `json:"maxXp"`
+			WeeklyDisplay [7]interface{} `json:"weekly_display"`
 		}{
-			User:  user,
-			MaxXp: user.Level * 100,
+			User:          user,
+			WeeklyDisplay: weeklyDisplay,
 		}
 
-		// 5. Return
+		// 6. Return
 		c.JSON(http.StatusOK, resp)
 	}
 }
