@@ -22,7 +22,7 @@ services:
       - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
       - CLOUDINARY_URL=cloudinary://949328679259627:uAn0lWJ-JKYyhv5QtFY5Sa0V3Ss@dv4enxyxo
     networks:
-      - app-network
+      - api-impro-network
 
 networks:
   api-impro-network:
