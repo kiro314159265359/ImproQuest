@@ -46,7 +46,9 @@ class UserCubit extends HydratedCubit<UserState> {
     }
 
     // Check if we already have fresh data and don't need to refetch
-    if (!forceRefresh && (state is UserLoaded || state is UserUpdated) && currentUser != null) {
+    if (!forceRefresh &&
+        (state is UserLoaded || state is UserUpdated) &&
+        currentUser != null) {
       print("User data already loaded, skipping fetch");
       return currentUser!;
     }
@@ -518,7 +520,7 @@ class UserCubit extends HydratedCubit<UserState> {
       currentUser = null;
       await clear();
       clearTokens();
-      
+
       // Reset the fetching flag
       _isFetching = false;
 
