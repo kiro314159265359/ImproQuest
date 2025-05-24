@@ -25,5 +25,5 @@ services:
       - app-network
 
 networks:
-  app-network:
+  api-impro-network:
     driver: bridge
