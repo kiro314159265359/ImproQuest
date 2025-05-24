@@ -50,15 +50,15 @@ class DailyQuestCard extends StatelessWidget {
                 children: [
                   Text(
                     "DAILY QUESTS",
-                    style: TextStyles.bold24White,
+                    style: TextStyles.bold20White,
                     textAlign: TextAlign.center,
                   ),
                   CustomRichText(
                     text1:
                         '${context.read<UserCubit>().completedQuestCount} Quest ',
-                    textStyle1: TextStyles.semiBold18lightGreen,
+                    textStyle1: TextStyles.semiBold16lightGreen,
                     text2: 'completed',
-                    textStyle2: TextStyles.semiBold18lightGrey,
+                    textStyle2: TextStyles.semiBold16lightGrey,
                   ),
                   Container(
                     decoration: const BoxDecoration(
@@ -68,7 +68,7 @@ class DailyQuestCard extends StatelessWidget {
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     child: Text(
                       "${context.read<UserCubit>().remainingQuestCount} Quests left",
-                      style: TextStyles.semiBold18White,
+                      style: TextStyles.semiBold16White,
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -81,7 +81,7 @@ class DailyQuestCard extends StatelessWidget {
                   child: const Icon(
                     Icons.circle,
                     color: ColorManager.blackColor,
-                    size: 9,
+                    size: 8,
                   ),
                 ),
                 backgroundColor: ColorManager.containerBackGround,

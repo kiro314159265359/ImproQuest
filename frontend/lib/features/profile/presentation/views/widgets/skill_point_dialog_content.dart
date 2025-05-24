@@ -71,7 +71,7 @@ class _SkillPointDialogContentState extends State<SkillPointDialogContent> {
             ),
             Text(
               '$_pointsToSpend',
-              style: TextStyles.bold20White,
+              style: TextStyles.bold16White,
             ),
             IconButton(
               icon: const Icon(Icons.add_circle_outline,

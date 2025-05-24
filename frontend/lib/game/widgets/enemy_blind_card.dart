@@ -28,7 +28,7 @@ class EnemyBlindCard extends StatelessWidget {
         padding: const EdgeInsets.all(8.0),
         child: Column(
           children: [
-            Text('Blind $blind: $enemyType', style: TextStyles.semiBold18White),
+            Text('Blind $blind: $enemyType', style: TextStyles.semiBold16White),
             IntrinsicHeight(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -38,7 +38,7 @@ class EnemyBlindCard extends StatelessWidget {
                     children: [
                       Text('Strength: ${stats.strength}',
                           style: TextStyles.medium16White),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 16),
                       Text('Endurance: ${stats.endurance}',
                           style: TextStyles.medium16White),
                     ],
@@ -56,7 +56,7 @@ class EnemyBlindCard extends StatelessWidget {
                     children: [
                       Text('Vitality: ${stats.vitality}',
                           style: TextStyles.medium16White),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 16),
                       Text('Agility: ${stats.agility}',
                           style: TextStyles.medium16White),
                     ],

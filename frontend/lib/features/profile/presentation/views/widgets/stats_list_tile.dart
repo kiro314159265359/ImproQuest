@@ -34,7 +34,7 @@ class _StatsListTileState extends State<StatsListTile> {
       leading: ImageIcon(
         AssetImage(widget.statIcon),
         color: ColorManager.whiteColor,
-        size: 25,
+        size: 24,
       ),
       title: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,

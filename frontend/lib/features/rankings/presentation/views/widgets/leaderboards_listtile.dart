@@ -33,7 +33,7 @@ class _LeaderboardsListTileState extends State<LeaderboardsListTile> {
           title: Row(
             children: [
               Padding(
-                padding: const EdgeInsets.only(right: 7),
+                padding: const EdgeInsets.only(right: 8),
                 child: CircleAvatar(
                   backgroundColor: ColorManager.primaryColor,
                   radius: 24,
@@ -42,8 +42,14 @@ class _LeaderboardsListTileState extends State<LeaderboardsListTile> {
                       : NetworkImage(widget.playerImage!),
                 ),
               ),
-              Text(widget.isUser ? "You" : widget.playerName!,
-                  style: TextStyles.bold16White),
+              Expanded(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(widget.isUser ? "You" : widget.playerName!,
+                      style: TextStyles.bold16White),
+                ),
+              ),
             ],
           ),
           trailing:

@@ -63,7 +63,7 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
       height: widget.height,
       alignment: Alignment.center,
       child: TextFormField(
-        style: TextStyles.semiBold18White,
+        style: TextStyles.semiBold16White,
         cursorColor: ColorManager.primaryColor,
         controller: widget.controller,
         obscureText: widget.obscureText ? isSecure : false,
@@ -74,7 +74,7 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
                   icon: Icon(
                     Icons.calendar_today,
                     color: ColorManager.fadedlightGrey,
-                    size: 30,
+                    size: 24,
                   ),
                   onPressed: () {
                     selectDate(context);
@@ -84,9 +84,9 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
                   ? IconButton(
                       icon: isSecure
                           ? Icon(Icons.visibility_off_outlined,
-                              color: ColorManager.fadedlightGrey, size: 30)
+                              color: ColorManager.fadedlightGrey, size: 24)
                           : const Icon(Icons.visibility_outlined,
-                              color: ColorManager.primaryColor, size: 30),
+                              color: ColorManager.primaryColor, size: 24),
                       onPressed: () {
                         setState(() {
                           isSecure = !isSecure;
@@ -112,9 +112,9 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
               )),
           errorStyle: TextStyles.semiBold12Red,
           hintText: widget.hintText,
-          hintStyle: widget.hintStyle ?? TextStyles.semiBold18fadedlightGrey,
-          contentPadding:
-              const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+          hintStyle: widget.hintStyle ?? TextStyles.semiBold16fadedlightGrey,
+          // contentPadding:
+          //     const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         ),
         validator: widget.validator,
       ),

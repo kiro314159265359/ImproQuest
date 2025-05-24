@@ -91,7 +91,7 @@ class _LoginState extends State<Login> {
                                 ],
                               ),
                               SizedBox(
-                                height: h * 0.022,
+                                height: h * 0.024,
                               ),
                               CustomPrimaryButton(
                                   onPressed: () {
@@ -100,10 +100,9 @@ class _LoginState extends State<Login> {
                                     }
                                   },
                                   buttonText: "Login",
-                                  height: 45,
                                   isLoading: state is LoginLoadingState),
                               SizedBox(
-                                height: h * 0.05,
+                                height: h * 0.04,
                               ),
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,

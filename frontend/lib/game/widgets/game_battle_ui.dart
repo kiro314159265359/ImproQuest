@@ -54,7 +54,7 @@ class GameBattleUI extends StatelessWidget {
             icon: const ImageIcon(
               AssetImage(AppIcons.exitIcon),
               color: ColorManager.whiteColor,
-              size: 35,
+              size: 32,
             ),
             onPressed: () {
               Dialogs.confirmDialog(

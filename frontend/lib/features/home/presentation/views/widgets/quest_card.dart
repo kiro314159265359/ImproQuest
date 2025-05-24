@@ -37,7 +37,7 @@ class _QuestCardState extends State<QuestCard> {
                     ImageIcon(
                       AssetImage(widget.questImageIcon),
                       color: ColorManager.whiteColor,
-                      size: 25,
+                      size: 24,
                     ),
                     Column(
                       mainAxisAlignment: MainAxisAlignment.start,
@@ -68,7 +68,7 @@ class _QuestCardState extends State<QuestCard> {
             children: [
               Expanded(
                 child: Container(
-                  margin: const EdgeInsets.symmetric(vertical: 7),
+                  margin: const EdgeInsets.symmetric(vertical: 8),
                   width: 230,
                   height: 12,
                   child: LinearProgressIndicator(

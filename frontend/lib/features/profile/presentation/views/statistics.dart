@@ -11,14 +11,8 @@ import '../../../home/presentation/views/widgets/custom_rich_text.dart';
 
 class Statistics extends StatefulWidget {
   final UserModel user;
-  final double width;
-  final double height;
-  const Statistics({
-    super.key,
-    required this.user,
-    required this.width,
-    required this.height,
-  });
+
+  const Statistics({super.key, required this.user});
 
   @override
   State<Statistics> createState() => _StatisticsState();
@@ -35,27 +29,29 @@ class _StatisticsState extends State<Statistics> {
 
   @override
   Widget build(BuildContext context) {
+    // var w = MediaQuery.of(context).size.width;
+    var h = MediaQuery.of(context).size.height;
     return SingleChildScrollView(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            height: widget.height * 0.2,
+            height: h * 0.2,
             child: Card(
               color: ColorManager.gunmetal,
               child: Column(
                 children: [
                   ListTile(
                     leading: Image.asset(AppIcons.flameIcon,
-                        width: 25, fit: BoxFit.contain),
+                        width: 24, fit: BoxFit.contain),
                     title: Text("${widget.user.streak?.current}",
                         style: TextStyles.bold20Primary),
                     subtitle:
                         Text("day streak", style: TextStyles.bold8Primary),
                   ),
                   SizedBox(
-                    height: widget.height * 0.08,
+                    height: h * 0.08,
                     child: ListView.builder(
                         scrollDirection: Axis.horizontal,
                         itemCount: weekDays.length,
@@ -103,10 +99,10 @@ class _StatisticsState extends State<Statistics> {
             ),
           ),
           SizedBox(
-            height: widget.height * 0.05,
+            height: h * 0.04,
           ),
           SizedBox(
-            height: widget.height * 0.2,
+            height: h * 0.2,
             child: Card(
               color: ColorManager.gunmetal,
               child: ListTile(
@@ -159,7 +155,7 @@ class _StatisticsState extends State<Statistics> {
                     ),
                   ],
                 ),
-                trailing: const Icon(Icons.arrow_forward_ios, size: 30),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 28),
                 onTap: () {
                   Navigator.pushNamed(context, Routes.distanceScreen);
                 },

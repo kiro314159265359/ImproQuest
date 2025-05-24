@@ -27,8 +27,8 @@ class GameConstants {
   static const int bossBaseAgility = 10;
 
   // UI constants
-  static const double buttonSpacing = 25.0;
+  static const double buttonSpacing = 24.0;
   static const double standardButtonWidth = 140.0;
   static const double wideButtonWidth = 320.0;
-  static const double standardButtonHeight = 50.0;
+  static const double standardButtonHeight = 52.0;
 }

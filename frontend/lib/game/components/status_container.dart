@@ -30,7 +30,7 @@ class StatusContainer extends PositionComponent {
   void render(Canvas canvas) {
     final paint = Paint()..color = ColorManager.gunmetal;
     final rect =
-        RRect.fromRectAndRadius(size.toRect(), const Radius.circular(10));
+        RRect.fromRectAndRadius(size.toRect(), const Radius.circular(12));
     canvas.drawRRect(rect, paint);
     super.render(canvas);
   }

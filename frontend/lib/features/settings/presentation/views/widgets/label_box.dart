@@ -26,12 +26,12 @@ class _LabelBoxState extends State<LabelBox> {
         leading: widget.leadingIcon != null
             ? Icon(
                 widget.leadingIcon,
-                size: 30,
+                size: 24,
                 color: ColorManager.darkGreyColor,
               )
             : null,
         title: Text(widget.labelText,
-            style: TextStyles.semiBold18darkGrey, textAlign: TextAlign.start),
+            style: TextStyles.semiBold16darkGrey, textAlign: TextAlign.start),
       ),
       widget.child
     ]);

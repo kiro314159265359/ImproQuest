@@ -76,7 +76,7 @@ class StatisticsLoading extends StatelessWidget {
                 ],
               ),
             ),
-            SizedBox(height: h * 0.05),
+            SizedBox(height: h * 0.04),
             SizedBox(
               height: h * 0.2,
               child: Card(
@@ -107,7 +107,7 @@ class StatisticsLoading extends StatelessWidget {
                           ],
                         ),
                       ]),
-                  trailing: const Icon(Icons.arrow_forward_ios, size: 30),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 28),
                 ),
               ),
             )

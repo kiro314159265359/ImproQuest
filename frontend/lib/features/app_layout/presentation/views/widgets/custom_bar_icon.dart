@@ -19,7 +19,7 @@ class CustomBarIcon extends StatelessWidget {
       color: cubit.currentIndex == index
           ? ColorManager.primaryColor
           : ColorManager.whiteColor,
-      size: 25,
+      size: 24,
     );
   }
 }

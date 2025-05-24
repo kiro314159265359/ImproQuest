@@ -72,7 +72,7 @@ class _CharacterState extends State<Character> {
                       );
                     },
                   ),
-                  SizedBox(height: h * 0.025),
+                  SizedBox(height: h * 0.024),
                   ItemButton(
                     width: w * 0.15,
                     height: h * 0.07,
@@ -96,7 +96,7 @@ class _CharacterState extends State<Character> {
                       height: h * 0.23,
                       child: Image.asset(AppImages.shinobiPhoto,
                           width: 25, fit: BoxFit.contain)),
-                  SizedBox(height: h * 0.025),
+                  SizedBox(height: h * 0.024),
                   ItemButton(
                     width: w * 0.15,
                     height: h * 0.07,
@@ -123,7 +123,7 @@ class _CharacterState extends State<Character> {
                       );
                     },
                   ),
-                  SizedBox(height: h * 0.025),
+                  SizedBox(height: h * 0.024),
                   ItemButton(
                     width: w * 0.15,
                     height: h * 0.07,
@@ -139,14 +139,17 @@ class _CharacterState extends State<Character> {
               ),
             ],
           ),
-          SizedBox(height: h * 0.025),
+          SizedBox(height: h * 0.024),
           Card(
             color: ColorManager.gunmetal,
             child: Column(
               children: [
-                Text(
-                  "SKILL POINTS : ${user.skillPoints ?? 0}",
-                  style: TextStyles.bold18White,
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(
+                    "SKILL POINTS : ${user.skillPoints ?? 0}",
+                    style: TextStyles.bold16White,
+                  ),
                 ),
                 StatsListTile(
                     statName: "STRENGTH",

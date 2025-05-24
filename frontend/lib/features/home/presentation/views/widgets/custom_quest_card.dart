@@ -70,7 +70,7 @@ class _CustomQuestCardState extends State<CustomQuestCard> {
           leading: ImageIcon(
             AssetImage(widget.questImageIcon),
             color: ColorManager.whiteColor,
-            size: 25,
+            size: 24,
           ),
           title: Text(
             widget.quest.name ?? "Unnamed Quest",

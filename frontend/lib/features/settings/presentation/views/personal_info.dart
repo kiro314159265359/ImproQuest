@@ -56,8 +56,6 @@ class _PersonalInfoState extends State<PersonalInfo> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: ColorManager.navyColor,
-        centerTitle: true,
-        title: Text('Personal Info', style: TextStyles.extraBold38White),
         actions: [
           TextButton(
             child: Text('Save', style: TextStyles.semiBold20White),
@@ -130,7 +128,7 @@ class _PersonalInfoState extends State<PersonalInfo> {
               children: [
                 CircleAvatar(
                   backgroundColor: ColorManager.primaryColor,
-                  radius: 85,
+                  radius: 64,
                   backgroundImage: backgroundImageProvider,
                   child: Align(
                     alignment: Alignment.bottomRight,
@@ -147,7 +145,7 @@ class _PersonalInfoState extends State<PersonalInfo> {
                     ),
                   ),
                 ),
-                SizedBox(height: h * 0.03),
+                SizedBox(height: h * 0.012),
                 LabelBox(
                     leadingIcon: Icons.person_outline,
                     labelText: "Username",
@@ -155,7 +153,7 @@ class _PersonalInfoState extends State<PersonalInfo> {
                         hintText: "",
                         controller: cubit.userNameController,
                         validator: ValidateInput.username)),
-                SizedBox(height: h * 0.025),
+                SizedBox(height: h * 0.012),
                 LabelBox(
                     leadingIcon: Icons.alternate_email,
                     labelText: "Email",
@@ -163,7 +161,7 @@ class _PersonalInfoState extends State<PersonalInfo> {
                         hintText: "",
                         controller: cubit.emailController,
                         validator: ValidateInput.email)),
-                SizedBox(height: h * 0.025),
+                SizedBox(height: h * 0.012),
                 LabelBox(
                     leadingIcon: Icons.calendar_today_outlined,
                     labelText: "Birthday",
@@ -173,7 +171,7 @@ class _PersonalInfoState extends State<PersonalInfo> {
                         controller: cubit.birthDayController,
                         validator: (value) =>
                             value?.isEmpty ?? true ? 'Required' : null)),
-                SizedBox(height: h * 0.025),
+                SizedBox(height: h * 0.012),
                 LabelBox(
                     leadingIcon: Icons.height,
                     labelText: "Height",
@@ -181,7 +179,7 @@ class _PersonalInfoState extends State<PersonalInfo> {
                         hintText: "",
                         controller: cubit.heightController,
                         validator: ValidateInput.height)),
-                SizedBox(height: h * 0.025),
+                SizedBox(height: h * 0.012),
                 LabelBox(
                     leadingIcon: Icons.scale,
                     labelText: "Weight",
@@ -189,7 +187,7 @@ class _PersonalInfoState extends State<PersonalInfo> {
                         hintText: "",
                         controller: cubit.weightController,
                         validator: ValidateInput.weight)),
-                SizedBox(height: h * 0.025),
+                SizedBox(height: h * 0.012),
                 LabelBox(
                     leadingIcon: Icons.male,
                     labelText: "Gender",

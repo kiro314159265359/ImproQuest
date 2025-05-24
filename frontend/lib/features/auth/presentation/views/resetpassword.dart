@@ -31,8 +31,7 @@ class _ResetpasswordState extends State<Resetpassword> {
         Navigator.pushReplacementNamed(context, Routes.loginScreen);
       }
       if (state is OTPErrorState) {
-                   Snackbars.showErrorSnackbar(context, state.failure.message);
-
+        Snackbars.showErrorSnackbar(context, state.failure.message);
       }
     }, builder: (context, state) {
       var cubit = context.read<ForgetPasswordCubit>();
@@ -55,11 +54,11 @@ class _ResetpasswordState extends State<Resetpassword> {
                           ),
                           Text(
                             "Enter your new password",
-                            style: TextStyles.semiBold18White,
+                            style: TextStyles.semiBold16White,
                             textAlign: TextAlign.center,
                           ),
                           SizedBox(
-                            height: h * 0.06,
+                            height: h * 0.04,
                           ),
                           CustomTextFormField(
                             obscureText: true,
@@ -68,7 +67,7 @@ class _ResetpasswordState extends State<Resetpassword> {
                             validator: ValidateInput.password,
                           ),
                           SizedBox(
-                            height: h * 0.06,
+                            height: h * 0.04,
                           ),
                           CustomTextFormField(
                             obscureText: true,
@@ -78,7 +77,7 @@ class _ResetpasswordState extends State<Resetpassword> {
                                 value, cubit.newPasswordController.text),
                           ),
                           SizedBox(
-                            height: h * 0.06,
+                            height: h * 0.04,
                           ),
                           CustomPrimaryButton(
                               onPressed: () {
@@ -89,10 +88,9 @@ class _ResetpasswordState extends State<Resetpassword> {
                                 }
                               },
                               buttonText: "Confirm",
-                              height: 45,
                               isLoading: state is ResetPasswordSendingState),
                           SizedBox(
-                            height: h * 0.06,
+                            height: h * 0.04,
                           ),
                           BackButton(
                             onPressed: () {

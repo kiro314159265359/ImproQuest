@@ -54,11 +54,11 @@ class _VerifyOtpState extends State<VerifyOtp> {
                           ),
                           Text(
                             "We have sent the code to your email",
-                            style: TextStyles.semiBold18White,
+                            style: TextStyles.semiBold16White,
                             textAlign: TextAlign.center,
                           ),
                           SizedBox(
-                            height: h * 0.06,
+                            height: h * 0.04,
                           ),
                           CustomTextFormField(
                             hintText: "OTP",
@@ -66,7 +66,7 @@ class _VerifyOtpState extends State<VerifyOtp> {
                             validator: ValidateInput.username,
                           ),
                           SizedBox(
-                            height: h * 0.06,
+                            height: h * 0.04,
                           ),
                           CustomPrimaryButton(
                               onPressed: () {
@@ -77,10 +77,9 @@ class _VerifyOtpState extends State<VerifyOtp> {
                                 }
                               },
                               buttonText: "Verify",
-                              height: 45,
                               isLoading: state is OTPSendingState),
                           SizedBox(
-                            height: h * 0.06,
+                            height: h * 0.04,
                           ),
                           BackButton(
                             onPressed: () {

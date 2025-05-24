@@ -32,7 +32,7 @@ class _Onboarding1State extends State<Onboarding1> {
                         ),
                         SizedBox(height: h * 0.025),
                         Text('Welcome to ImproQuest',
-                            style: TextStyles.bold18White,
+                            style: TextStyles.bold16White,
                             textAlign: TextAlign.center),
                         Text('Gamified Self Improvement App',
                             style: TextStyles.bold16White,

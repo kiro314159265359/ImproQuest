@@ -70,9 +70,9 @@ class _SettingsState extends State<Settings> {
                   child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        SizedBox(height: h * 0.025),
-                        Text('Settings', style: TextStyles.extraBold38White),
-                        SizedBox(height: h * 0.035),
+                        SizedBox(height: h * 0.032),
+                        Text('Settings', style: TextStyles.extraBold28White),
+                        SizedBox(height: h * 0.024),
                         CustomSingleListTile(
                             titleText: 'Edit your information',
                             leadingIcon: Icons.person_outline,
@@ -80,37 +80,6 @@ class _SettingsState extends State<Settings> {
                               Navigator.pushNamed(
                                   context, Routes.personalInfoScreen);
                             }),
-                        SizedBox(height: h * 0.005),
-                        LabelBox(
-                          labelText: "Notifications",
-                          child: DividerBox(
-                              child1: SwitchListTile(
-                                title: Text("Pop Up Notifications",
-                                    style: TextStyles.semiBold18White),
-                                value: popNotificationBool,
-                                activeTrackColor: ColorManager.primaryColor,
-                                secondary: const Icon(Icons.notifications_none,
-                                    size: 30),
-                                onChanged: (value) {
-                                  setState(() {
-                                    popNotificationBool = value;
-                                  });
-                                },
-                              ),
-                              child2: SwitchListTile(
-                                activeTrackColor: ColorManager.primaryColor,
-                                secondary:
-                                    const Icon(Icons.email_outlined, size: 30),
-                                title: Text("Email Notifications",
-                                    style: TextStyles.semiBold18White),
-                                value: emailNotificationBool,
-                                onChanged: (value) {
-                                  setState(() {
-                                    emailNotificationBool = value;
-                                  });
-                                },
-                              )),
-                        ),
                         SizedBox(height: h * 0.005),
                         LabelBox(
                             labelText: "Sound & Audio",
@@ -123,10 +92,10 @@ class _SettingsState extends State<Settings> {
                                   children: [
                                     Row(
                                       children: [
-                                        const Icon(Icons.music_note, size: 30),
+                                        const Icon(Icons.music_note, size: 28),
                                         const SizedBox(width: 8),
                                         Text("Music",
-                                            style: TextStyles.semiBold18White),
+                                            style: TextStyles.semiBold16White),
                                       ],
                                     ),
                                     Expanded(
@@ -164,11 +133,11 @@ class _SettingsState extends State<Settings> {
                                       padding: const EdgeInsets.only(right: 8),
                                       child: Row(
                                         children: [
-                                          const Icon(Icons.volume_up, size: 30),
+                                          const Icon(Icons.volume_up, size: 28),
                                           const SizedBox(width: 8),
                                           Text("SFX",
                                               style:
-                                                  TextStyles.semiBold18White),
+                                                  TextStyles.semiBold16White),
                                         ],
                                       ),
                                     ),
@@ -208,11 +177,11 @@ class _SettingsState extends State<Settings> {
                             child1: ListTile(
                               leading: const Icon(
                                 Icons.delete,
-                                size: 30,
+                                size: 28,
                                 color: ColorManager.errorColor,
                               ),
                               title: Text("Delete Account",
-                                  style: TextStyles.semiBold18Error),
+                                  style: TextStyles.semiBold16Error),
                               onTap: () {
                                 Dialogs.confirmDialog(
                                   context: context,
@@ -229,11 +198,11 @@ class _SettingsState extends State<Settings> {
                             child2: ListTile(
                               leading: const Icon(
                                 Icons.logout,
-                                size: 30,
+                                size: 28,
                                 color: ColorManager.errorColor,
                               ),
                               title: Text("Logout",
-                                  style: TextStyles.semiBold18Error),
+                                  style: TextStyles.semiBold16Error),
                               onTap: () {
                                 Dialogs.confirmDialog(
                                   context: context,

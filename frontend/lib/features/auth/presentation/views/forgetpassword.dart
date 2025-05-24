@@ -54,11 +54,11 @@ class _ForgetpasswordState extends State<Forgetpassword> {
                           ),
                           Text(
                             "Enter the email to send Verification code",
-                            style: TextStyles.semiBold18White,
+                            style: TextStyles.semiBold16White,
                             textAlign: TextAlign.center,
                           ),
                           SizedBox(
-                            height: h * 0.06,
+                            height: h * 0.04,
                           ),
                           CustomTextFormField(
                             hintText: "Email",
@@ -66,7 +66,7 @@ class _ForgetpasswordState extends State<Forgetpassword> {
                             validator: ValidateInput.email,
                           ),
                           SizedBox(
-                            height: h * 0.06,
+                            height: h * 0.04,
                           ),
                           CustomPrimaryButton(
                               onPressed: () {
@@ -77,10 +77,9 @@ class _ForgetpasswordState extends State<Forgetpassword> {
                                 }
                               },
                               buttonText: "Send",
-                              height: 45,
                               isLoading: state is EmailSendingState),
                           SizedBox(
-                            height: h * 0.06,
+                            height: h * 0.04,
                           ),
                           BackButton(
                             onPressed: () {

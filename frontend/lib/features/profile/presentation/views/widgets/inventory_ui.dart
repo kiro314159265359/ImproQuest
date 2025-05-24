@@ -106,7 +106,7 @@ class _InventoryUIState extends State<InventoryUI> {
                     ),
                     child: Text(
                       widget.title!,
-                      style: TextStyles.regular18White,
+                      style: TextStyles.regular16White,
                       textAlign: TextAlign.center,
                     ),
                   ),
