@@ -14,8 +14,8 @@ class LoginCubit extends Cubit<LoginState> {
       TextEditingController(text: "nigga@gmail.com");
   TextEditingController passController =
       TextEditingController(text: "nigga123");
-      
-  Future<void> loginUser(bool rememberMe) async {
+
+  Future<void> loginUser() async {
     emit(LoginLoadingState());
 
     try {
@@ -25,10 +25,9 @@ class LoginCubit extends Cubit<LoginState> {
       var accessToken = response['user']['access_token'];
       var refreshToken = response['user']['refresh_token'];
 
-      if (rememberMe) {
-        saveAccessToken(accessToken);
-        saveRefreshToken(refreshToken);
-      }
+      saveAccessToken(accessToken);
+      saveRefreshToken(refreshToken);
+
       emit(LoginSuccessState());
     } catch (error) {
       if (error is DioException) {
