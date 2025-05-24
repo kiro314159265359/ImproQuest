@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_2/features/auth/presentation/manager/login_cubit/login_state.dart';
 import '../../../../../core/error/failure.dart';
 import '../../../../../core/service/cache_helper.dart';
+import '../../../../../core/utils/get_it_constants.dart';
+import '../../../../home/presentation/manager/user_cubit.dart';
 import '../../../domain/repo/login_repo.dart';
 
 class LoginCubit extends Cubit<LoginState> {
@@ -27,6 +29,15 @@ class LoginCubit extends Cubit<LoginState> {
 
       saveAccessToken(accessToken);
       saveRefreshToken(refreshToken);
+
+      // Fetch user data to initialize UserCubit state
+      try {
+        final userCubit = getIt<UserCubit>();
+        await userCubit.fetchUserData(forceRefresh: true);
+      } catch (e) {
+        print("Warning: Failed to fetch user data after login: $e");
+        // Continue with login success even if user data fetch fails
+      }
 
       emit(LoginSuccessState());
     } catch (error) {

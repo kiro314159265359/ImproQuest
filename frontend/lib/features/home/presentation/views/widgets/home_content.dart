@@ -30,40 +30,37 @@ class HomeContent extends StatelessWidget {
     return Scaffold(
       resizeToAvoidBottomInset: false,
       body: BackgroundTheme(
-        child: BlocBuilder<HomeBloc, HomeState>(
-          builder: (context, homeState) {
-            // Show loading only when HomeBloc is in loading state
-            if (homeState is HomeLoading) {}
+        child: BlocConsumer<UserCubit, UserState>(
+          buildWhen: (previous, current) =>
+              current is UserLoaded ||
+              current is UserUpdated ||
+              current is UserLoading ||
+              current is UserError ||
+              current is UserInitial,
+          listener: (context, state) {
+            if (state is UserError) {
+              Snackbars.showErrorSnackbar(context, state.failure.message);
+            }
+          },
+          builder: (context, state) {
+            if (state is UserLoaded) {
+              return _buildHomeContent(
+                  context, state.user, screenWidth, screenHeight);
+            } else if (state is UserUpdated) {
+              return _buildHomeContent(
+                  context, state.user, screenWidth, screenHeight);
+            } else if (state is UserLoading) {
+              // Show loading skeleton UI that matches the home structure
+              return _buildHomeContent(
+                  context, state.user, screenWidth, screenHeight);
+            } else if (state is UserInitial || state is UserError) {
+              // Show a simple loading indicator for initial state
+              return const Center(
+                child: CircularProgressIndicator(),
+              );
+            }
 
-            return BlocConsumer<UserCubit, UserState>(
-              listener: (context, state) {
-                if (state is UserError) {
-                  Snackbars.showErrorSnackbar(context, state.failure.message);
-                }
-              },
-              builder: (context, state) {
-                if (state is UserLoaded) {
-                  return _buildHomeContent(
-                      context, state.user, screenWidth, screenHeight);
-                } else if (state is UserUpdated) {
-                  return _buildHomeContent(
-                      context, state.user, screenWidth, screenHeight);
-                } else if (state is UserLoading) {
-                  // Show loading skeleton UI that matches the home structure
-                  return _buildHomeContent(
-                      context, state.user, screenWidth, screenHeight);
-                }
-
-                // If UserCubit is loading but HomeBloc is ready, show empty content
-                // This prevents infinite loading
-                if (homeState is HomeReady) {
-                  //  return _buildHomeContent(
-                  //         context, state.user, screenWidth, screenHeight);
-                }
-
-                return const Center(child: CircularProgressIndicator());
-              },
-            );
+            return const Center(child: CircularProgressIndicator());
           },
         ),
       ),

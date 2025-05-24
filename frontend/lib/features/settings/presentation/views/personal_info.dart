@@ -32,7 +32,23 @@ class _PersonalInfoState extends State<PersonalInfo> {
   @override
   void initState() {
     super.initState();
-    cubit.fetchUserData();
+    // Always fetch fresh data to keep the edit form updated
+    cubit.fetchUserData(forceRefresh: true).then((_) {
+      // Populate text fields after data is fetched
+      _populateTextFields();
+    });
+  }
+
+  void _populateTextFields() {
+    final user = cubit.currentUser;
+    if (user != null) {
+      cubit.userNameController.text = user.username ?? '';
+      cubit.emailController.text = user.email ?? '';
+      cubit.weightController.text = user.weight?.toString() ?? '';
+      cubit.heightController.text = user.height?.toString() ?? '';
+      cubit.birthDayController.text = user.birthDate ?? '';
+      cubit.genderController.text = user.gender ?? '';
+    }
   }
 
   @override
@@ -56,14 +72,7 @@ class _PersonalInfoState extends State<PersonalInfo> {
       body: BlocConsumer<UserCubit, UserState>(
         listener: (context, state) {
           if (state is UserLoaded) {
-            setState(() {
-              cubit.userNameController.text = state.user.username ?? '';
-              cubit.emailController.text = state.user.email ?? '';
-              cubit.weightController.text = state.user.weight?.toString() ?? '';
-              cubit.heightController.text = state.user.height?.toString() ?? '';
-              cubit.birthDayController.text = state.user.birthDate ?? '';
-              cubit.genderController.text = state.user.gender ?? '';
-            });
+            _populateTextFields();
           }
           if (state is UserUpdated) {
             Navigator.pop(context);

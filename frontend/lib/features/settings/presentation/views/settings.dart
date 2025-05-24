@@ -45,7 +45,7 @@ class _SettingsState extends State<Settings> {
   Widget build(BuildContext context) {
     return BlocListener<UserCubit, UserState>(
         listener: (context, state) {
-          if (state is UserDeleted) {
+          if (state is UserInitial) {
             Navigator.pushReplacementNamed(context, Routes.loginScreen);
           } else if (state is UpdateError) {
             Snackbars.showErrorSnackbar(context, state.failure.message);

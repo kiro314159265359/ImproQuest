@@ -15,6 +15,11 @@ class DailyQuestCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<UserCubit, UserState>(
+      buildWhen: (previous, current) =>
+          current is UserLoaded ||
+          current is UserUpdated ||
+          current is UserLoading ||
+          current is UserError,
       builder: (context, state) {
         if (state is UserLoaded) {
           return _buildDailyQuestCard(context, state.user, state);

@@ -23,7 +23,8 @@ class _ProfileState extends State<Profile> {
   @override
   void initState() {
     super.initState();
-    context.read<UserCubit>().fetchUserData();
+    // Always fetch fresh data to keep profile updated
+    context.read<UserCubit>().fetchUserData(forceRefresh: true);
   }
 
   @override

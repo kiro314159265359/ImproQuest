@@ -51,9 +51,9 @@ class HomeBloc extends HydratedBloc<HomeEvent, HomeState> {
     emit(HomeLoading());
 
     try {
-      // Always fetch fresh user data from API, regardless of current state
-      print("Fetching fresh user data from API...");
-      await userCubit.fetchUserData();
+      // Trigger user data fetch if needed - let UserCubit handle deduplication
+      print("HomeBloc: Ensuring fresh user data is available");
+      await userCubit.fetchUserData(forceRefresh: true);
 
       // Check the service distance
       add(CheckServiceDistance());

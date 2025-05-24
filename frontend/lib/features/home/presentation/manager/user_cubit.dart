@@ -17,6 +17,7 @@ class UserCubit extends HydratedCubit<UserState> {
   final UserRepo userRepo;
   UserModel? currentUser;
   List<ShopItem>? itemsList;
+  bool _isFetching = false; // Flag to prevent concurrent fetches
   UserCubit(this.userRepo) : super(UserInitial());
 
   TextEditingController userNameController = TextEditingController();
@@ -31,7 +32,27 @@ class UserCubit extends HydratedCubit<UserState> {
   double get _currentDistance =>
       (state is UserLoaded) ? (state as UserLoaded).totalDistance : 0.0;
 
-  Future<UserModel> fetchUserData() async {
+  Future<UserModel> fetchUserData({bool forceRefresh = false}) async {
+    // Prevent concurrent fetches
+    if (_isFetching) {
+      print("Fetch already in progress, waiting for it to complete...");
+      // Wait for the current fetch to complete
+      while (_isFetching) {
+        await Future.delayed(Duration(milliseconds: 100));
+      }
+      if (currentUser != null) {
+        return currentUser!;
+      }
+    }
+
+    // Check if we already have fresh data and don't need to refetch
+    if (!forceRefresh && (state is UserLoaded || state is UserUpdated) && currentUser != null) {
+      print("User data already loaded, skipping fetch");
+      return currentUser!;
+    }
+
+    _isFetching = true;
+
     // Capture the previous distance before emitting a new state.
     double previousDistance = 0.0;
     if (state is UserLoaded) {
@@ -39,9 +60,10 @@ class UserCubit extends HydratedCubit<UserState> {
     }
     print("Captured previousDistance: $previousDistance");
 
-    // Now emit loading without affecting the captured value.
-    emit(UserLoading());
     try {
+      // Now emit loading without affecting the captured value.
+      emit(UserLoading());
+
       print("Fetching fresh user data from API...");
       final freshUser = await userRepo.getUserData();
       print("GAY: ${freshUser.toJson()}");
@@ -67,6 +89,8 @@ class UserCubit extends HydratedCubit<UserState> {
         emit(UserError(ServerFailure(error.toString())));
       }
       rethrow;
+    } finally {
+      _isFetching = false;
     }
   }
 
@@ -432,7 +456,7 @@ class UserCubit extends HydratedCubit<UserState> {
         // completing quests that might have been completed in another session
         try {
           print("Fetching fresh data before completing quests");
-          await fetchUserData();
+          await fetchUserData(forceRefresh: true);
 
           // Re-evaluate quests with fresh data while preserving distance
           if (state is UserLoaded) {
@@ -494,8 +518,11 @@ class UserCubit extends HydratedCubit<UserState> {
       currentUser = null;
       await clear();
       clearTokens();
+      
+      // Reset the fetching flag
+      _isFetching = false;
 
-      emit(UserDeleted());
+      emit(UserInitial()); // Reset to initial state instead of UserDeleted
 
       if (getIt.isRegistered<UserModel>()) {
         getIt.unregister<UserModel>();
