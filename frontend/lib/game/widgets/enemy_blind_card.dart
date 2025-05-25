@@ -17,6 +17,8 @@ class EnemyBlindCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    var w = MediaQuery.of(context).size.width;
+    var h = MediaQuery.of(context).size.height;
     final enemyType = _getEnemyType();
     final stats = _calculateStats();
 
@@ -25,7 +27,7 @@ class EnemyBlindCard extends StatelessWidget {
     return Card(
       color: isAvailable ? ColorManager.primaryColor : ColorManager.gunmetal,
       child: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: EdgeInsets.all(w * 0.02),
         child: Column(
           children: [
             Text('Blind $blind: $enemyType', style: TextStyles.semiBold16White),
@@ -38,14 +40,14 @@ class EnemyBlindCard extends StatelessWidget {
                     children: [
                       Text('Strength: ${stats.strength}',
                           style: TextStyles.medium16White),
-                      const SizedBox(height: 16),
+                      SizedBox(height: h * 0.02),
                       Text('Endurance: ${stats.endurance}',
                           style: TextStyles.medium16White),
                     ],
                   ),
-                  const Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: VerticalDivider(
+                  Padding(
+                    padding: EdgeInsets.all(w * 0.02),
+                    child: const VerticalDivider(
                       width: 2,
                       color: ColorManager.lightGrey,
                       thickness: 2,
@@ -56,7 +58,7 @@ class EnemyBlindCard extends StatelessWidget {
                     children: [
                       Text('Vitality: ${stats.vitality}',
                           style: TextStyles.medium16White),
-                      const SizedBox(height: 16),
+                      SizedBox(height: h * 0.02),
                       Text('Agility: ${stats.agility}',
                           style: TextStyles.medium16White),
                     ],

@@ -496,7 +496,7 @@ class UserCubit extends HydratedCubit<UserState> {
       currentUser = null;
       await clear();
       clearTokens();
-      emit(UserDeleted());
+      emit(UserInitial());
 
       if (getIt.isRegistered<UserModel>()) {
         getIt.unregister<UserModel>();
