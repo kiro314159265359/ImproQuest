@@ -4,18 +4,18 @@ import '../../manager/cubit/app_layout_cubit.dart';
 
 class CustomBarIcon extends StatelessWidget {
   final AppLayoutCubit cubit;
-  final String iconName;
+  final String? iconName;
   final int index;
   const CustomBarIcon(
-      {super.key,
-      required this.cubit,
-      required this.iconName,
-      required this.index});
+      {super.key, required this.cubit, this.iconName, required this.index});
 
   @override
   Widget build(BuildContext context) {
+    if (iconName == null) {
+      return const SizedBox(width: 24, height: 24);
+    }
     return ImageIcon(
-      AssetImage(iconName),
+      AssetImage(iconName!),
       color: cubit.currentIndex == index
           ? ColorManager.primaryColor
           : ColorManager.whiteColor,

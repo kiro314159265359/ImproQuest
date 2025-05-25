@@ -27,12 +27,23 @@ class AppLayout extends StatelessWidget {
                   selectedItemColor: ColorManager.primaryColor,
                   unselectedItemColor: ColorManager.whiteColor,
                   currentIndex: cubit.currentIndex,
-                  onTap: (index) => cubit.changeCurrentIndex(index),
+                  onTap: (index) {
+                    if (index == 2) {
+                      Flame.device.fullScreen();
+                      Flame.device.setPortrait();
+                      Navigator.pushNamed(context, Routes.gameScreen);
+                    } else {
+                      cubit.changeCurrentIndex(index);
+                    }
+                  },
                   type: BottomNavigationBarType.fixed,
                   items: [
                     BottomNavigationBarItem(
                       icon: CustomBarIcon(
-                          cubit: cubit, iconName: AppIcons.homeIcon, index: 0),
+                        cubit: cubit,
+                        iconName: AppIcons.homeIcon,
+                        index: 0,
+                      ),
                       label: 'Home',
                     ),
                     BottomNavigationBarItem(
@@ -43,17 +54,21 @@ class AppLayout extends StatelessWidget {
                       label: 'Profile',
                     ),
                     BottomNavigationBarItem(
+                      icon: CustomBarIcon(cubit: cubit, index: 2),
+                      label: '',
+                    ),
+                    BottomNavigationBarItem(
                       icon: CustomBarIcon(
                           cubit: cubit,
                           iconName: AppIcons.rankingsIcon,
-                          index: 2),
+                          index: 3),
                       label: 'Rankings',
                     ),
                     BottomNavigationBarItem(
                       icon: CustomBarIcon(
                           cubit: cubit,
                           iconName: AppIcons.settingsIcon,
-                          index: 3),
+                          index: 4),
                       label: 'Settings',
                     ),
                   ]),
