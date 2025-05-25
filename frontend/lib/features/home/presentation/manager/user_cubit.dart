@@ -347,7 +347,6 @@ class UserCubit extends HydratedCubit<UserState> {
   Future<void> getUserItems(String? slot) async {
     emit(InventoryLoading());
     try {
-      await userRepo.getUserItems();
       final invModel = await userRepo.getUserItems();
       itemsList = invModel.items?.where((inv) => inv.slot == slot).toList();
 

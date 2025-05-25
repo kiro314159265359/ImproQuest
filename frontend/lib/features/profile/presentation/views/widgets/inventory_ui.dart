@@ -75,7 +75,7 @@ class _InventoryUIState extends State<InventoryUI> {
           break;
         case 'weapon':
           equippedItemId = equippedItems.weapon;
-          equippedItemIcon = AppImages.armorPhoto;
+          equippedItemIcon = AppImages.swordPhoto;
           break;
       }
     }

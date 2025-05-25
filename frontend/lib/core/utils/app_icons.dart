@@ -5,6 +5,7 @@ class AppIcons {
   static const String settingsIcon = 'assets/icons/SettingsIcon.png';
   static const String fightIcon = 'assets/icons/Swords.png';
   static const String runningIcon = 'assets/icons/RunningChIcon.png';
+  static const String timeIcon = 'assets/icons/TimeIcon.png';
   static const String exitIcon = 'assets/icons/ExitIcon.png';
   static const String coinsIcon = 'assets/icons/CoinsIcon.png';
   static const String flameIcon = 'assets/icons/FlameIcon.png';

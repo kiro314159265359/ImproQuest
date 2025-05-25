@@ -100,7 +100,7 @@ class _CharacterState extends State<Character> {
                   ItemButton(
                     width: w * 0.15,
                     height: h * 0.07,
-                    itemPhoto: AppImages.armorPhoto,
+                    itemPhoto: AppImages.swordPhoto,
                     onPressed: () {
                       showDialog(
                         context: context,

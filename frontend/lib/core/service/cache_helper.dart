@@ -28,5 +28,7 @@ Future<bool> isFirstTime() async {
 }
 
 Future<void> clearTokens() async {
+  final value = await storage.read(key: 'isFirstTime');
   await storage.deleteAll();
+  await storage.write(key: 'isFirstTime', value: value);
 }

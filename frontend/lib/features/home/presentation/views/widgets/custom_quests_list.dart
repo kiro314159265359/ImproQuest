@@ -58,7 +58,7 @@ class CustomQuestsList extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 4),
                 child: CustomQuestCard(
                   quest: quest,
-                  questImageIcon: AppIcons.runningIcon,
+                  questImageIcon: AppIcons.timeIcon,
                   onCompleteQuest: () {
                     context.read<HomeBloc>().add(CompleteCustomQuest(questId));
                   },
