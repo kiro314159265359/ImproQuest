@@ -25,22 +25,22 @@ class QuestRewardData {
     }
   }
 
-  static int questDifficultyLevel(int xpReward) {
+  static double questDifficultyLevel(int xpReward) {
     switch (xpReward) {
       case 10:
-        return 0;
+        return 0.0;
       case 20:
-        return 1;
+        return 1.0;
       case 30:
-        return 2;
+        return 2.0;
       case 40:
-        return 3;
+        return 3.0;
       case 50:
-        return 4;
+        return 4.0;
       case 60:
-        return 5;
+        return 5.0;
       default:
-        return -1;
+        return 0.0;
     }
   }
 }

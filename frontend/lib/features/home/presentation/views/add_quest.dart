@@ -50,9 +50,8 @@ class _AddQuestState extends State<AddQuest> {
       questNameController.text = widget.quest?.name ?? '';
       questType = widget.quest!.type;
 
-      final difficultyLevel =
+      questDifficultyLevel =
           QuestRewardData.questDifficultyLevel(widget.quest!.xpReward ?? 0);
-      questDifficultyLevel = difficultyLevel.toDouble();
     }
   }
 
