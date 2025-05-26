@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_application_2/features/home/data/quest_reward_data.dart';
 import 'package:flutter_application_2/game/models/shop_item.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
@@ -199,42 +200,10 @@ class UserCubit extends HydratedCubit<UserState> {
       int questDifficultyLevel, String questType) async {
     emit(UserUpdating());
     try {
-      int questXp = 0;
-      int questGold = 0;
-
-      switch (questDifficultyLevel) {
-        case 0:
-          questXp = 10;
-          questGold = 10;
-          break;
-        case 1:
-          questXp = 20;
-          questGold = 20;
-          break;
-        case 2:
-          questXp = 30;
-          questGold = 30;
-          break;
-        case 3:
-          questXp = 40;
-          questGold = 40;
-          break;
-        case 4:
-          questXp = 50;
-          questGold = 50;
-          break;
-        case 5:
-          questXp = 60;
-          questGold = 60;
-          break;
-        default:
-          questXp = 0;
-          questGold = 0;
-          break;
-      }
+      final rewards = QuestRewardData.questRewards(questDifficultyLevel);
 
       await userRepo.editQuest(
-          quest.sId, questName, questXp, questGold, questType);
+          quest.sId, questName, rewards.xp, rewards.gold, questType);
 
       if (currentUser != null && currentUser!.quests != null) {
         final questIndex =
@@ -242,8 +211,8 @@ class UserCubit extends HydratedCubit<UserState> {
         if (questIndex != -1) {
           currentUser!.quests![questIndex].name = questName;
           currentUser!.quests![questIndex].type = questType;
-          currentUser!.quests![questIndex].xpReward = questXp;
-          currentUser!.quests![questIndex].goldReward = questGold;
+          currentUser!.quests![questIndex].xpReward = rewards.xp;
+          currentUser!.quests![questIndex].goldReward = rewards.gold;
         }
       }
 
@@ -290,40 +259,10 @@ class UserCubit extends HydratedCubit<UserState> {
       String questName, int questDifficultyLevel, String questType) async {
     emit(UserUpdating());
     try {
-      int questXp = 0;
-      int questGold = 0;
+      final rewards = QuestRewardData.questRewards(questDifficultyLevel);
 
-      switch (questDifficultyLevel) {
-        case 0:
-          questXp = 10;
-          questGold = 10;
-          break;
-        case 1:
-          questXp = 20;
-          questGold = 20;
-          break;
-        case 2:
-          questXp = 30;
-          questGold = 30;
-          break;
-        case 3:
-          questXp = 40;
-          questGold = 40;
-          break;
-        case 4:
-          questXp = 50;
-          questGold = 50;
-          break;
-        case 5:
-          questXp = 60;
-          questGold = 60;
-          break;
-        default:
-          questXp = 0;
-          questGold = 0;
-          break;
-      }
-      await userRepo.addCustomQuest(questName, questXp, questGold, questType);
+      await userRepo.addCustomQuest(
+          questName, rewards.xp, rewards.gold, questType);
 
       currentUser = await userRepo.getUserData();
 
