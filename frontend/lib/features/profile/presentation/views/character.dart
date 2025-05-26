@@ -60,7 +60,7 @@ class _CharacterState extends State<Character> {
   }
 
   Widget _buildCharacterContent(UserModel user) {
-    final w = MediaQuery.of(context).size.width;
+    // final w = MediaQuery.of(context).size.width;
     final h = MediaQuery.of(context).size.height;
     return SingleChildScrollView(
       child: Column(
@@ -73,8 +73,8 @@ class _CharacterState extends State<Character> {
               Column(
                 children: [
                   ItemButton(
-                    width: w * 0.15,
-                    height: h * 0.07,
+                    width: 56,
+                    height: 56,
                     itemPhoto: AppImages.helmetPhoto,
                     onPressed: () {
                       showDialog(
@@ -85,8 +85,8 @@ class _CharacterState extends State<Character> {
                   ),
                   SizedBox(height: h * 0.024),
                   ItemButton(
-                    width: w * 0.15,
-                    height: h * 0.07,
+                    width: 56,
+                    height: 56,
                     itemPhoto: AppImages.armorPhoto,
                     onPressed: () {
                       showDialog(
@@ -103,14 +103,14 @@ class _CharacterState extends State<Character> {
                       decoration: const BoxDecoration(
                           color: ColorManager.gunmetal,
                           borderRadius: BorderRadius.all(Radius.circular(12))),
-                      width: w * 0.25,
-                      height: h * 0.23,
+                      width: 88,
+                      height: 160,
                       child: Image.asset(AppImages.shinobiPhoto,
                           width: 25, fit: BoxFit.contain)),
                   SizedBox(height: h * 0.024),
                   ItemButton(
-                    width: w * 0.15,
-                    height: h * 0.07,
+                    width: 56,
+                    height: 56,
                     itemPhoto: AppImages.swordPhoto,
                     onPressed: () {
                       showDialog(
@@ -124,8 +124,8 @@ class _CharacterState extends State<Character> {
               Column(
                 children: [
                   ItemButton(
-                    width: w * 0.15,
-                    height: h * 0.07,
+                    width: 56,
+                    height: 56,
                     itemPhoto: AppImages.glovesPhoto,
                     onPressed: () async {
                       showDialog(
@@ -136,8 +136,8 @@ class _CharacterState extends State<Character> {
                   ),
                   SizedBox(height: h * 0.024),
                   ItemButton(
-                    width: w * 0.15,
-                    height: h * 0.07,
+                    width: 56,
+                    height: 56,
                     itemPhoto: AppImages.bootsPhoto,
                     onPressed: () async {
                       showDialog(

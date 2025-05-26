@@ -8,6 +8,7 @@ import '../../../../core/theme/color_manger.dart';
 import '../../../../core/theme/text_style.dart';
 import '../../../../core/utils/app_icons.dart';
 import '../../../home/presentation/views/widgets/custom_rich_text.dart';
+import 'widgets/rank_card.dart';
 
 class Statistics extends StatefulWidget {
   final UserModel user;
@@ -37,7 +38,16 @@ class _StatisticsState extends State<Statistics> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            height: h * 0.2,
+            height: h * 0.02,
+          ),
+          RankCard(
+            userRank: widget.user.rank ?? 'E',
+          ),
+          SizedBox(
+            height: h * 0.02,
+          ),
+          SizedBox(
+            height: 150,
             child: Card(
               color: ColorManager.gunmetal,
               child: Column(
@@ -51,7 +61,7 @@ class _StatisticsState extends State<Statistics> {
                         Text("day streak", style: TextStyles.bold8Primary),
                   ),
                   SizedBox(
-                    height: h * 0.08,
+                    height: 50,
                     child: ListView.builder(
                         scrollDirection: Axis.horizontal,
                         itemCount: weekDays.length,
@@ -99,10 +109,10 @@ class _StatisticsState extends State<Statistics> {
             ),
           ),
           SizedBox(
-            height: h * 0.04,
+            height: h * 0.02,
           ),
           SizedBox(
-            height: h * 0.2,
+            height: 180,
             child: Card(
               color: ColorManager.gunmetal,
               child: ListTile(

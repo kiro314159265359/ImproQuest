@@ -12,4 +12,10 @@ class AppIcons {
   static const String trophyUnlockedIcon =
       'assets/icons/TrophyUnlockedIcon.png';
   static const String trophyLockedIcon = 'assets/icons/TrophyLockedIcon.png';
+  static const String rankSIcon = 'assets/icons/RankSIcon.png';
+  static const String rankAIcon = 'assets/icons/RankAIcon.png';
+  static const String rankBIcon = 'assets/icons/RankBIcon.png';
+  static const String rankCIcon = 'assets/icons/RankCIcon.png';
+  static const String rankDIcon = 'assets/icons/RankDIcon.png';
+  static const String rankEIcon = 'assets/icons/RankEIcon.png';
 }
