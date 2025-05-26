@@ -280,7 +280,7 @@ func CompleteQuest() gin.HandlerFunc {
 		}
 
 		// 3. Update user to award XP/gold & mark quest as completed
-		// Using filtered positional operator to target the specific quest by ID
+		now := time.Now()
 		filter := bson.M{
 			"_id": userOID,
 		}
@@ -292,12 +292,12 @@ func CompleteQuest() gin.HandlerFunc {
 			},
 			"$set": bson.M{
 				"quests.$[elem].is_completed": true,
-				"updated_at":                  time.Now(), // Also update user's updated_at
+				"quests.$[elem].completed_at": now, // Record completion time
+				"updated_at":                  now,
 			},
 		}
 
 		// Define the array filter to match only the quest with the specified ID.
-		// Pass the slice of filters directly to SetArrayFilters.
 		opts := options.UpdateOne().
 			SetArrayFilters([]any{
 				bson.D{{Key: "elem._id", Value: questOID}},
@@ -308,7 +308,7 @@ func CompleteQuest() gin.HandlerFunc {
 			return
 		}
 		if result.ModifiedCount == 0 {
-			c.JSON(http.StatusConflict, gin.H{"error": "quest completion failed or already completed"}) // Adjusted message
+			c.JSON(http.StatusConflict, gin.H{"error": "quest completion failed or already completed"})
 			return
 		}
 
@@ -418,7 +418,7 @@ func UpdateStreakHandler() gin.HandlerFunc {
 			if helpers.SameDay(user.Streak.LastCompleted, yesterday) {
 				user.Streak.Current++ // Increment streak if completed yesterday
 			} else {
-				user.Streak.Current = 1 // Reset streak if a day was skipped
+				user.Streak.Current = 0 // Reset streak if a day was skipped
 			}
 			user.Streak.LastCompleted = today
 
@@ -446,6 +446,7 @@ func UpdateStreakHandler() gin.HandlerFunc {
 		})
 	}
 }
+
 func EditMentalOrHabitQuest() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 1. Get user ID from token/context

@@ -7,8 +7,10 @@ import (
 )
 
 func AreAllQuestsCompleted(quests []models.Quest) bool {
+	// Only check Running quests for streak completion
+	// Custom quests (Mental/Habit) reset daily and shouldn't affect streaks
 	for _, quest := range quests {
-		if !quest.IsCompleted {
+		if quest.Type != nil && *quest.Type == "Running" && !quest.IsCompleted {
 			return false
 		}
 	}

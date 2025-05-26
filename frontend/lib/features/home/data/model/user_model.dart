@@ -182,6 +182,7 @@ class Quests {
   int? goldReward;
   bool? isCompleted;
   bool? isCustom;
+  String? completedAt; // Add completion timestamp
 
   Quests(
       {this.sId,
@@ -192,7 +193,8 @@ class Quests {
       this.xpReward,
       this.goldReward,
       this.isCustom,
-      this.isCompleted});
+      this.isCompleted,
+      this.completedAt});
 
   Quests.fromJson(Map<String, dynamic> json) {
     sId = json['_id'];
@@ -204,6 +206,7 @@ class Quests {
     goldReward = json['gold_reward'];
     isCompleted = json['is_completed'];
     isCustom = json['is_custom'];
+    completedAt = json['completed_at'];
   }
 
   Map<String, dynamic> toJson() {
@@ -217,6 +220,7 @@ class Quests {
     data['gold_reward'] = goldReward;
     data['is_completed'] = isCompleted;
     data['is_custom'] = isCustom;
+    data['completed_at'] = completedAt;
     return data;
   }
 }
