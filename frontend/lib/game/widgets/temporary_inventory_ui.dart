@@ -70,7 +70,7 @@ class TemporaryInventoryUi extends StatelessWidget {
       ),
       child: Text(
         'Temporary Consumables',
-        style: TextStyles.bold18White,
+        style: TextStyles.bold16White,
         textAlign: TextAlign.center,
       ),
     );

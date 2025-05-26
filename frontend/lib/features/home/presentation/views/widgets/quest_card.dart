@@ -23,36 +23,38 @@ class QuestCard extends StatefulWidget {
 class _QuestCardState extends State<QuestCard> {
   @override
   Widget build(BuildContext context) {
+    var w = MediaQuery.of(context).size.width;
     return Card(
         color: ColorManager.gunmetal,
         child: ListTile(
           title: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              Padding(
+                padding: EdgeInsets.only(right: w * 0.024),
+                child: ImageIcon(
+                  AssetImage(widget.questImageIcon),
+                  color: ColorManager.whiteColor,
+                  size: 24,
+                ),
+              ),
               Expanded(
-                child: Row(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    ImageIcon(
-                      AssetImage(widget.questImageIcon),
-                      color: ColorManager.whiteColor,
-                      size: 25,
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        "${widget.questName} ${widget.goal}m",
+                        style: TextStyles.semiBold16White,
+                      ),
                     ),
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "${widget.questName} ${widget.goal}m",
-                          style: TextStyles.semiBold16White,
-                        ),
-                        Text(
-                          widget.questDesc,
-                          style: TextStyles.semiBold12White,
-                        )
-                      ],
-                    ),
+                    Text(
+                      widget.questDesc,
+                      style: TextStyles.semiBold12White,
+                    )
                   ],
                 ),
               ),
@@ -68,7 +70,7 @@ class _QuestCardState extends State<QuestCard> {
             children: [
               Expanded(
                 child: Container(
-                  margin: const EdgeInsets.symmetric(vertical: 7),
+                  margin: const EdgeInsets.symmetric(vertical: 8),
                   width: 230,
                   height: 12,
                   child: LinearProgressIndicator(

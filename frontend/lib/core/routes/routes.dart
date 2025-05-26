@@ -1,5 +1,5 @@
 class Routes {
-  static const String onboarding1Screen = 'onboarding1Screen';
+  static const String onboardingScreen = 'onboardingScreen';
   static const String loginScreen = 'loginScreen';
   static const String registerScreen = 'registerScreen';
   static const String continueRegisterScreen = 'ContinueRegisterScreen';

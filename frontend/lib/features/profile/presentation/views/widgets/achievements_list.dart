@@ -49,8 +49,8 @@ class _AchievementsListState extends State<AchievementsList> {
                     widget.isLocked
                         ? AppIcons.trophyLockedIcon
                         : AppIcons.trophyUnlockedIcon,
-                    width: 65),
-                title: Text(achievement.name!, style: TextStyles.bold20White),
+                    width: 48),
+                title: Text(achievement.name!, style: TextStyles.bold16White),
                 subtitle: Text(achievement.description!,
                     style: TextStyles.regular12White),
               ),

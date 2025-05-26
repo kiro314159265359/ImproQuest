@@ -29,7 +29,7 @@ class Dialogs {
             ),
             Text(
               title!,
-              style: TextStyles.bold28White,
+              style: TextStyles.bold20White,
             ),
             const Divider(
               color: ColorManager.darkGreyColor,
@@ -74,7 +74,7 @@ class Dialogs {
             ),
             Text(
               title!,
-              style: TextStyles.bold24White,
+              style: TextStyles.bold20White,
             ),
             const Divider(
               color: ColorManager.darkGreyColor,

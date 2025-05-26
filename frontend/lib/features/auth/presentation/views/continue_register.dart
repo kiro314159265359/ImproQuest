@@ -55,7 +55,7 @@ class _ContinueRegisterState extends State<ContinueRegister> {
                           style: TextStyles.extraBold32White,
                         ),
                         SizedBox(
-                          height: h * 0.03,
+                          height: h * 0.04,
                         ),
                         CustomTextFormField(
                           hintText: "Username",
@@ -155,11 +155,10 @@ class _ContinueRegisterState extends State<ContinueRegister> {
                             }
                           },
                           buttonText: "Register",
-                          height: 45,
                           isLoading: state is RegisterLoadingState,
                         ),
                         SizedBox(
-                          height: h * 0.04,
+                          height: h * 0.02,
                         ),
                         BackButton(
                           onPressed: () {

@@ -3,7 +3,7 @@ import 'package:flutter_application_2/features/auth/presentation/views/continue_
 import 'package:flutter_application_2/features/auth/presentation/views/forgetpassword.dart';
 import 'package:flutter_application_2/features/auth/presentation/views/resetpassword.dart';
 import 'package:flutter_application_2/features/home/presentation/views/add_quest.dart';
-import 'package:flutter_application_2/features/onboarding/presentation/views/onboarding1.dart';
+import 'package:flutter_application_2/features/onboarding/presentation/views/onboarding.dart';
 import 'package:flutter_application_2/features/settings/presentation/views/personal_info.dart';
 import 'package:flutter_application_2/game/game_page.dart';
 import '../../features/app_layout/presentation/views/app_layout.dart';
@@ -18,8 +18,8 @@ import 'routes.dart';
 class AppRoutes {
   Route? onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
-      case Routes.onboarding1Screen:
-        return MaterialPageRoute(builder: (_) => const Onboarding1());
+      case Routes.onboardingScreen:
+        return MaterialPageRoute(builder: (_) => const Onboarding());
 
       case Routes.loginScreen:
         return MaterialPageRoute(builder: (_) => const Login());

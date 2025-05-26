@@ -55,10 +55,10 @@ class CustomQuestsList extends StatelessWidget {
               final isLoading = loadingStates[questId] ?? false;
 
               return Padding(
-                padding: const EdgeInsets.only(bottom: 5),
+                padding: const EdgeInsets.only(bottom: 4),
                 child: CustomQuestCard(
                   quest: quest,
-                  questImageIcon: AppIcons.runningIcon,
+                  questImageIcon: AppIcons.timeIcon,
                   onCompleteQuest: () {
                     context.read<HomeBloc>().add(CompleteCustomQuest(questId));
                   },

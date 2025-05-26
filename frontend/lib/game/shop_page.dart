@@ -49,7 +49,7 @@ class ShopPage extends StatelessWidget {
                       children: [
                         Image.asset(AppIcons.coinsIcon, width: 24, height: 24),
                         SizedBox(width: screenWidth * 0.01),
-                        Text('$gold', style: TextStyles.bold18Gold),
+                        Text('$gold', style: TextStyles.bold16Gold),
                       ],
                     ),
                   ),

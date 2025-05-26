@@ -64,7 +64,7 @@ class _CustomButtonState extends State<CustomButton> {
               icon: ImageIcon(
                 AssetImage(widget.buttonIcon!),
                 color: widget.iconColor,
-                size: 25,
+                size: 24,
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: widget.fillColor,

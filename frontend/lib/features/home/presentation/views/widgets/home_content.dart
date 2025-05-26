@@ -5,8 +5,6 @@ import 'package:flutter_application_2/core/theme/color_manger.dart';
 import 'package:flutter_application_2/core/theme/text_style.dart';
 import 'package:flutter_application_2/core/widget/appbar_stats.dart';
 import 'package:flutter_application_2/features/home/data/model/user_model.dart';
-import 'package:flutter_application_2/features/home/presentation/manager/home_bloc.dart';
-import 'package:flutter_application_2/features/home/presentation/manager/home_state.dart';
 import 'package:flutter_application_2/features/home/presentation/manager/user_cubit.dart';
 import 'package:flutter_application_2/features/home/presentation/manager/user_state.dart';
 import 'package:flutter_application_2/features/home/presentation/views/widgets/custom_quests_list.dart';
@@ -16,7 +14,6 @@ import 'package:flutter_application_2/features/home/presentation/views/widgets/q
 import 'package:flutter_application_2/features/settings/presentation/views/widgets/label_box.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:skeletonizer/skeletonizer.dart';
-
 import '../../../../../core/widget/snackabars.dart';
 
 class HomeContent extends StatelessWidget {
@@ -92,16 +89,19 @@ class HomeContent extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(height: screenHeight * 0.025),
+              SizedBox(height: screenHeight * 0.024),
               const AppBarStats(),
-              SizedBox(height: screenHeight * 0.025),
-              CustomRichText(
-                text1: 'Welcome, ',
-                textStyle1: TextStyles.extraBold30White,
-                text2: user.username?.trim().split(' ').first ?? 'Player',
-                textStyle2: TextStyles.extraBold30Primary,
+              SizedBox(height: screenHeight * 0.024),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: CustomRichText(
+                  text1: 'Welcome, ',
+                  textStyle1: TextStyles.bold24White,
+                  text2: user.username?.trim().split(' ').first ?? 'Player',
+                  textStyle2: TextStyles.bold24Primary,
+                ),
               ),
-              SizedBox(height: screenHeight * 0.025),
+              SizedBox(height: screenHeight * 0.024),
               const DailyQuestCard(),
               LabelBox(
                   labelText: "Daily Quest",

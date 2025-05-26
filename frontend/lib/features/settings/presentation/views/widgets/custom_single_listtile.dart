@@ -23,9 +23,9 @@ class _CustomSingleListTileState extends State<CustomSingleListTile> {
     return Card(
       color: ColorManager.gunmetal,
       child: ListTile(
-        leading: Icon(widget.leadingIcon, size: 30),
-        title: Text(widget.titleText, style: TextStyles.semiBold18White),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 30),
+        leading: Icon(widget.leadingIcon, size: 28),
+        title: Text(widget.titleText, style: TextStyles.semiBold16White),
+        trailing: const Icon(Icons.arrow_forward_ios, size: 28),
         onTap: widget.onTap,
       ),
     );

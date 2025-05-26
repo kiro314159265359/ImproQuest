@@ -62,10 +62,8 @@ class _LeaderboardsListState extends State<LeaderboardsList> {
                 state.type == widget.leaderboardType) {
               return _buildList(state.leaderboard, state.type, state);
             }
-            if (state is LeaderboardLoading) {
-              return _buildLoadingList();
-            }
-            return const Center(child: CircularProgressIndicator());
+
+            return _buildLoadingList();
           },
         ),
       ),

@@ -87,7 +87,7 @@ class _TemporaryShopPageState extends State<TemporaryShopPage> {
                       children: [
                         Image.asset(AppIcons.coinsIcon, width: 24, height: 24),
                         SizedBox(width: screenWidth * 0.01),
-                        Text('$gold', style: TextStyles.bold18Gold),
+                        Text('$gold', style: TextStyles.bold16Gold),
                       ],
                     ),
                   ),
@@ -101,7 +101,7 @@ class _TemporaryShopPageState extends State<TemporaryShopPage> {
             Padding(
               padding: EdgeInsets.all(screenWidth * 0.02),
               child: Text("These items will be reset after your run ends",
-                  style: TextStyles.regularItalic14darkGold),
+                  style: TextStyles.regularItalic12darkGold),
             ),
             Expanded(
               child: BlocBuilder<ShopBloc, ShopState>(

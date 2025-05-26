@@ -27,7 +27,7 @@ class GameButton extends StatelessWidget {
           ),
         ),
         onPressed: onPressed,
-        child: Text(text, style: TextStyles.bold18White),
+        child: Text(text, style: TextStyles.bold16White),
       ),
     );
   }

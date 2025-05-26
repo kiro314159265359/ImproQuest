@@ -8,6 +8,7 @@ class AppImages {
   static const String shinobiPhoto = 'assets/images/ShinobiPhoto.png';
   static const String helmetPhoto = 'assets/images/HelmetPhoto.png';
   static const String armorPhoto = 'assets/images/ArmorPhoto.png';
+  static const String swordPhoto = 'assets/images/MCSword.png';
   static const String glovesPhoto = 'assets/images/GlovesPhoto.png';
   static const String bootsPhoto = 'assets/images/BootsPhoto.png';
 }

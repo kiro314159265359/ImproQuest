@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_2/features/profile/presentation/views/widgets/achievements_list.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/color_manger.dart';
+import '../../../../core/theme/text_style.dart';
 import '../../../../core/widget/snackabars.dart';
+import '../../../home/data/model/achievement_model.dart';
 import '../manager/achievement_cubit.dart';
 import '../manager/achievement_state.dart';
 
@@ -28,12 +30,13 @@ class _AchievementsState extends State<Achievements> {
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const TabBar(
+          TabBar(
+            labelStyle: TextStyles.bold12White,
             dividerColor: Colors.transparent,
             labelColor: ColorManager.primaryColor,
             unselectedLabelColor: ColorManager.darkGreyColor,
             indicatorColor: ColorManager.primaryColor,
-            tabs: [
+            tabs: const [
               Tab(
                 text: 'Unlocked',
                 icon: Icon(Icons.lock_open),
@@ -52,23 +55,7 @@ class _AchievementsState extends State<Achievements> {
                 }
               },
               builder: (context, state) {
-                if (state is AchievementLoading) {
-                  return TabBarView(
-                    physics: const NeverScrollableScrollPhysics(),
-                    children: <Widget>[
-                      AchievementsList(
-                        isLoading: true,
-                        isLocked: false,
-                        achievementsList: state.achievementsList,
-                      ),
-                      AchievementsList(
-                        isLoading: true,
-                        isLocked: true,
-                        achievementsList: state.achievementsList,
-                      ),
-                    ],
-                  );
-                } else if (state is AchievementsLoaded) {
+                if (state is AchievementsLoaded) {
                   return TabBarView(
                     physics: const NeverScrollableScrollPhysics(),
                     children: <Widget>[
@@ -85,9 +72,28 @@ class _AchievementsState extends State<Achievements> {
                     ],
                   );
                 }
-                return const Center(
-                    child: Text('No achievements data.',
-                        style: TextStyle(color: Colors.white)));
+                final dummyAchievements = List.generate(
+                  10,
+                  (index) => AchievementModel(
+                    name: 'Achievement',
+                    description: 'Description',
+                  ),
+                );
+                return TabBarView(
+                  physics: const NeverScrollableScrollPhysics(),
+                  children: <Widget>[
+                    AchievementsList(
+                      isLoading: true,
+                      isLocked: false,
+                      achievementsList: dummyAchievements,
+                    ),
+                    AchievementsList(
+                      isLoading: true,
+                      isLocked: true,
+                      achievementsList: dummyAchievements,
+                    ),
+                  ],
+                );
               },
             ),
           ),

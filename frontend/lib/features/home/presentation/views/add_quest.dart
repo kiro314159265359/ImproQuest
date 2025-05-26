@@ -97,10 +97,9 @@ class _AddQuestState extends State<AddQuest> {
       return Scaffold(
           appBar: AppBar(
             backgroundColor: ColorManager.navyColor,
-            centerTitle: true,
             title: Text(
               widget.isEditing ? 'Edit Quest' : 'Add Quest',
-              style: TextStyles.extraBold28White,
+              style: TextStyles.extraBold24White,
             ),
           ),
           body: Form(
@@ -146,7 +145,7 @@ class _AddQuestState extends State<AddQuest> {
                                       value: type,
                                       child: Text(
                                         type,
-                                        style: TextStyles.semiBold18White,
+                                        style: TextStyles.semiBold16White,
                                       ),
                                     );
                                   }).toList(),
@@ -188,9 +187,6 @@ class _AddQuestState extends State<AddQuest> {
                           SizedBox(
                             height: h * 0.02,
                           ),
-                          SizedBox(
-                            height: h * 0.02,
-                          ),
                           CustomPrimaryButton(
                               onPressed: () {
                                 if (formKey.currentState!.validate()) {
@@ -212,7 +208,6 @@ class _AddQuestState extends State<AddQuest> {
                               },
                               buttonText:
                                   widget.isEditing ? "Save Changes" : "Add",
-                              height: 45,
                               isLoading: state is UserUpdating),
                         ],
                       ),
