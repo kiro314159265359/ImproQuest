@@ -430,7 +430,7 @@ func UpdateStreakHandler() gin.HandlerFunc {
 		} else {
 			// If yesterday wasn't part of a continuous streak ending yesterday,
 			// or if this is the first completion in a while, streak resets to 1 (for today).
-			user.Streak.Current = 1
+			user.Streak.Current = 0
 		}
 		user.Streak.LastCompleted = todayDate
 
