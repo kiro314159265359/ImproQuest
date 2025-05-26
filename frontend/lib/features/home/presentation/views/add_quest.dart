@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_2/core/utils/get_it_constants.dart';
 import 'package:flutter_application_2/features/home/data/model/user_model.dart';
+import 'package:flutter_application_2/features/home/data/quest_reward_data.dart';
 import 'package:flutter_application_2/features/home/presentation/manager/user_cubit.dart';
 import 'package:flutter_application_2/features/home/presentation/manager/user_state.dart';
 import 'package:flutter_application_2/features/settings/presentation/views/widgets/label_box.dart';
@@ -49,28 +50,9 @@ class _AddQuestState extends State<AddQuest> {
       questNameController.text = widget.quest?.name ?? '';
       questType = widget.quest!.type;
 
-      switch (widget.quest!.xpReward) {
-        case 10:
-          questDifficultyLevel = 0.0;
-          break;
-        case 20:
-          questDifficultyLevel = 1.0;
-          break;
-        case 30:
-          questDifficultyLevel = 2.0;
-          break;
-        case 40:
-          questDifficultyLevel = 3.0;
-          break;
-        case 50:
-          questDifficultyLevel = 4.0;
-          break;
-        case 60:
-          questDifficultyLevel = 5.0;
-          break;
-        default:
-          break;
-      }
+      final difficultyLevel =
+          QuestRewardData.questDifficultyLevel(widget.quest!.xpReward ?? 0);
+      questDifficultyLevel = difficultyLevel.toDouble();
     }
   }
 

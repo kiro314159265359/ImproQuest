@@ -24,4 +24,23 @@ class QuestRewardData {
         return const QuestRewardsModel(xp: 0, gold: 0);
     }
   }
+
+  static int questDifficultyLevel(int xpReward) {
+    switch (xpReward) {
+      case 10:
+        return 0;
+      case 20:
+        return 1;
+      case 30:
+        return 2;
+      case 40:
+        return 3;
+      case 50:
+        return 4;
+      case 60:
+        return 5;
+      default:
+        return -1;
+    }
+  }
 }
