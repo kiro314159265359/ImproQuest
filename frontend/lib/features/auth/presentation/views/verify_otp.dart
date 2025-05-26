@@ -4,7 +4,6 @@ import 'package:flutter_application_2/features/auth/presentation/manager/forget_
 import 'package:flutter_application_2/features/auth/presentation/manager/forget_password_cubit/forget_password_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/routes/routes.dart';
-import '../../../../core/utils/validate_input.dart';
 import '../../../../core/widget/custom_primary_button.dart';
 import '../../../../core/theme/text_style.dart';
 import '../../../../core/widget/custom_text_form_field.dart';
@@ -63,7 +62,9 @@ class _VerifyOtpState extends State<VerifyOtp> {
                           CustomTextFormField(
                             hintText: "OTP",
                             controller: cubit.otpController,
-                            validator: ValidateInput.username,
+                            validator: (value) => value?.isEmpty ?? true
+                                ? 'Please enter the OTP'
+                                : null,
                           ),
                           SizedBox(
                             height: h * 0.04,
