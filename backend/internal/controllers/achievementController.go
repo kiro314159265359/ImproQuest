@@ -338,16 +338,12 @@ func GetUserUnlockedAchievements() gin.HandlerFunc {
 		defer cancel()
 
 		var user models.User
-		if err := database.Users().
-			FindOne(ctx, bson.M{"_id": userOID}).
-			Decode(&user); err != nil {
+		if err := database.Users().FindOne(ctx, bson.M{"_id": userOID}).Decode(&user); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch user"})
 			return
 		}
-
-		// nothing earned
 		if len(user.UserAchievements) == 0 {
-			c.JSON(http.StatusOK, []gin.H{})
+			c.JSON(http.StatusOK, []models.Achievement{})
 			return
 		}
 
@@ -369,22 +365,8 @@ func GetUserUnlockedAchievements() gin.HandlerFunc {
 			return
 		}
 
-		// map defs by ID
-		defMap := make(map[bson.ObjectID]models.Achievement, len(defs))
-		for _, d := range defs {
-			defMap[d.ID] = d
-		}
-
-		out := make([]gin.H, 0, len(user.UserAchievements))
-		for _, ua := range user.UserAchievements {
-			if d, ok := defMap[ua.AchievementID]; ok {
-				out = append(out, gin.H{
-					"achievement": d,
-					"date_earned": ua.DateEarned,
-				})
-			}
-		}
-		c.JSON(http.StatusOK, out)
+		// Return the flat slice of Achievement structs
+		c.JSON(http.StatusOK, defs)
 	}
 }
 
