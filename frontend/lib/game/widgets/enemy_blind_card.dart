@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/color_manger.dart';
 import '../../core/theme/text_style.dart';
+import '../../core/utils/app_icons.dart';
 import '../constants/game_constants.dart';
 
 class EnemyBlindCard extends StatelessWidget {
@@ -38,11 +39,31 @@ class EnemyBlindCard extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Strength: ${stats.strength}',
-                          style: TextStyles.medium16White),
+                      Row(
+                        children: [
+                          const ImageIcon(
+                            AssetImage(AppIcons.strengthIcon),
+                            color: ColorManager.whiteColor,
+                            size: 24,
+                          ),
+                          SizedBox(width: w * 0.01),
+                          Text('Strength: ${stats.strength}',
+                              style: TextStyles.medium16White),
+                        ],
+                      ),
                       SizedBox(height: h * 0.02),
-                      Text('Endurance: ${stats.endurance}',
-                          style: TextStyles.medium16White),
+                      Row(
+                        children: [
+                          const ImageIcon(
+                            AssetImage(AppIcons.enduranceIcon),
+                            color: ColorManager.whiteColor,
+                            size: 24,
+                          ),
+                          SizedBox(width: w * 0.01),
+                          Text('Endurance: ${stats.endurance}',
+                              style: TextStyles.medium16White),
+                        ],
+                      ),
                     ],
                   ),
                   Padding(
@@ -56,11 +77,31 @@ class EnemyBlindCard extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Vitality: ${stats.vitality}',
-                          style: TextStyles.medium16White),
+                      Row(
+                        children: [
+                          const ImageIcon(
+                            AssetImage(AppIcons.vitalityIcon),
+                            color: ColorManager.whiteColor,
+                            size: 24,
+                          ),
+                          SizedBox(width: w * 0.01),
+                          Text('Vitality: ${stats.vitality}',
+                              style: TextStyles.medium16White),
+                        ],
+                      ),
                       SizedBox(height: h * 0.02),
-                      Text('Agility: ${stats.agility}',
-                          style: TextStyles.medium16White),
+                      Row(
+                        children: [
+                          const ImageIcon(
+                            AssetImage(AppIcons.agilityIcon),
+                            color: ColorManager.whiteColor,
+                            size: 24,
+                          ),
+                          SizedBox(width: w * 0.01),
+                          Text('Agility: ${stats.agility}',
+                              style: TextStyles.medium16White),
+                        ],
+                      ),
                     ],
                   ),
                 ],

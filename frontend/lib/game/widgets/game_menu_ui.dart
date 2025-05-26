@@ -50,7 +50,7 @@ class GameMenuUI extends StatelessWidget {
                 onPressed: () {
                   Navigator.pushNamed(context, Routes.shopScreen);
                 },
-                buttonIcon: AppIcons.fightIcon),
+                buttonIcon: AppIcons.shopIcon),
           ],
         ),
       ),

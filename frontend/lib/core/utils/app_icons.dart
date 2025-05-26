@@ -12,6 +12,13 @@ class AppIcons {
   static const String trophyUnlockedIcon =
       'assets/icons/TrophyUnlockedIcon.png';
   static const String trophyLockedIcon = 'assets/icons/TrophyLockedIcon.png';
+
+  static const String strengthIcon = 'assets/icons/FistIcon.png';
+  static const String enduranceIcon = 'assets/icons/ShieldIcon.png';
+  static const String agilityIcon = 'assets/icons/RunningIcon.png';
+  static const String vitalityIcon = 'assets/icons/LeafIcon.png';
+  static const String shopIcon = 'assets/icons/ShopIcon.png';
+
   static const String rankSIcon = 'assets/icons/RankSIcon.png';
   static const String rankAIcon = 'assets/icons/RankAIcon.png';
   static const String rankBIcon = 'assets/icons/RankBIcon.png';
