@@ -10,7 +10,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/color_manger.dart';
 import '../../../../core/theme/text_style.dart';
 import '../../../../core/utils/app_icons.dart';
+import '../../../../core/widget/dialogs.dart';
 import '../../../../core/widget/snackabars.dart';
+import '../manager/character_cubit.dart';
+import '../manager/character_state.dart';
 
 class Character extends StatefulWidget {
   const Character({super.key});
@@ -22,29 +25,37 @@ class Character extends StatefulWidget {
 class _CharacterState extends State<Character> {
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<UserCubit, UserState>(
-      buildWhen: (previous, current) =>
-          current is UserLoaded ||
-          current is UserUpdated ||
-          current is UserError,
-      listener: (context, state) {
-        if (state is UserError) {
-          Snackbars.showErrorSnackbar(context, state.failure.message);
-        }
-        if (state is UpdateError) {
-          Snackbars.showErrorSnackbar(context, state.failure.message);
-        }
-      },
-      builder: (context, state) {
-        if (state is UserLoaded) {
-          return _buildCharacterContent(state.user);
-        }
-        if (state is UserUpdated) {
-          return _buildCharacterContent(state.user);
-        }
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<CharacterCubit, CharacterState>(
+          listener: (context, state) {
+            if (state is SkillPointUpdating) {
+              Dialogs.loadingDialog(context: context);
+            } else if (state is SkillPointSuccess) {
+              Navigator.pop(context);
+            } else if (state is SkillPointError) {
+              Navigator.pop(context);
+              Snackbars.showErrorSnackbar(context, state.failure.message);
+            }
+          },
+        ),
+      ],
+      child: BlocBuilder<UserCubit, UserState>(
+        buildWhen: (previous, current) =>
+            current is UserLoaded ||
+            current is UserUpdated ||
+            current is UserError,
+        builder: (context, state) {
+          if (state is UserLoaded) {
+            return _buildCharacterContent(state.user);
+          }
+          if (state is UserUpdated) {
+            return _buildCharacterContent(state.user);
+          }
 
-        return const Center(child: CircularProgressIndicator());
-      },
+          return const Center(child: CircularProgressIndicator());
+        },
+      ),
     );
   }
 
@@ -158,7 +169,7 @@ class _CharacterState extends State<Character> {
                     statSubNum: "${user.stats?.strength ?? 0}",
                     statIcon: AppIcons.fightIcon),
                 StatsListTile(
-                    statName: "TENACITY",
+                    statName: "ENDURANCE",
                     statNum: "${user.stats?.endurance ?? 0}",
                     statSubName: "DEFENSE",
                     statSubNum: "${user.stats?.endurance ?? 0}",

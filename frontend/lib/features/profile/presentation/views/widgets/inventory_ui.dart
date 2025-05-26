@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_2/core/theme/color_manger.dart';
 import 'package:flutter_application_2/core/theme/text_style.dart';
 import 'package:flutter_application_2/core/utils/app_images.dart';
+import 'package:flutter_application_2/features/profile/presentation/manager/character_state.dart';
 import 'package:flutter_application_2/game/models/shop_item.dart';
 import 'package:flutter_application_2/game/widgets/inventory_item_card.dart';
 import 'package:flutter_application_2/core/widget/custom_button.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../../core/widget/snackabars.dart';
 import '../../../../home/presentation/manager/user_cubit.dart';
-import '../../../../home/presentation/manager/user_state.dart';
+import '../../manager/character_cubit.dart';
 
 class InventoryUI extends StatefulWidget {
   final String? title;
@@ -25,14 +26,15 @@ class _InventoryUIState extends State<InventoryUI> {
   @override
   void initState() {
     super.initState();
-    context.read<UserCubit>().getUserItems(widget.title?.toLowerCase());
+    context.read<CharacterCubit>().getUserItems(widget.title?.toLowerCase());
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<UserCubit, UserState>(
+    return BlocConsumer<CharacterCubit, CharacterState>(
       listener: (context, state) {
-        if (state is UserError) {
+        if (state is InventoryError) {
+          Navigator.pop(context);
           Snackbars.showErrorSnackbar(context, state.failure.message);
         }
       },
@@ -132,10 +134,10 @@ class _InventoryUIState extends State<InventoryUI> {
                                 onButtonPressed: () async {
                                   isEquipped
                                       ? await context
-                                          .read<UserCubit>()
+                                          .read<CharacterCubit>()
                                           .unequipItem(item.id, item.slot)
                                       : await context
-                                          .read<UserCubit>()
+                                          .read<CharacterCubit>()
                                           .equipItem(item.id, item.slot);
 
                                   if (mounted) {

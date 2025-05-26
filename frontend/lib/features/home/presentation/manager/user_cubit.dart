@@ -22,7 +22,6 @@ class UserCubit extends HydratedCubit<UserState> {
 
   TextEditingController userNameController = TextEditingController();
   TextEditingController emailController = TextEditingController();
-  // TextEditingController passController = TextEditingController();
   TextEditingController weightController = TextEditingController();
   TextEditingController heightController = TextEditingController();
   TextEditingController birthDayController = TextEditingController();
@@ -327,97 +326,6 @@ class UserCubit extends HydratedCubit<UserState> {
       currentUser = await userRepo.getUserData();
 
       // Emit loaded state with preserved distance
-      emit(UserLoaded(currentUser!, totalDistance: _currentDistance));
-      emit(UserUpdated(currentUser!));
-
-      _updateGetItRegistrations(currentUser!);
-    } catch (error) {
-      if (error is DioException) {
-        emit(UpdateError(ServerFailure.fromDioError(error)));
-      } else {
-        emit(UpdateError(ServerFailure(error.toString())));
-        if (currentUser != null) {
-          emit(UserLoaded(currentUser!, totalDistance: _currentDistance));
-          emit(UserUpdated(currentUser!));
-        }
-      }
-    }
-  }
-
-  Future<void> getUserItems(String? slot) async {
-    emit(InventoryLoading());
-    try {
-      final invModel = await userRepo.getUserItems();
-      itemsList = invModel.items?.where((inv) => inv.slot == slot).toList();
-
-      emit(InventoryLoaded(itemsList!));
-    } catch (error) {
-      if (error is DioException) {
-        emit(UserError(ServerFailure.fromDioError(error)));
-      } else {
-        emit(UserError(ServerFailure(error.toString())));
-        if (currentUser != null) {
-          emit(InventoryLoaded(itemsList!));
-        }
-      }
-    }
-  }
-
-  Future<void> equipItem(String? itemId, String? slot) async {
-    emit(UserUpdating());
-    try {
-      await userRepo.equipItem(itemId, slot);
-
-      currentUser = await userRepo.getUserData();
-
-      emit(UserLoaded(currentUser!, totalDistance: _currentDistance));
-      emit(UserUpdated(currentUser!));
-
-      _updateGetItRegistrations(currentUser!);
-    } catch (error) {
-      if (error is DioException) {
-        emit(UpdateError(ServerFailure.fromDioError(error)));
-      } else {
-        emit(UpdateError(ServerFailure(error.toString())));
-        if (currentUser != null) {
-          emit(UserLoaded(currentUser!, totalDistance: _currentDistance));
-          emit(UserUpdated(currentUser!));
-        }
-      }
-    }
-  }
-
-  Future<void> unequipItem(String? itemId, String? slot) async {
-    emit(UserUpdating());
-    try {
-      await userRepo.unequipItem(itemId, slot);
-
-      currentUser = await userRepo.getUserData();
-
-      emit(UserLoaded(currentUser!, totalDistance: _currentDistance));
-      emit(UserUpdated(currentUser!));
-
-      _updateGetItRegistrations(currentUser!);
-    } catch (error) {
-      if (error is DioException) {
-        emit(UpdateError(ServerFailure.fromDioError(error)));
-      } else {
-        emit(UpdateError(ServerFailure(error.toString())));
-        if (currentUser != null) {
-          emit(UserLoaded(currentUser!, totalDistance: _currentDistance));
-          emit(UserUpdated(currentUser!));
-        }
-      }
-    }
-  }
-
-  Future<void> skillPoints(String? stats, int? points) async {
-    emit(UserUpdating());
-    try {
-      await userRepo.skillPoints(stats, points);
-
-      currentUser = await userRepo.getUserData();
-
       emit(UserLoaded(currentUser!, totalDistance: _currentDistance));
       emit(UserUpdated(currentUser!));
 

@@ -12,11 +12,13 @@ import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'core/utils/get_it_constants.dart';
 import 'features/auth/data/api/register_api.dart';
 import 'features/auth/presentation/manager/register_cubit/register_cubit.dart';
+import 'features/home/domain/repo/user_repo.dart';
 import 'features/home/presentation/manager/user_cubit.dart';
 import 'core/utils/auth_helpers.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:path_provider/path_provider.dart';
 import 'features/profile/presentation/manager/achievement_cubit.dart';
+import 'features/profile/presentation/manager/character_cubit.dart';
 import 'features/rankings/presentation/manager/leaderboard_cubit.dart';
 
 Future<void> main() async {
@@ -70,6 +72,12 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider<DistanceCubit>.value(
           value: getIt<DistanceCubit>(),
+        ),
+        BlocProvider<CharacterCubit>.value(
+          value: CharacterCubit(
+            userCubit: getIt<UserCubit>(),
+            userRepo: getIt<UserRepo>(),
+          ),
         ),
         BlocProvider<LeaderboardCubit>.value(
           value: getIt<LeaderboardCubit>(),

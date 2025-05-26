@@ -4,6 +4,7 @@ import '../../../../../core/theme/color_manger.dart';
 import '../../../../../core/theme/text_style.dart';
 import '../../../../home/presentation/manager/user_cubit.dart';
 import '../../../../../core/widget/dialogs.dart';
+import '../../manager/character_cubit.dart';
 
 class StatsListTile extends StatefulWidget {
   final String statName;
@@ -27,7 +28,8 @@ class StatsListTile extends StatefulWidget {
 class _StatsListTileState extends State<StatsListTile> {
   @override
   Widget build(BuildContext context) {
-    final userCubit = context.watch<UserCubit>();
+    final characterCubit = context.read<CharacterCubit>();
+    final userCubit = context.read<UserCubit>();
     final availableSkillPoints = userCubit.currentUser?.skillPoints ?? 0;
 
     return ListTile(
@@ -54,7 +56,7 @@ class _StatsListTileState extends State<StatsListTile> {
                       availableSkillPoints: availableSkillPoints,
                       onConfirm: (pointsSpent) {
                         if (pointsSpent > 0) {
-                          userCubit.skillPoints(
+                          characterCubit.skillPoints(
                               widget.statName.toLowerCase(), pointsSpent);
                         }
                       },

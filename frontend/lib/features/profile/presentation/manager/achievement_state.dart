@@ -15,17 +15,7 @@ final class AchievementsLoaded extends AchievementState {
   });
 }
 
-final class AchievementLoading extends AchievementState {
-  final List<AchievementModel> achievementsList = List.generate(
-    10,
-    (index) => AchievementModel(
-      name: 'Achievement',
-      description: 'Description',
-    ),
-  );
-
-  AchievementLoading();
-}
+final class AchievementLoading extends AchievementState {}
 
 class AchievementError extends AchievementState {
   Failure failure;
