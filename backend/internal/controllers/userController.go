@@ -145,20 +145,41 @@ func GetMyData() gin.HandlerFunc {
 			return
 		}
 
-		// 4. Generate weekly display
+		// 4. Check and reset streak for missed days
+		streakWasReset := helpers.CheckAndResetStreakForMissedDays(&user)
+
+		// 5. Update user in database if streak was reset
+		if streakWasReset {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+
+			update := bson.M{
+				"$set": bson.M{
+					"streak":     user.Streak,
+					"updated_at": time.Now(),
+				},
+			}
+			_, err := database.Users().UpdateOne(ctx, bson.M{"_id": objId}, update)
+			if err != nil {
+				logger.Errorf("Failed to update user streak reset: %v", err)
+				// Don't return error, just log it - user data is still valid
+			}
+		}
+
+		// 6. Generate weekly display
 		currentTime := time.Now()
 		weeklyDisplay := helpers.GenerateSunToSatWeeklyDisplay(user.DailyCompletions, currentTime)
 
-		// 5. Build response with weekly_display
+		// 7. Build response with weekly_display
 		resp := struct {
 			models.User
-			WeeklyDisplay [7]interface{} `json:"weekly_display"`
+			WeeklyDisplay [7]any `json:"weekly_display"`
 		}{
 			User:          user,
 			WeeklyDisplay: weeklyDisplay,
 		}
 
-		// 6. Return
+		// 8. Return
 		c.JSON(http.StatusOK, resp)
 	}
 }
