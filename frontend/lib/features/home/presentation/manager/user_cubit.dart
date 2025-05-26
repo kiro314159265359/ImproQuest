@@ -163,8 +163,11 @@ class UserCubit extends HydratedCubit<UserState> {
 
       currentUser = await userRepo.getUserData();
 
-      if (totalQuestCount > 0 && completedQuestCount == totalQuestCount) {
-        await userRepo.completeStreak();
+      // Check if all non-custom (running) quests are completed for streak completion
+      bool allRunningQuestsCompleted = quests.isNotEmpty &&
+          quests.every((quest) => quest.isCompleted == true);
+
+      if (allRunningQuestsCompleted) {
         currentUser = await userRepo.getUserData();
       }
 
@@ -173,8 +176,7 @@ class UserCubit extends HydratedCubit<UserState> {
 
       _updateGetItRegistrations(currentUser!);
 
-      if (quests.isNotEmpty &&
-          quests.every((quest) => quest.isCompleted == true)) {
+      if (allRunningQuestsCompleted) {
         // Send reset command to the background service.
         await FlutterForegroundTask.stopService();
         // Optionally, update the local state to reflect that totalDistance is now reset.

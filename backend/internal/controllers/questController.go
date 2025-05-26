@@ -280,7 +280,7 @@ func CompleteQuest() gin.HandlerFunc {
 		}
 
 		// 3. Update user to award XP/gold & mark quest as completed
-		// Using filtered positional operator to target the specific quest by ID
+		now := time.Now()
 		filter := bson.M{
 			"_id": userOID,
 		}
@@ -292,12 +292,12 @@ func CompleteQuest() gin.HandlerFunc {
 			},
 			"$set": bson.M{
 				"quests.$[elem].is_completed": true,
-				"updated_at":                  time.Now(), // Also update user's updated_at
+				"quests.$[elem].completed_at": now, // Record completion time
+				"updated_at":                  now,
 			},
 		}
 
 		// Define the array filter to match only the quest with the specified ID.
-		// Pass the slice of filters directly to SetArrayFilters.
 		opts := options.UpdateOne().
 			SetArrayFilters([]any{
 				bson.D{{Key: "elem._id", Value: questOID}},
@@ -308,7 +308,7 @@ func CompleteQuest() gin.HandlerFunc {
 			return
 		}
 		if result.ModifiedCount == 0 {
-			c.JSON(http.StatusConflict, gin.H{"error": "quest completion failed or already completed"}) // Adjusted message
+			c.JSON(http.StatusConflict, gin.H{"error": "quest completion failed or already completed"})
 			return
 		}
 
@@ -362,8 +362,81 @@ func CompleteQuest() gin.HandlerFunc {
 		// Check for achievements after all updates
 		go services.AwardAchievements(context.Background(), userOID) // Run in a goroutine if it can be slow
 
-		// 6. Send response
-		c.JSON(http.StatusOK, gin.H{
+		// NEW: Handle streak update for running quests
+		if quest.Type != nil && *quest.Type == "Running" {
+			// Initialize map if it's nil
+			if user.DailyCompletions == nil {
+				user.DailyCompletions = make(map[string]bool)
+			}
+
+			currentTime := time.Now()
+			todayDate := currentTime.Truncate(24 * time.Hour)
+			todayKey := todayDate.Format("2006-01-02") // "YYYY-MM-DD"
+
+			// Debug: Log streak before reset check
+			logger.Infof("Before streak check - Current: %d, LastCompleted: %v", user.Streak.Current, user.Streak.LastCompleted)
+
+			// Check and reset streak for missed days first
+			streakWasReset := helpers.CheckAndResetStreakForMissedDays(&user)
+
+			// Debug: Log streak after reset check
+			logger.Infof("After streak check - Current: %d, WasReset: %v", user.Streak.Current, streakWasReset)
+
+			// If streak was reset, save it to database immediately
+			if streakWasReset {
+				logger.Infof("Saving streak reset to database - Current: %d", user.Streak.Current)
+				resetUpdate := bson.M{
+					"$set": bson.M{
+						"streak":     user.Streak,
+						"updated_at": currentTime,
+					},
+				}
+				_, err := collection.UpdateOne(ctx, bson.M{"_id": userOID}, resetUpdate)
+				if helpers.HandleError(c, err) {
+					return
+				}
+			}
+
+			// Mark today as completed
+			user.DailyCompletions[todayKey] = true
+
+			// Update streak logic
+			yesterdayDate := todayDate.AddDate(0, 0, -1)
+			yesterdayKey := yesterdayDate.Format("2006-01-02")
+
+			// Check if yesterday was actually completed and was the last day of the streak
+			wasYesterdayPartOfStreak := !user.Streak.LastCompleted.IsZero() &&
+				helpers.SameDay(user.Streak.LastCompleted, yesterdayDate) &&
+				user.DailyCompletions[yesterdayKey]
+
+			if wasYesterdayPartOfStreak && user.Streak.Current > 0 {
+				user.Streak.Current++
+			} else {
+				// Reset streak to 1 for today's completion
+				user.Streak.Current = 1
+			}
+			user.Streak.LastCompleted = todayDate
+
+			if user.Streak.Current > user.Streak.HighestCount {
+				user.Streak.HighestCount = user.Streak.Current
+			}
+
+			// Update user with streak and daily completions
+			streakUpdate := bson.M{
+				"$set": bson.M{
+					"streak":            user.Streak,
+					"daily_completions": user.DailyCompletions,
+					"updated_at":        currentTime,
+				},
+			}
+			_, err := collection.UpdateOne(ctx, bson.M{"_id": userOID}, streakUpdate)
+			if helpers.HandleError(c, err) {
+				return
+			}
+		}
+
+		// 6. Send response with streak info for running quests
+		response := gin.H{
 			"message":       "Quest completed!",
 			"xp_gained":     *quest.XPReward,
 			"gold_gained":   *quest.GoldReward,
@@ -371,81 +444,18 @@ func CompleteQuest() gin.HandlerFunc {
 			"current_xp":    user.XP,
 			"levels_gained": levelUps,
 			"new_rank":      user.Rank,
-		})
+		}
+
+		// Add streak info if it was a running quest
+		if quest.Type != nil && *quest.Type == "Running" {
+			response["streak"] = user.Streak
+			response["weekly_display"] = helpers.GenerateSunToSatWeeklyDisplay(user.DailyCompletions, time.Now())
+		}
+
+		c.JSON(http.StatusOK, response)
 	}
 }
 
-func UpdateStreakHandler() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		// 1. Get user id from context
-		userID := c.GetString("id")
-		if userID == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found in context"})
-			return
-		}
-
-		// Convert the userID to an ObjectID
-		userOID, err := bson.ObjectIDFromHex(userID)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
-			return
-		}
-
-		// 2. Fetch the user from the database
-		collection := database.Users() // Assume your database package exposes a Users() collection.
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-
-		var user models.User
-		if err := collection.FindOne(ctx, bson.M{"_id": userOID}).Decode(&user); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "User not found"})
-			return
-		}
-
-		// 3. Check if all quests are completed using the helper
-		if !helpers.AreAllQuestsCompleted(user.CurrentQuests) {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Not all quests are completed"})
-			return
-		}
-
-		// 4. Update the streak if the quests are all done
-		currentTime := time.Now()
-		today := currentTime.Truncate(24 * time.Hour)
-		yesterday := today.AddDate(0, 0, -1)
-
-		// Update the streak only if not already updated today.
-		if user.Streak.LastCompleted.IsZero() || !helpers.SameDay(user.Streak.LastCompleted, today) {
-			if helpers.SameDay(user.Streak.LastCompleted, yesterday) {
-				user.Streak.Current++ // Increment streak if completed yesterday
-			} else {
-				user.Streak.Current = 1 // Reset streak if a day was skipped
-			}
-			user.Streak.LastCompleted = today
-
-			// Optionally, update the highest streak record if you maintain a count.
-			if user.Streak.Current > user.Streak.HighestCount {
-				user.Streak.HighestCount = user.Streak.Current
-			}
-		}
-
-		// 5. Save the updated streak back to the database
-		update := bson.M{"$set": bson.M{"streak": user.Streak, "updated_at": time.Now()}}
-		_, err = collection.UpdateOne(ctx, bson.M{"_id": userOID}, update)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update streak"})
-			return
-		}
-
-		// Check for achievements after streak update
-		go services.AwardAchievements(context.Background(), userOID) // Run in a goroutine
-
-		// 6. Respond with success and the updated streak information
-		c.JSON(http.StatusOK, gin.H{
-			"message": "Streak updated successfully",
-			"streak":  user.Streak,
-		})
-	}
-}
 func EditMentalOrHabitQuest() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 1. Get user ID from token/context

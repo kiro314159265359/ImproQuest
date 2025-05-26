@@ -145,16 +145,41 @@ func GetMyData() gin.HandlerFunc {
 			return
 		}
 
-		// 4. Build response with computed maxXp
-		resp := struct {
-			models.User
-			MaxXp int `json:"maxXp"`
-		}{
-			User:  user,
-			MaxXp: user.Level * 100,
+		// 4. Check and reset streak for missed days
+		streakWasReset := helpers.CheckAndResetStreakForMissedDays(&user)
+
+		// 5. Update user in database if streak was reset
+		if streakWasReset {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+
+			update := bson.M{
+				"$set": bson.M{
+					"streak":     user.Streak,
+					"updated_at": time.Now(),
+				},
+			}
+			_, err := database.Users().UpdateOne(ctx, bson.M{"_id": objId}, update)
+			if err != nil {
+				logger.Errorf("Failed to update user streak reset: %v", err)
+				// Don't return error, just log it - user data is still valid
+			}
 		}
 
-		// 5. Return
+		// 6. Generate weekly display
+		currentTime := time.Now()
+		weeklyDisplay := helpers.GenerateSunToSatWeeklyDisplay(user.DailyCompletions, currentTime)
+
+		// 7. Build response with weekly_display
+		resp := struct {
+			models.User
+			WeeklyDisplay [7]any `json:"weekly_display"`
+		}{
+			User:          user,
+			WeeklyDisplay: weeklyDisplay,
+		}
+
+		// 8. Return
 		c.JSON(http.StatusOK, resp)
 	}
 }
@@ -395,19 +420,28 @@ func AssignRandomQuests() gin.HandlerFunc {
 			return
 		}
 
-		// Separate custom quests from daily quests
+		// Separate custom quests from daily quests and reset custom quests daily
 		var customQuests, dailyQuests []models.Quest
 		var hasRunningQuest bool
+		now := time.Now()
+		today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 
 		for _, quest := range user.CurrentQuests {
 			if quest.IsCustom {
+				// Reset custom quest if it was completed before today
+				if quest.IsCompleted && quest.CompletedAt != nil {
+					completedDate := time.Date(quest.CompletedAt.Year(), quest.CompletedAt.Month(), quest.CompletedAt.Day(), 0, 0, 0, 0, quest.CompletedAt.Location())
+					if completedDate.Before(today) {
+						// Reset the quest for today
+						quest.IsCompleted = false
+						quest.CompletedAt = nil
+					}
+				}
 				customQuests = append(customQuests, quest)
 			} else if quest.Type != nil && *quest.Type == "Running" {
 				// Check if the running quest is still valid (assigned after today's midnight)
-				now := time.Now().In(quest.GivenAt.Location())
-				todayMidnight := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
-
-				if quest.GivenAt.After(todayMidnight) {
+				questDate := time.Date(quest.GivenAt.Year(), quest.GivenAt.Month(), quest.GivenAt.Day(), 0, 0, 0, 0, quest.GivenAt.Location())
+				if !questDate.Before(today) {
 					dailyQuests = append(dailyQuests, quest)
 					hasRunningQuest = true
 				}
@@ -417,9 +451,18 @@ func AssignRandomQuests() gin.HandlerFunc {
 		// If we already have a valid running quest, just return the combined quests
 		if hasRunningQuest {
 			combinedQuests := append(customQuests, dailyQuests...)
+
+			// Update user with reset custom quests
+			filter := bson.M{"_id": objectID}
+			update := bson.M{"$set": bson.M{"quests": combinedQuests}}
+			_, err = userCollection.UpdateOne(ctx, filter, update)
+			if err != nil {
+				logger.Errorf("Error updating user quests: %v", err)
+			}
+
 			c.JSON(http.StatusOK, gin.H{
 				"quests":  combinedQuests,
-				"message": "Found existing valid running quest",
+				"message": "Found existing valid running quest and reset custom quests",
 			})
 			return
 		}
@@ -438,7 +481,6 @@ func AssignRandomQuests() gin.HandlerFunc {
 		multiplier := helpers.GetQuestMultiplier(user.Rank)
 
 		// Apply rank multiplier to rewards and goal
-		now := time.Now()
 		runningQuest.GivenAt = now
 
 		if runningQuest.XPReward != nil {
