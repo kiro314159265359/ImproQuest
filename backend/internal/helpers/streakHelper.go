@@ -23,8 +23,8 @@ func SameDay(a, b time.Time) bool {
 	return ay == by && am == bm && ad == bd
 }
 
-func GenerateSunToSatWeeklyDisplay(dailyCompletions map[string]bool, today time.Time) [7]interface{} {
-	display := [7]interface{}{}
+func GenerateSunToSatWeeklyDisplay(dailyCompletions map[string]bool, today time.Time) [7]any {
+	display := [7]any{}
 	normalizedToday := today.Truncate(24 * time.Hour)
 
 	// Find Sunday of the current week
