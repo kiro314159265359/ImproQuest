@@ -168,7 +168,6 @@ class UserCubit extends HydratedCubit<UserState> {
           quests.every((quest) => quest.isCompleted == true);
 
       if (allRunningQuestsCompleted) {
-        await userRepo.completeStreak();
         currentUser = await userRepo.getUserData();
       }
 

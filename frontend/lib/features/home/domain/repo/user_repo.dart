@@ -21,7 +21,6 @@ abstract class UserRepo {
   Future<void> editQuest(String? qId, String questName, int questXp,
       int questGold, String questType);
   Future<void> deleteQuest(String? qId);
-  Future<void> completeStreak();
   Future<void> addCustomQuest(
       String questName, int questXp, int questGold, String questType);
   Future<List<AchievementModel>> getUnlockedAchievementModelList();
