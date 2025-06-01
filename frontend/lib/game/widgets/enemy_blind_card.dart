@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/color_manger.dart';
 import '../../core/theme/text_style.dart';
+import '../../core/utils/app_icons.dart';
 import '../constants/game_constants.dart';
 
 class EnemyBlindCard extends StatelessWidget {
@@ -17,6 +18,8 @@ class EnemyBlindCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    var w = MediaQuery.of(context).size.width;
+    var h = MediaQuery.of(context).size.height;
     final enemyType = _getEnemyType();
     final stats = _calculateStats();
 
@@ -25,10 +28,10 @@ class EnemyBlindCard extends StatelessWidget {
     return Card(
       color: isAvailable ? ColorManager.primaryColor : ColorManager.gunmetal,
       child: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: EdgeInsets.all(w * 0.02),
         child: Column(
           children: [
-            Text('Blind $blind: $enemyType', style: TextStyles.semiBold18White),
+            Text('Blind $blind: $enemyType', style: TextStyles.semiBold16White),
             IntrinsicHeight(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -36,16 +39,36 @@ class EnemyBlindCard extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Strength: ${stats.strength}',
-                          style: TextStyles.medium16White),
-                      const SizedBox(height: 14),
-                      Text('Endurance: ${stats.endurance}',
-                          style: TextStyles.medium16White),
+                      Row(
+                        children: [
+                          const ImageIcon(
+                            AssetImage(AppIcons.strengthIcon),
+                            color: ColorManager.whiteColor,
+                            size: 24,
+                          ),
+                          SizedBox(width: w * 0.01),
+                          Text('Strength: ${stats.strength}',
+                              style: TextStyles.medium16White),
+                        ],
+                      ),
+                      SizedBox(height: h * 0.02),
+                      Row(
+                        children: [
+                          const ImageIcon(
+                            AssetImage(AppIcons.enduranceIcon),
+                            color: ColorManager.whiteColor,
+                            size: 24,
+                          ),
+                          SizedBox(width: w * 0.01),
+                          Text('Endurance: ${stats.endurance}',
+                              style: TextStyles.medium16White),
+                        ],
+                      ),
                     ],
                   ),
-                  const Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: VerticalDivider(
+                  Padding(
+                    padding: EdgeInsets.all(w * 0.02),
+                    child: const VerticalDivider(
                       width: 2,
                       color: ColorManager.lightGrey,
                       thickness: 2,
@@ -54,11 +77,31 @@ class EnemyBlindCard extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Vitality: ${stats.vitality}',
-                          style: TextStyles.medium16White),
-                      const SizedBox(height: 14),
-                      Text('Agility: ${stats.agility}',
-                          style: TextStyles.medium16White),
+                      Row(
+                        children: [
+                          const ImageIcon(
+                            AssetImage(AppIcons.vitalityIcon),
+                            color: ColorManager.whiteColor,
+                            size: 24,
+                          ),
+                          SizedBox(width: w * 0.01),
+                          Text('Vitality: ${stats.vitality}',
+                              style: TextStyles.medium16White),
+                        ],
+                      ),
+                      SizedBox(height: h * 0.02),
+                      Row(
+                        children: [
+                          const ImageIcon(
+                            AssetImage(AppIcons.agilityIcon),
+                            color: ColorManager.whiteColor,
+                            size: 24,
+                          ),
+                          SizedBox(width: w * 0.01),
+                          Text('Agility: ${stats.agility}',
+                              style: TextStyles.medium16White),
+                        ],
+                      ),
                     ],
                   ),
                 ],

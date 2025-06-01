@@ -31,6 +31,12 @@ class CustomQuestsList extends StatelessWidget {
     }
 
     return BlocBuilder<HomeBloc, HomeState>(
+      buildWhen: (previous, current) =>
+          current is HomeReady ||
+          current is HomeLoading ||
+          (previous is HomeReady &&
+              current is HomeReady &&
+              previous.questLoadingStates != current.questLoadingStates),
       builder: (context, state) {
         final loadingStates =
             state is HomeReady ? state.questLoadingStates : {};
@@ -49,15 +55,15 @@ class CustomQuestsList extends StatelessWidget {
               final isLoading = loadingStates[questId] ?? false;
 
               return Padding(
-                padding: const EdgeInsets.only(bottom: 5),
+                padding: const EdgeInsets.only(bottom: 4),
                 child: CustomQuestCard(
-                  questName: quest.name ?? "Unnamed Quest",
-                  questDesc:
-                      "${quest.xpReward ?? 0} XP • ${quest.goldReward ?? 0} Gold",
-                  questImageIcon: AppIcons.runningIcon,
-                  progress: quest.isCompleted ?? false,
+                  quest: quest,
+                  questImageIcon: AppIcons.timeIcon,
                   onCompleteQuest: () {
                     context.read<HomeBloc>().add(CompleteCustomQuest(questId));
+                  },
+                  onDeleteQuest: () {
+                    context.read<UserCubit>().deleteQuest(quest);
                   },
                   isLoading: isLoading,
                 ),

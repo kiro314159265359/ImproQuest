@@ -60,6 +60,9 @@ dependencies:
   flutter_launcher_icons: ^0.14.3
   image_picker: ^1.1.2
   web_socket_channel: ^3.0.3
+  flutter_slidable: ^4.0.0
+  awesome_snackbar_content: ^0.1.6
+  smooth_page_indicator: ^1.2.1
   
 dev_dependencies:
   flutter_test:
@@ -90,7 +93,7 @@ flutter:
     - assets/images/sprites/backgrounds/nature_3/
     - assets/images/sprites/character/Shinobi/
     - assets/images/sprites/character/Fighter/
-    - assets/images/sprites/backgrounds/Vertical/
+    - assets/images/sprites/backgrounds/vertical/
     - assets/audio/music/
     - assets/audio/sfx/
   #   - images/a_dot_ham.jpeg

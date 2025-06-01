@@ -3,6 +3,8 @@ import 'package:flutter_application_2/core/theme/color_manger.dart';
 import 'package:flutter_application_2/core/theme/text_style.dart';
 import 'package:flutter_application_2/core/widget/custom_button.dart';
 
+import '../../features/profile/presentation/views/widgets/skill_point_dialog_content.dart';
+
 class Dialogs {
   static Future<void> noticeDialog(
       {required BuildContext context,
@@ -27,7 +29,7 @@ class Dialogs {
             ),
             Text(
               title!,
-              style: TextStyles.bold28White,
+              style: TextStyles.bold20White,
             ),
             const Divider(
               color: ColorManager.darkGreyColor,
@@ -72,7 +74,7 @@ class Dialogs {
             ),
             Text(
               title!,
-              style: TextStyles.bold24White,
+              style: TextStyles.bold20White,
             ),
             const Divider(
               color: ColorManager.darkGreyColor,
@@ -138,6 +140,77 @@ class Dialogs {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  static Future<void> skillpointsDialog({
+    required BuildContext context,
+    required String statName,
+    required int availableSkillPoints,
+    required ValueChanged<int> onConfirm,
+  }) {
+    int pointsToSpend = availableSkillPoints > 0 ? 1 : 0;
+
+    return showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: ColorManager.gunmetal,
+        shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(12)),
+            side: BorderSide(width: 2, color: ColorManager.neonBlue)),
+        title: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Divider(
+              color: ColorManager.darkGreyColor,
+              height: 5,
+            ),
+            Text(
+              'Allocate to ${statName.toUpperCase()}',
+              style: TextStyles.bold16White,
+            ),
+            const Divider(
+              color: ColorManager.darkGreyColor,
+              height: 5,
+            ),
+          ],
+        ),
+        content: SkillPointDialogContent(
+          availableSkillPoints: availableSkillPoints,
+          initialPointsToSpend: pointsToSpend,
+          onPointsChanged: (newPoints) {
+            pointsToSpend = newPoints;
+          },
+        ),
+        actions: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              Expanded(
+                child: CustomButton(
+                  borderColor: ColorManager.lightGrey,
+                  fillColor: Colors.transparent,
+                  buttonText: "Cancel",
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: CustomButton(
+                    fillColor: ColorManager.primaryColor,
+                    buttonText: "Continue",
+                    onPressed: () {
+                      onConfirm(pointsToSpend);
+                      Navigator.of(context).pop();
+                    }),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

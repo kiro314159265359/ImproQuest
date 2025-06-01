@@ -11,19 +11,21 @@ class UserModel {
   String? birthDate;
   int? weight;
   int? xp;
+  int? maxXP;
   int? level;
   int? gold;
   Streak? streak;
   String? inventoryId;
   String? avatarUrl;
-  // List<Null>? achievements;
   List<Quests>? quests;
   Stats? stats;
   EquippedItems? equippedItems;
-  int? accumDistance;
+  double? accumDistance;
   String? rank;
+  int? skillPoints;
   String? createdAt;
   String? updatedAt;
+  List<bool?>? weeklyDisplay;
 
   UserModel(
       {this.sId,
@@ -36,19 +38,21 @@ class UserModel {
       this.birthDate,
       this.weight,
       this.xp,
+      this.maxXP,
       this.level,
       this.gold,
       this.streak,
       this.inventoryId,
       this.avatarUrl,
-      // this.achievements,
       this.quests,
       this.stats,
       this.equippedItems,
       this.accumDistance,
       this.rank,
+      this.skillPoints,
       this.createdAt,
-      this.updatedAt});
+      this.updatedAt,
+      this.weeklyDisplay});
 
   UserModel.fromJson(Map<String, dynamic> json) {
     sId = json['_id'];
@@ -68,17 +72,12 @@ class UserModel {
     }
     weight = json['weight'];
     xp = json['xp'];
+    maxXP = json['maxXp'];
     level = json['level'];
     gold = json['gold'];
     streak = json['streak'] != null ? Streak.fromJson(json['streak']) : null;
     inventoryId = json['inventory_id'];
     avatarUrl = json['avatar_url'];
-    // if (json['achievements'] != null) {
-    //   achievements = <Null>[];
-    //   json['achievements'].forEach((v) {
-    //     achievements!.add( Null.fromJson(v));
-    //   });
-    // }
     if (json['quests'] != null) {
       quests = <Quests>[];
       json['quests'].forEach((v) {
@@ -89,10 +88,30 @@ class UserModel {
     equippedItems = json['equipped_items'] != null
         ? EquippedItems.fromJson(json['equipped_items'])
         : null;
-    accumDistance = json['accum_distance'];
+    if (json['accum_distance'] != null) {
+      if (json['accum_distance'] is int) {
+        accumDistance = (json['accum_distance'] as int).toDouble();
+      } else {
+        accumDistance = json['accum_distance'];
+      }
+    } else {
+      accumDistance = null;
+    }
     rank = json['rank'];
+    skillPoints = json['skill_points'];
     createdAt = json['created_at'];
     updatedAt = json['updated_at'];
+    if (json['weekly_display'] != null) {
+      weeklyDisplay =
+          List<bool?>.from((json['weekly_display'] as List).map((item) {
+        if (item is bool) {
+          return item;
+        }
+        return null;
+      }));
+    } else {
+      weeklyDisplay = null;
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -108,15 +127,13 @@ class UserModel {
     data['weight'] = weight;
     data['xp'] = xp;
     data['level'] = level;
+    data['maxXp'] = maxXP;
     data['gold'] = gold;
     if (streak != null) {
       data['streak'] = streak!.toJson();
     }
     data['inventory_id'] = inventoryId;
     data['avatar_url'] = avatarUrl;
-    // if (this.achievements != null) {
-    //   data['achievements'] = this.achievements!.map((v) => v.toJson()).toList();
-    // }
     if (quests != null) {
       data['quests'] = quests!.map((v) => v.toJson()).toList();
     }
@@ -125,8 +142,10 @@ class UserModel {
     }
     data['accum_distance'] = accumDistance;
     data['rank'] = rank;
+    data['skill_points'] = skillPoints;
     data['created_at'] = createdAt;
     data['updated_at'] = updatedAt;
+    data['weekly_display'] = weeklyDisplay;
     return data;
   }
 }
@@ -156,44 +175,52 @@ class Streak {
 class Quests {
   String? sId;
   String? name;
+  String? type;
   int? goal;
   double? progress;
   int? xpReward;
   int? goldReward;
   bool? isCompleted;
   bool? isCustom;
+  String? completedAt; // Add completion timestamp
 
   Quests(
       {this.sId,
       this.name,
+      this.type,
       this.goal,
       this.progress,
       this.xpReward,
       this.goldReward,
       this.isCustom,
-      this.isCompleted});
+      this.isCompleted,
+      this.completedAt});
 
   Quests.fromJson(Map<String, dynamic> json) {
     sId = json['_id'];
     name = json['name'];
+    type = json['type'];
     goal = json['goal'];
     progress = json['progress'];
     xpReward = json['xp_reward'];
     goldReward = json['gold_reward'];
     isCompleted = json['is_completed'];
     isCustom = json['is_custom'];
+    completedAt = json['completed_at'];
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['_id'] = sId;
     data['name'] = name;
+    data['type'] = type;
     data['goal'] = goal;
     data['progress'] = progress;
     data['xp_reward'] = xpReward;
     data['gold_reward'] = goldReward;
     data['is_completed'] = isCompleted;
     data['is_custom'] = isCustom;
+    data['completed_at'] = completedAt;
     return data;
   }
 }

@@ -13,17 +13,12 @@ class AppLayoutCubit extends Cubit<AppLayoutState> {
   List<Widget> screens = [
     const Home(),
     const Profile(),
-    // const Fight(),
+    const SizedBox.shrink(),
     const Rankings(),
     const Settings(),
   ];
 
   int currentIndex = 0;
-
-  void navigateToFightScreen() {
-    currentIndex = 2;
-    emit(AppLayoutChangeIndex());
-  }
 
   changeCurrentIndex(int index) {
     currentIndex = index;

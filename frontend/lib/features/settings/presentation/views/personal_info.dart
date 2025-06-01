@@ -12,6 +12,7 @@ import '../../../../core/theme/color_manger.dart';
 import '../../../../core/theme/text_style.dart';
 import '../../../../core/utils/app_images.dart';
 import '../../../../core/widget/dialogs.dart';
+import '../../../../core/widget/snackabars.dart';
 import '../../../home/presentation/manager/user_cubit.dart';
 import '../../../home/presentation/manager/user_state.dart';
 
@@ -31,7 +32,23 @@ class _PersonalInfoState extends State<PersonalInfo> {
   @override
   void initState() {
     super.initState();
-    cubit.fetchUserData();
+    // Always fetch fresh data to keep the edit form updated
+    cubit.fetchUserData(forceRefresh: true).then((_) {
+      // Populate text fields after data is fetched
+      _populateTextFields();
+    });
+  }
+
+  void _populateTextFields() {
+    final user = cubit.currentUser;
+    if (user != null) {
+      cubit.userNameController.text = user.username ?? '';
+      cubit.emailController.text = user.email ?? '';
+      cubit.weightController.text = user.weight?.toString() ?? '';
+      cubit.heightController.text = user.height?.toString() ?? '';
+      cubit.birthDayController.text = user.birthDate ?? '';
+      cubit.genderController.text = user.gender ?? '';
+    }
   }
 
   @override
@@ -39,8 +56,6 @@ class _PersonalInfoState extends State<PersonalInfo> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: ColorManager.navyColor,
-        centerTitle: true,
-        title: Text('Personal Info', style: TextStyles.extraBold38White),
         actions: [
           TextButton(
             child: Text('Save', style: TextStyles.semiBold20White),
@@ -55,31 +70,22 @@ class _PersonalInfoState extends State<PersonalInfo> {
       body: BlocConsumer<UserCubit, UserState>(
         listener: (context, state) {
           if (state is UserLoaded) {
-            setState(() {
-              cubit.userNameController.text = state.user.username ?? '';
-              cubit.emailController.text = state.user.email ?? '';
-              cubit.weightController.text = state.user.weight?.toString() ?? '';
-              cubit.heightController.text = state.user.height?.toString() ?? '';
-              cubit.birthDayController.text = state.user.birthDate ?? '';
-              cubit.genderController.text = state.user.gender ?? '';
-            });
+            _populateTextFields();
           }
           if (state is UserUpdated) {
             Navigator.pop(context);
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Profile updated successfully')),
-            );
+            Snackbars.showSuccessSnackbar(
+                context, "Profile updated successfully");
           }
           if (state is UserUpdating) {
             Dialogs.loadingDialog(context: context);
           }
           if (state is UserError || state is UpdateError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                  content: Text(state is UserError
-                      ? state.failure.message
-                      : (state as UpdateError).failure.message)),
-            );
+            Snackbars.showErrorSnackbar(
+                context,
+                state is UserError
+                    ? state.failure.message
+                    : (state as UpdateError).failure.message);
           }
         },
         builder: (context, state) {
@@ -121,7 +127,8 @@ class _PersonalInfoState extends State<PersonalInfo> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 CircleAvatar(
-                  radius: 85,
+                  backgroundColor: ColorManager.primaryColor,
+                  radius: 64,
                   backgroundImage: backgroundImageProvider,
                   child: Align(
                     alignment: Alignment.bottomRight,
@@ -138,7 +145,7 @@ class _PersonalInfoState extends State<PersonalInfo> {
                     ),
                   ),
                 ),
-                SizedBox(height: h * 0.03),
+                SizedBox(height: h * 0.012),
                 LabelBox(
                     leadingIcon: Icons.person_outline,
                     labelText: "Username",
@@ -146,7 +153,7 @@ class _PersonalInfoState extends State<PersonalInfo> {
                         hintText: "",
                         controller: cubit.userNameController,
                         validator: ValidateInput.username)),
-                SizedBox(height: h * 0.025),
+                SizedBox(height: h * 0.012),
                 LabelBox(
                     leadingIcon: Icons.alternate_email,
                     labelText: "Email",
@@ -154,7 +161,7 @@ class _PersonalInfoState extends State<PersonalInfo> {
                         hintText: "",
                         controller: cubit.emailController,
                         validator: ValidateInput.email)),
-                SizedBox(height: h * 0.025),
+                SizedBox(height: h * 0.012),
                 LabelBox(
                     leadingIcon: Icons.calendar_today_outlined,
                     labelText: "Birthday",
@@ -164,7 +171,7 @@ class _PersonalInfoState extends State<PersonalInfo> {
                         controller: cubit.birthDayController,
                         validator: (value) =>
                             value?.isEmpty ?? true ? 'Required' : null)),
-                SizedBox(height: h * 0.025),
+                SizedBox(height: h * 0.012),
                 LabelBox(
                     leadingIcon: Icons.height,
                     labelText: "Height",
@@ -172,7 +179,7 @@ class _PersonalInfoState extends State<PersonalInfo> {
                         hintText: "",
                         controller: cubit.heightController,
                         validator: ValidateInput.height)),
-                SizedBox(height: h * 0.025),
+                SizedBox(height: h * 0.012),
                 LabelBox(
                     leadingIcon: Icons.scale,
                     labelText: "Weight",
@@ -180,15 +187,16 @@ class _PersonalInfoState extends State<PersonalInfo> {
                         hintText: "",
                         controller: cubit.weightController,
                         validator: ValidateInput.weight)),
-                SizedBox(height: h * 0.025),
+                SizedBox(height: h * 0.012),
                 LabelBox(
                     leadingIcon: Icons.male,
                     labelText: "Gender",
                     child: CustomTextFormField(
                       hintText: "",
                       controller: cubit.genderController,
-                      validator: (value) =>
-                          value?.isEmpty ?? true ? 'Required' : null,
+                      validator: (value) => value?.isEmpty ?? true
+                          ? 'Please enter your gender'
+                          : null,
                     )),
               ],
             ),

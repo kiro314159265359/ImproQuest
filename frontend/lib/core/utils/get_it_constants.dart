@@ -4,13 +4,17 @@ import 'package:flutter_application_2/features/auth/data/api/login_api.dart';
 import 'package:flutter_application_2/features/auth/domain/repo/login_repo.dart';
 import 'package:flutter_application_2/features/home/data/api/user_api.dart';
 import 'package:flutter_application_2/features/home/data/model/user_model.dart';
+import 'package:flutter_application_2/features/home/domain/repo/user_repo.dart';
 import 'package:flutter_application_2/features/home/presentation/manager/home_bloc.dart';
 import 'package:flutter_application_2/features/home/presentation/manager/user_cubit.dart';
 import 'package:flutter_application_2/core/network/dio_interceptor.dart';
+import 'package:flutter_application_2/features/profile/presentation/manager/distance_cubit.dart';
 import 'package:flutter_application_2/game/logic/shop_bloc.dart';
 import 'package:flutter_application_2/game/services/shop_api.dart';
 import 'package:flutter_application_2/features/rankings/presentation/manager/leaderboard_cubit.dart';
 import 'package:get_it/get_it.dart';
+
+import '../../features/profile/presentation/manager/achievement_cubit.dart';
 
 final getIt = GetIt.instance;
 
@@ -21,7 +25,7 @@ Future<void> setupDependencies() async {
   // Inject the ApiService into LoginApi.
   final LoginRepo loginRepo = LoginApi(apiService);
 
-  final UserApi userApi = UserApi(apiService);
+  final UserRepo userRepo = UserApi(apiService);
 
   final ShopApi shopApi = ShopApi(apiService: apiService);
 
@@ -35,8 +39,11 @@ Future<void> setupDependencies() async {
   getIt.registerSingleton<ApiService>(apiService);
   getIt.registerSingleton<ShopApi>(shopApi);
   getIt.registerSingleton<LoginRepo>(loginRepo);
-  getIt.registerSingleton<UserCubit>(UserCubit(userApi));
-  getIt.registerSingleton<LeaderboardCubit>(LeaderboardCubit(userApi));
+  getIt.registerSingleton<UserRepo>(userRepo);
+  getIt.registerSingleton<UserCubit>(UserCubit(userRepo));
+  getIt.registerSingleton<LeaderboardCubit>(LeaderboardCubit(userRepo));
+  getIt.registerSingleton<AchievementCubit>(AchievementCubit(userRepo));
+  getIt.registerFactory<DistanceCubit>(() => DistanceCubit(userRepo));
 
   // Services
   if (!getIt.isRegistered<DistanceTrackingService>()) {

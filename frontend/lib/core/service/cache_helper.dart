@@ -18,6 +18,17 @@ Future<String?> getRefreshToken() async {
   return await storage.read(key: 'refreshToken');
 }
 
+Future<void> notFirstTime() async {
+  await storage.write(key: 'isFirstTime', value: 'false');
+}
+
+Future<bool> isFirstTime() async {
+  final value = await storage.read(key: 'isFirstTime');
+  return value == null;
+}
+
 Future<void> clearTokens() async {
+  final value = await storage.read(key: 'isFirstTime');
   await storage.deleteAll();
+  await storage.write(key: 'isFirstTime', value: value);
 }

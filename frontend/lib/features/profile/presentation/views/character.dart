@@ -10,6 +10,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/color_manger.dart';
 import '../../../../core/theme/text_style.dart';
 import '../../../../core/utils/app_icons.dart';
+import '../../../../core/widget/dialogs.dart';
+import '../../../../core/widget/snackabars.dart';
+import '../manager/character_cubit.dart';
+import '../manager/character_state.dart';
 
 class Character extends StatefulWidget {
   const Character({super.key});
@@ -21,33 +25,42 @@ class Character extends StatefulWidget {
 class _CharacterState extends State<Character> {
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<UserCubit, UserState>(
-      buildWhen: (previous, current) =>
-          current is UserLoaded ||
-          current is UserUpdated ||
-          current is UserError,
-      listener: (context, state) {
-        if (state is UserError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.failure.message)),
-          );
-        }
-      },
-      builder: (context, state) {
-        if (state is UserLoaded) {
-          return _buildCharacterContent(state.user);
-        }
-        if (state is UserUpdated) {
-          return _buildCharacterContent(state.user);
-        }
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<CharacterCubit, CharacterState>(
+          listener: (context, state) {
+            if (state is SkillPointUpdating) {
+              Dialogs.loadingDialog(context: context);
+            } else if (state is SkillPointSuccess) {
+              Navigator.pop(context);
+            } else if (state is SkillPointError) {
+              Navigator.pop(context);
+              Snackbars.showErrorSnackbar(context, state.failure.message);
+            }
+          },
+        ),
+      ],
+      child: BlocBuilder<UserCubit, UserState>(
+        buildWhen: (previous, current) =>
+            current is UserLoaded ||
+            current is UserUpdated ||
+            current is UserError,
+        builder: (context, state) {
+          if (state is UserLoaded) {
+            return _buildCharacterContent(state.user);
+          }
+          if (state is UserUpdated) {
+            return _buildCharacterContent(state.user);
+          }
 
-        return const Center(child: CircularProgressIndicator());
-      },
+          return const Center(child: CircularProgressIndicator());
+        },
+      ),
     );
   }
 
   Widget _buildCharacterContent(UserModel user) {
-    final w = MediaQuery.of(context).size.width;
+    // final w = MediaQuery.of(context).size.width;
     final h = MediaQuery.of(context).size.height;
     return SingleChildScrollView(
       child: Column(
@@ -60,8 +73,8 @@ class _CharacterState extends State<Character> {
               Column(
                 children: [
                   ItemButton(
-                    width: w * 0.15,
-                    height: h * 0.07,
+                    width: 56,
+                    height: 56,
                     itemPhoto: AppImages.helmetPhoto,
                     onPressed: () {
                       showDialog(
@@ -70,10 +83,10 @@ class _CharacterState extends State<Character> {
                       );
                     },
                   ),
-                  SizedBox(height: h * 0.025),
+                  SizedBox(height: h * 0.024),
                   ItemButton(
-                    width: w * 0.15,
-                    height: h * 0.07,
+                    width: 56,
+                    height: 56,
                     itemPhoto: AppImages.armorPhoto,
                     onPressed: () {
                       showDialog(
@@ -90,15 +103,15 @@ class _CharacterState extends State<Character> {
                       decoration: const BoxDecoration(
                           color: ColorManager.gunmetal,
                           borderRadius: BorderRadius.all(Radius.circular(12))),
-                      width: w * 0.25,
-                      height: h * 0.23,
+                      width: 88,
+                      height: 160,
                       child: Image.asset(AppImages.shinobiPhoto,
                           width: 25, fit: BoxFit.contain)),
-                  SizedBox(height: h * 0.025),
+                  SizedBox(height: h * 0.024),
                   ItemButton(
-                    width: w * 0.15,
-                    height: h * 0.07,
-                    itemPhoto: AppImages.armorPhoto,
+                    width: 56,
+                    height: 56,
+                    itemPhoto: AppImages.swordPhoto,
                     onPressed: () {
                       showDialog(
                         context: context,
@@ -111,8 +124,8 @@ class _CharacterState extends State<Character> {
               Column(
                 children: [
                   ItemButton(
-                    width: w * 0.15,
-                    height: h * 0.07,
+                    width: 56,
+                    height: 56,
                     itemPhoto: AppImages.glovesPhoto,
                     onPressed: () async {
                       showDialog(
@@ -121,10 +134,10 @@ class _CharacterState extends State<Character> {
                       );
                     },
                   ),
-                  SizedBox(height: h * 0.025),
+                  SizedBox(height: h * 0.024),
                   ItemButton(
-                    width: w * 0.15,
-                    height: h * 0.07,
+                    width: 56,
+                    height: 56,
                     itemPhoto: AppImages.bootsPhoto,
                     onPressed: () async {
                       showDialog(
@@ -137,57 +150,42 @@ class _CharacterState extends State<Character> {
               ),
             ],
           ),
-          ListTile(
-            title: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text("FATIGUE", style: TextStyles.semiBold12White),
-                Text("24/100", style: TextStyles.semiBold8White),
-              ],
-            ),
-            subtitle: const SizedBox(
-              width: 230,
-              height: 12,
-              child: LinearProgressIndicator(
-                borderRadius: BorderRadius.all(Radius.circular(64)),
-                color: ColorManager.primaryColor,
-                value: 0.5,
-                backgroundColor: ColorManager.containerBackGround,
-              ),
-            ),
-          ),
+          SizedBox(height: h * 0.024),
           Card(
             color: ColorManager.gunmetal,
             child: Column(
               children: [
-                Text(
-                  "SKILL POINTS : 1",
-                  style: TextStyles.bold18White,
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(
+                    "SKILL POINTS : ${user.skillPoints ?? 0}",
+                    style: TextStyles.bold16White,
+                  ),
                 ),
                 StatsListTile(
                     statName: "STRENGTH",
                     statNum: "${user.stats?.strength ?? 0}",
                     statSubName: "ATTACK",
                     statSubNum: "${user.stats?.strength ?? 0}",
-                    statIcon: AppIcons.fightIcon),
+                    statIcon: AppIcons.strengthIcon),
                 StatsListTile(
-                    statName: "TENACITY",
+                    statName: "ENDURANCE",
                     statNum: "${user.stats?.endurance ?? 0}",
                     statSubName: "DEFENSE",
                     statSubNum: "${user.stats?.endurance ?? 0}",
-                    statIcon: AppIcons.fightIcon),
+                    statIcon: AppIcons.enduranceIcon),
                 StatsListTile(
                     statName: "VITALITY",
                     statNum: "${user.stats?.vitality ?? 0}",
                     statSubName: "HEALTH",
                     statSubNum: "${user.stats?.vitality ?? 0}",
-                    statIcon: AppIcons.fightIcon),
+                    statIcon: AppIcons.vitalityIcon),
                 StatsListTile(
                     statName: "AGILITY",
                     statNum: "${user.stats?.agility ?? 0}",
                     statSubName: "SPEED",
                     statSubNum: "${user.stats?.agility ?? 0}",
-                    statIcon: AppIcons.fightIcon),
+                    statIcon: AppIcons.agilityIcon),
               ],
             ),
           ),

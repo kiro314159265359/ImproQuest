@@ -21,11 +21,11 @@ class GameMenuUI extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // var w = MediaQuery.of(context).size.width;
+    var w = MediaQuery.of(context).size.width;
     var h = MediaQuery.of(context).size.height;
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: EdgeInsets.all(w * 0.02),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -50,7 +50,7 @@ class GameMenuUI extends StatelessWidget {
                 onPressed: () {
                   Navigator.pushNamed(context, Routes.shopScreen);
                 },
-                buttonIcon: AppIcons.fightIcon),
+                buttonIcon: AppIcons.shopIcon),
           ],
         ),
       ),

@@ -6,7 +6,9 @@ import 'package:flutter_application_2/features/profile/presentation/views/charac
 import 'package:flutter_application_2/features/profile/presentation/views/widgets/statistics_loading.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/background_theme.dart';
+import '../../../../core/theme/text_style.dart';
 import '../../../../core/widget/appbar_stats.dart';
+import '../../../../core/widget/snackabars.dart';
 import '../../../home/data/model/user_model.dart';
 import '../../../home/presentation/manager/user_cubit.dart';
 import '../../../home/presentation/manager/user_state.dart';
@@ -22,7 +24,8 @@ class _ProfileState extends State<Profile> {
   @override
   void initState() {
     super.initState();
-    context.read<UserCubit>().fetchUserData();
+    // Always fetch fresh data to keep profile updated
+    context.read<UserCubit>().fetchUserData(forceRefresh: true);
   }
 
   @override
@@ -38,9 +41,7 @@ class _ProfileState extends State<Profile> {
                 current is UserError,
             listener: (context, state) {
               if (state is UserError) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(state.failure.message)),
-                );
+                Snackbars.showErrorSnackbar(context, state.failure.message);
               }
             },
             builder: (context, state) {
@@ -72,15 +73,16 @@ class _ProfileState extends State<Profile> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(height: h * 0.025),
+          SizedBox(height: h * 0.024),
           const AppBarStats(),
-          SizedBox(height: h * 0.025),
-          const TabBar(
+          SizedBox(height: h * 0.024),
+          TabBar(
+            labelStyle: TextStyles.bold12White,
             dividerColor: Colors.transparent,
             labelColor: ColorManager.primaryColor,
             unselectedLabelColor: ColorManager.darkGreyColor,
             indicatorColor: ColorManager.primaryColor,
-            tabs: [
+            tabs: const [
               Tab(text: 'STATS'),
               Tab(text: 'ACHIEVEMENTS'),
               Tab(text: 'CHARACTER'),
@@ -88,7 +90,6 @@ class _ProfileState extends State<Profile> {
           ),
           Expanded(
             child: TabBarView(
-// physics: NeverScrollableScrollPhysics(),
               children: <Widget>[
                 Statistics(user: user),
                 const Achievements(),
@@ -100,40 +101,4 @@ class _ProfileState extends State<Profile> {
       ),
     );
   }
-
-  // Widget _buildProfileLoadingContent() {
-  //   var w = MediaQuery.of(context).size.width;
-  //   var h = MediaQuery.of(context).size.height;
-  //   return Padding(
-  //     padding: EdgeInsets.symmetric(horizontal: w * 0.04, vertical: h * 0.02),
-  //     child: Column(
-  //       crossAxisAlignment: CrossAxisAlignment.start,
-  //       children: [
-  //         SizedBox(height: h * 0.025),
-  //         const AppBarStats(),
-  //         SizedBox(height: h * 0.025),
-  //         const TabBar(
-  //           dividerColor: Colors.transparent,
-  //           labelColor: ColorManager.primaryColor,
-  //           unselectedLabelColor: ColorManager.darkGreyColor,
-  //           indicatorColor: ColorManager.primaryColor,
-  //           tabs: [
-  //             Tab(text: 'STATS'),
-  //             Tab(text: 'ACHIEVEMENTS'),
-  //             Tab(text: 'CHARACTER'),
-  //           ],
-  //         ),
-  //         const Expanded(
-  //           child: TabBarView(
-  //             children: <Widget>[
-  //               StatisticsLoading(),
-  //               Achievements(),
-  //               Character(),
-  //             ],
-  //           ),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
 }

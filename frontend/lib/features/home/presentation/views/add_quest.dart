@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_2/core/utils/get_it_constants.dart';
+import 'package:flutter_application_2/features/home/data/model/user_model.dart';
+import 'package:flutter_application_2/features/home/data/quest_reward_data.dart';
 import 'package:flutter_application_2/features/home/presentation/manager/user_cubit.dart';
 import 'package:flutter_application_2/features/home/presentation/manager/user_state.dart';
 import 'package:flutter_application_2/features/settings/presentation/views/widgets/label_box.dart';
@@ -8,12 +10,19 @@ import '../../../../core/routes/routes.dart';
 import '../../../../core/theme/background_theme.dart';
 import '../../../../core/theme/color_manger.dart';
 import '../../../../core/theme/text_style.dart';
-import '../../../../core/utils/validate_input.dart';
 import '../../../../core/widget/custom_primary_button.dart';
 import '../../../../core/widget/custom_text_form_field.dart';
+import '../../../../core/widget/snackabars.dart';
 
 class AddQuest extends StatefulWidget {
-  const AddQuest({super.key});
+  final bool isEditing;
+  final Quests? quest;
+
+  const AddQuest({
+    super.key,
+    this.isEditing = false,
+    this.quest,
+  });
 
   @override
   State<AddQuest> createState() => _AddQuestState();
@@ -35,30 +44,48 @@ class _AddQuestState extends State<AddQuest> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.isEditing && widget.quest != null) {
+      questNameController.text = widget.quest?.name ?? '';
+      questType = widget.quest!.type;
+
+      questDifficultyLevel =
+          QuestRewardData.questDifficultyLevel(widget.quest!.xpReward ?? 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    questNameController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     var w = MediaQuery.of(context).size.width;
     var h = MediaQuery.of(context).size.height;
 
     return BlocConsumer<UserCubit, UserState>(listener: (context, state) {
       if (state is UserUpdated) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("The Quest has been added!")),
-        );
+        Snackbars.showSuccessSnackbar(
+            context,
+            widget.isEditing
+                ? "The Quest has been updated!"
+                : "The Quest has been added!");
+
         Navigator.pushReplacementNamed(context, Routes.appLayoutScreen);
       }
       if (state is UpdateError) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(state.failure.message)),
-        );
+        Snackbars.showErrorSnackbar(context, state.failure.message);
       }
     }, builder: (context, state) {
       return Scaffold(
           appBar: AppBar(
             backgroundColor: ColorManager.navyColor,
-            centerTitle: true,
             title: Text(
-              'Add Quest',
-              style: TextStyles.extraBold28White,
+              widget.isEditing ? 'Edit Quest' : 'Add Quest',
+              style: TextStyles.extraBold24White,
             ),
           ),
           body: Form(
@@ -75,7 +102,9 @@ class _AddQuestState extends State<AddQuest> {
                           CustomTextFormField(
                             hintText: "Quest Name",
                             controller: questNameController,
-                            validator: ValidateInput.username,
+                            validator: (value) => value?.isEmpty ?? true
+                                ? 'Please enter quest name'
+                                : null,
                           ),
                           SizedBox(
                             height: h * 0.02,
@@ -104,7 +133,7 @@ class _AddQuestState extends State<AddQuest> {
                                       value: type,
                                       child: Text(
                                         type,
-                                        style: TextStyles.semiBold18White,
+                                        style: TextStyles.semiBold16White,
                                       ),
                                     );
                                   }).toList(),
@@ -114,19 +143,7 @@ class _AddQuestState extends State<AddQuest> {
                                     });
                                   },
                                   borderRadius: BorderRadius.circular(16),
-                                  underline: SizedBox(),
-                                  // decoration: InputDecoration(
-                                  //   filled: true,
-                                  //   fillColor:
-                                  //       ColorManager.gunmetal.withValues(alpha: .6),
-                                  //   border: OutlineInputBorder(
-                                  //     borderRadius: BorderRadius.circular(16),
-                                  //     borderSide: BorderSide.none,
-                                  //   ),
-                                  //   labelText: 'Quest Type',
-                                  //   hintStyle: const TextStyle(
-                                  //       color: ColorManager.lightGrey, fontSize: 20),
-                                  // ),
+                                  underline: const SizedBox(),
                                 ),
                               ),
                             ),
@@ -158,20 +175,27 @@ class _AddQuestState extends State<AddQuest> {
                           SizedBox(
                             height: h * 0.02,
                           ),
-                          SizedBox(
-                            height: h * 0.02,
-                          ),
                           CustomPrimaryButton(
                               onPressed: () {
                                 if (formKey.currentState!.validate()) {
-                                  getIt<UserCubit>().addCustomQuest(
+                                  if (widget.isEditing &&
+                                      widget.quest != null) {
+                                    getIt<UserCubit>().editQuest(
+                                      widget.quest!,
                                       questNameController.text,
                                       questDifficultyLevel.toInt(),
-                                      questType!);
+                                      questType!,
+                                    );
+                                  } else {
+                                    getIt<UserCubit>().addCustomQuest(
+                                        questNameController.text,
+                                        questDifficultyLevel.toInt(),
+                                        questType!);
+                                  }
                                 }
                               },
-                              buttonText: "Add",
-                              height: 45,
+                              buttonText:
+                                  widget.isEditing ? "Save Changes" : "Add",
                               isLoading: state is UserUpdating),
                         ],
                       ),

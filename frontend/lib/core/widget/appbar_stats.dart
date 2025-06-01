@@ -60,16 +60,19 @@ class _AppBarStatsState extends State<AppBarStats> {
           Stack(
             children: [
               Container(
-                margin: const EdgeInsets.fromLTRB(46, 17, 0, 0),
+                margin: const EdgeInsets.fromLTRB(38, 16, 0, 0),
                 child: LinearPercentIndicator(
-                  width: w * 0.3,
+                  width: w * 0.32,
                   lineHeight: 25,
-                  percent: (user.xp! / 1959541954191981),
-                  center: CustomRichText(
-                    text1: "${user.xp}/240",
-                    textStyle1: TextStyles.medium12White,
-                    text2: "XP",
-                    textStyle2: TextStyles.medium8White,
+                  percent: (user.xp! / (user.level! * 100)),
+                  center: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: CustomRichText(
+                      text1: "${user.xp}/${(user.level! * 100)}",
+                      textStyle1: TextStyles.medium12White,
+                      text2: "XP",
+                      textStyle2: TextStyles.medium8White,
+                    ),
                   ),
                   barRadius: const Radius.circular(4),
                   backgroundColor: ColorManager.containerBackGround,
@@ -77,10 +80,11 @@ class _AppBarStatsState extends State<AppBarStats> {
                 ),
               ),
               CircleAvatar(
-                radius: 30,
+                radius: 28,
                 backgroundColor: ColorManager.primaryColor,
                 child: CircleAvatar(
-                  radius: 26,
+                  backgroundColor: ColorManager.primaryColor,
+                  radius: 24,
                   backgroundImage: user.avatarUrl == null
                       ? const AssetImage(AppImages.profilePhoto)
                       : NetworkImage(user.avatarUrl!),
@@ -94,7 +98,7 @@ class _AppBarStatsState extends State<AppBarStats> {
                           borderRadius:
                               const BorderRadius.all(Radius.circular(16))),
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 5, vertical: 2),
+                          horizontal: 6, vertical: 2),
                       child: Text("${user.level}",
                           style: TextStyles.medium8White,
                           textAlign: TextAlign.center),
@@ -110,18 +114,21 @@ class _AppBarStatsState extends State<AppBarStats> {
                 decoration: const BoxDecoration(
                     color: ColorManager.containerBackGround,
                     borderRadius: BorderRadius.all(Radius.circular(4))),
-                margin: const EdgeInsets.fromLTRB(50, 17, 0, 0),
-                width: w * 0.3,
-                height: 25,
-                child: Text("${user.gold}",
-                    style: TextStyles.medium16White,
-                    textAlign: TextAlign.center),
+                margin: const EdgeInsets.fromLTRB(48, 16, 0, 0),
+                width: w * 0.28,
+                height: 24,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text("${user.gold}",
+                      style: TextStyles.medium12White,
+                      textAlign: TextAlign.center),
+                ),
               ),
               CircleAvatar(
-                radius: 30,
+                radius: 28,
                 backgroundColor: ColorManager.gunmetal,
                 child: Image.asset(AppIcons.coinsIcon,
-                    width: 25, fit: BoxFit.contain),
+                    width: 24, fit: BoxFit.contain),
               ),
             ],
           ),

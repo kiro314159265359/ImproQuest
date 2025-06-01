@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
+import 'package:flutter_application_2/features/home/data/model/achievement_model.dart';
+import 'package:flutter_application_2/features/home/data/model/distance_model.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_application_2/features/home/data/model/inventory_model.dart';
 import 'package:flutter_application_2/features/home/data/model/leaderboard_level_model.dart';
@@ -68,11 +70,6 @@ class UserApi extends UserRepo {
   }
 
   @override
-  Future<void> completeStreak() async {
-    await apiService.patch(EndPoints.streak);
-  }
-
-  @override
   Future<void> addCustomQuest(
       String questName, int questXp, int questGold, String questType) async {
     await apiService.post(EndPoints.customQuest, body: {
@@ -81,6 +78,22 @@ class UserApi extends UserRepo {
       'gold_reward': questGold,
       'type': questType,
     });
+  }
+
+  @override
+  Future<void> editQuest(String? qId, String questName, int questXp,
+      int questGold, String questType) async {
+    await apiService.put('/quests/mental-habit/$qId', body: {
+      'name': questName,
+      'xp_reward': questXp,
+      'gold_reward': questGold,
+      'type': questType,
+    });
+  }
+
+  @override
+  Future<void> deleteQuest(String? qId) async {
+    await apiService.delete('/quests/mental-habit/$qId');
   }
 
   @override
@@ -120,5 +133,68 @@ class UserApi extends UserRepo {
   Future<InventoryModel> getUserItems() async {
     var response = await apiService.get(EndPoints.userItems);
     return InventoryModel.fromJson(jsonDecode(response.toString()));
+  }
+
+  @override
+  Future<double> getDistanceToday(UserModel user) async {
+    var response = await apiService.get("/runs/${user.sId}/distance/today");
+    var data = jsonDecode(response.toString());
+    if (data['totalDistance'] == null) {
+      return 0.0;
+    }
+    return double.parse(data['totalDistance'].toString());
+  }
+
+  @override
+  Future<List<DistanceModel>> getDistanceWeek(UserModel user) async {
+    var response =
+        await apiService.get("/runs/${user.sId}/distance/days-of-week");
+    List<dynamic> list = response.data;
+    return list
+        .map((item) => DistanceModel.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  @override
+  Future<List<DistanceModel>> getDistanceMonth(UserModel user) async {
+    var response =
+        await apiService.get("/runs/${user.sId}/distance/weeks-of-month");
+    List<dynamic> list = response.data;
+    return list
+        .map((item) => DistanceModel.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  @override
+  Future<List<DistanceModel>> getDistanceYear(UserModel user) async {
+    var response =
+        await apiService.get("/runs/${user.sId}/distance/months-of-year");
+    List<dynamic> list = response.data;
+    return list
+        .map((item) => DistanceModel.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  @override
+  Future<List<AchievementModel>> getUnlockedAchievementModelList() async {
+    var response = await apiService.get(EndPoints.achievementsUnlocked);
+    List<dynamic> list = response.data;
+    return list
+        .map((item) => AchievementModel.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  @override
+  Future<List<AchievementModel>> getlockedAchievementModelList() async {
+    var response = await apiService.get(EndPoints.achievementsLocked);
+    List<dynamic> list = response.data;
+    return list
+        .map((item) => AchievementModel.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  @override
+  Future<void> skillPoints(String? stats, int? points) async {
+    await apiService.post('/users/stats/$stats/$points');
   }
 }

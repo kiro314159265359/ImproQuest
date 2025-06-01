@@ -5,8 +5,6 @@ import 'package:flutter_application_2/core/theme/color_manger.dart';
 import 'package:flutter_application_2/core/theme/text_style.dart';
 import 'package:flutter_application_2/core/widget/appbar_stats.dart';
 import 'package:flutter_application_2/features/home/data/model/user_model.dart';
-import 'package:flutter_application_2/features/home/presentation/manager/home_bloc.dart';
-import 'package:flutter_application_2/features/home/presentation/manager/home_state.dart';
 import 'package:flutter_application_2/features/home/presentation/manager/user_cubit.dart';
 import 'package:flutter_application_2/features/home/presentation/manager/user_state.dart';
 import 'package:flutter_application_2/features/home/presentation/views/widgets/custom_quests_list.dart';
@@ -16,6 +14,7 @@ import 'package:flutter_application_2/features/home/presentation/views/widgets/q
 import 'package:flutter_application_2/features/settings/presentation/views/widgets/label_box.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import '../../../../../core/widget/snackabars.dart';
 
 class HomeContent extends StatelessWidget {
   const HomeContent({super.key});
@@ -28,42 +27,37 @@ class HomeContent extends StatelessWidget {
     return Scaffold(
       resizeToAvoidBottomInset: false,
       body: BackgroundTheme(
-        child: BlocBuilder<HomeBloc, HomeState>(
-          builder: (context, homeState) {
-            // Show loading only when HomeBloc is in loading state
-            if (homeState is HomeLoading) {}
+        child: BlocConsumer<UserCubit, UserState>(
+          buildWhen: (previous, current) =>
+              current is UserLoaded ||
+              current is UserUpdated ||
+              current is UserLoading ||
+              current is UserError ||
+              current is UserInitial,
+          listener: (context, state) {
+            if (state is UserError) {
+              Snackbars.showErrorSnackbar(context, state.failure.message);
+            }
+          },
+          builder: (context, state) {
+            if (state is UserLoaded) {
+              return _buildHomeContent(
+                  context, state.user, screenWidth, screenHeight);
+            } else if (state is UserUpdated) {
+              return _buildHomeContent(
+                  context, state.user, screenWidth, screenHeight);
+            } else if (state is UserLoading) {
+              // Show loading skeleton UI that matches the home structure
+              return _buildHomeContent(
+                  context, state.user, screenWidth, screenHeight);
+            } else if (state is UserInitial || state is UserError) {
+              // Show a simple loading indicator for initial state
+              return const Center(
+                child: CircularProgressIndicator(),
+              );
+            }
 
-            return BlocConsumer<UserCubit, UserState>(
-              listener: (context, state) {
-                if (state is UserError) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(state.failure.message)),
-                  );
-                }
-              },
-              builder: (context, state) {
-                if (state is UserLoaded) {
-                  return _buildHomeContent(
-                      context, state.user, screenWidth, screenHeight);
-                } else if (state is UserUpdated) {
-                  return _buildHomeContent(
-                      context, state.user, screenWidth, screenHeight);
-                } else if (state is UserLoading) {
-                  // Show loading skeleton UI that matches the home structure
-                  return _buildHomeContent(
-                      context, state.user, screenWidth, screenHeight);
-                }
-
-                // If UserCubit is loading but HomeBloc is ready, show empty content
-                // This prevents infinite loading
-                if (homeState is HomeReady) {
-                  //  return _buildHomeContent(
-                  //         context, state.user, screenWidth, screenHeight);
-                }
-
-                return const Center(child: CircularProgressIndicator());
-              },
-            );
+            return const Center(child: CircularProgressIndicator());
           },
         ),
       ),
@@ -95,16 +89,19 @@ class HomeContent extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(height: screenHeight * 0.025),
+              SizedBox(height: screenHeight * 0.024),
               const AppBarStats(),
-              SizedBox(height: screenHeight * 0.025),
-              CustomRichText(
-                text1: 'Welcome, ',
-                textStyle1: TextStyles.extraBold30White,
-                text2: user.username?.trim().split(' ').first ?? 'Player',
-                textStyle2: TextStyles.extraBold30Primary,
+              SizedBox(height: screenHeight * 0.024),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: CustomRichText(
+                  text1: 'Welcome, ',
+                  textStyle1: TextStyles.bold24White,
+                  text2: user.username?.trim().split(' ').first ?? 'Player',
+                  textStyle2: TextStyles.bold24Primary,
+                ),
               ),
-              SizedBox(height: screenHeight * 0.025),
+              SizedBox(height: screenHeight * 0.024),
               const DailyQuestCard(),
               LabelBox(
                   labelText: "Daily Quest",

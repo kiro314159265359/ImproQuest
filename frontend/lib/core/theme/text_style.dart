@@ -55,20 +55,14 @@ class TextStyles {
     color: ColorManager.darkColor,
   );
 
-  static TextStyle regularItalic14darkGold = const TextStyle(
-    fontSize: 14,
+  static TextStyle regularItalic12darkGold = const TextStyle(
+    fontSize: 12,
     fontFamily: 'PlusJakartaSans',
     fontWeight: FontWeight.w400,
     fontStyle: FontStyle.italic,
     color: ColorManager.darkGoldColor,
   );
 
-  static TextStyle regular18White = const TextStyle(
-    fontSize: 18,
-    fontFamily: 'PlusJakartaSans',
-    fontWeight: FontWeight.w400,
-    color: ColorManager.whiteColor,
-  );
   static TextStyle regular20White = const TextStyle(
     fontSize: 20,
     fontFamily: 'PlusJakartaSans',
@@ -87,7 +81,7 @@ class TextStyles {
     fontWeight: FontWeight.w400,
     color: ColorManager.lightGrey,
   );
-    static TextStyle regular14primary = const TextStyle(
+  static TextStyle regular14primary = const TextStyle(
     fontSize: 14,
     fontFamily: 'PlusJakartaSans',
     fontWeight: FontWeight.w400,
@@ -105,19 +99,19 @@ class TextStyles {
     fontWeight: FontWeight.w400,
     color: ColorManager.whiteColor,
   );
-    static TextStyle regular12Gold = const TextStyle(
+  static TextStyle regular12Gold = const TextStyle(
     fontSize: 12,
     fontFamily: 'PlusJakartaSans',
     fontWeight: FontWeight.w400,
     color: ColorManager.goldColor,
   );
-    static TextStyle regular12LightGrey = const TextStyle(
+  static TextStyle regular12LightGrey = const TextStyle(
     fontSize: 12,
     fontFamily: 'PlusJakartaSans',
     fontWeight: FontWeight.w400,
     color: ColorManager.lightGrey,
   );
-      static TextStyle regular12LightBlue = const TextStyle(
+  static TextStyle regular12LightBlue = const TextStyle(
     fontSize: 12,
     fontFamily: 'PlusJakartaSans',
     fontWeight: FontWeight.w400,
@@ -130,21 +124,15 @@ class TextStyles {
     color: ColorManager.darkColor,
   );
 
-  static TextStyle medium18Dark = const TextStyle(
-    fontSize: 18,
-    fontFamily: 'PlusJakartaSans',
-    fontWeight: FontWeight.w500,
-    color: ColorManager.darkColor,
-  );
-
   static TextStyle semiBold16Grey = const TextStyle(
     fontSize: 16,
     fontFamily: 'PlusJakartaSans',
     fontWeight: FontWeight.w600,
     color: ColorManager.lightGrey,
   );
-  static TextStyle semiBold18darkGrey = const TextStyle(
-    fontSize: 18,
+
+  static TextStyle semiBold16darkGrey = const TextStyle(
+    fontSize: 16,
     fontFamily: 'PlusJakartaSans',
     fontWeight: FontWeight.w600,
     color: ColorManager.darkGreyColor,
@@ -156,12 +144,6 @@ class TextStyles {
     color: ColorManager.darkColor,
   );
 
-  static TextStyle semiBold18Primary = const TextStyle(
-    fontSize: 18,
-    fontFamily: 'PlusJakartaSans',
-    fontWeight: FontWeight.w600,
-    color: ColorManager.primaryColor,
-  );
   static TextStyle bold16Dark = const TextStyle(
     fontSize: 16,
     fontFamily: 'PlusJakartaSans',
@@ -176,6 +158,12 @@ class TextStyles {
   );
   static TextStyle bold20Primary = const TextStyle(
     fontSize: 20,
+    fontFamily: 'PlusJakartaSans',
+    fontWeight: FontWeight.w700,
+    color: ColorManager.primaryColor,
+  );
+  static TextStyle bold24Primary = const TextStyle(
+    fontSize: 24,
     fontFamily: 'PlusJakartaSans',
     fontWeight: FontWeight.w700,
     color: ColorManager.primaryColor,
@@ -198,12 +186,6 @@ class TextStyles {
     fontWeight: FontWeight.w700,
     color: ColorManager.greyColor,
   );
-  static TextStyle bold18Dark = const TextStyle(
-    fontSize: 18,
-    fontFamily: 'PlusJakartaSans',
-    fontWeight: FontWeight.w700,
-    color: ColorManager.darkColor,
-  );
 
   static TextStyle extraBold16Dark = const TextStyle(
     fontSize: 16,
@@ -218,30 +200,26 @@ class TextStyles {
     fontWeight: FontWeight.w800,
     color: ColorManager.darkColor,
   );
+  static TextStyle extraBold24White = const TextStyle(
+    fontSize: 24,
+    fontFamily: 'PlusJakartaSans',
+    fontWeight: FontWeight.w800,
+    color: ColorManager.whiteColor,
+  );
   static TextStyle extraBold28White = const TextStyle(
     fontSize: 28,
     fontFamily: 'PlusJakartaSans',
     fontWeight: FontWeight.w800,
     color: ColorManager.whiteColor,
   );
-  static TextStyle extraBold30White = const TextStyle(
-    fontSize: 30,
-    fontFamily: 'PlusJakartaSans',
-    fontWeight: FontWeight.w800,
-    color: ColorManager.whiteColor,
-  );
+
   static TextStyle extraBold32White = const TextStyle(
     fontSize: 32,
     fontFamily: 'PlusJakartaSans',
     fontWeight: FontWeight.w800,
     color: ColorManager.whiteColor,
   );
-  static TextStyle extraBold38White = const TextStyle(
-    fontSize: 38,
-    fontFamily: 'PlusJakartaSans',
-    fontWeight: FontWeight.w800,
-    color: ColorManager.whiteColor,
-  );
+
   static TextStyle regular16White = const TextStyle(
     fontSize: 16,
     fontFamily: 'PlusJakartaSans',
@@ -290,14 +268,9 @@ class TextStyles {
     fontWeight: FontWeight.w600,
     color: ColorManager.whiteColor,
   );
-  static TextStyle semiBold18White = const TextStyle(
-    fontSize: 18,
-    fontFamily: 'PlusJakartaSans',
-    fontWeight: FontWeight.w600,
-    color: ColorManager.whiteColor,
-  );
-  static TextStyle semiBold18lightGreen = const TextStyle(
-    fontSize: 18,
+
+  static TextStyle semiBold16lightGreen = const TextStyle(
+    fontSize: 16,
     fontFamily: 'PlusJakartaSans',
     fontWeight: FontWeight.w600,
     color: ColorManager.lightGreen,
@@ -308,8 +281,8 @@ class TextStyles {
     fontWeight: FontWeight.w600,
     color: ColorManager.lightGrey,
   );
-  static TextStyle semiBold18lightGrey = const TextStyle(
-    fontSize: 18,
+  static TextStyle semiBold16lightGrey = const TextStyle(
+    fontSize: 16,
     fontFamily: 'PlusJakartaSans',
     fontWeight: FontWeight.w600,
     color: ColorManager.lightGrey,
@@ -327,18 +300,13 @@ class TextStyles {
     color: ColorManager.whiteColor,
   );
 
-  static TextStyle bold18White = const TextStyle(
-    fontSize: 18,
-    fontFamily: 'PlusJakartaSans',
-    fontWeight: FontWeight.w700,
-    color: ColorManager.whiteColor,
-  );
-  static TextStyle bold18Gold = const TextStyle(
-    fontSize: 18,
+  static TextStyle bold16Gold = const TextStyle(
+    fontSize: 16,
     fontFamily: 'PlusJakartaSans',
     fontWeight: FontWeight.w700,
     color: ColorManager.goldColor,
   );
+
   static TextStyle bold20White = const TextStyle(
     fontSize: 20,
     fontFamily: 'PlusJakartaSans',
@@ -358,18 +326,19 @@ class TextStyles {
     color: ColorManager.whiteColor,
   );
 
+  static TextStyle semiBold12Primary = const TextStyle(
+    fontSize: 12,
+    fontFamily: 'PlusJakartaSans',
+    fontWeight: FontWeight.w600,
+    color: ColorManager.primaryColor,
+  );
   static TextStyle semiBold16Primary = const TextStyle(
     fontSize: 16,
     fontFamily: 'PlusJakartaSans',
     fontWeight: FontWeight.w600,
     color: ColorManager.primaryColor,
   );
-  static TextStyle extraBold30Primary = const TextStyle(
-    fontSize: 30,
-    fontFamily: 'PlusJakartaSans',
-    fontWeight: FontWeight.w800,
-    color: ColorManager.primaryColor,
-  );
+
   static TextStyle bold16Error = const TextStyle(
     fontSize: 16,
     fontFamily: 'PlusJakartaSans',
@@ -382,12 +351,7 @@ class TextStyles {
     fontWeight: FontWeight.w700,
     color: ColorManager.greenColor,
   );
-    static TextStyle bold10White = const TextStyle(
-    fontSize: 10,
-    fontFamily: 'PlusJakartaSans',
-    fontWeight: FontWeight.w700,
-    color: ColorManager.whiteColor,
-  );
+
   static TextStyle bold12White = const TextStyle(
     fontSize: 12,
     fontFamily: 'PlusJakartaSans',
@@ -400,8 +364,8 @@ class TextStyles {
     fontWeight: FontWeight.w700,
     color: ColorManager.errorColor,
   );
-  static TextStyle semiBold18Error = const TextStyle(
-    fontSize: 18,
+  static TextStyle semiBold16Error = const TextStyle(
+    fontSize: 16,
     fontFamily: 'PlusJakartaSans',
     fontWeight: FontWeight.w600,
     color: ColorManager.errorColor,
@@ -412,8 +376,8 @@ class TextStyles {
     fontWeight: FontWeight.w600,
     color: ColorManager.redColor,
   );
-  static TextStyle semiBold18fadedlightGrey = TextStyle(
-    fontSize: 18,
+  static TextStyle semiBold16fadedlightGrey = TextStyle(
+    fontSize: 16,
     fontFamily: 'PlusJakartaSans',
     fontWeight: FontWeight.w600,
     color: ColorManager.fadedlightGrey,

@@ -18,6 +18,7 @@ import (
 	"github.com/HarDizzeR/Project/backend/internal/helpers"
 	"github.com/HarDizzeR/Project/backend/internal/logger"
 	"github.com/HarDizzeR/Project/backend/internal/models"
+	"github.com/HarDizzeR/Project/backend/internal/services"
 )
 
 var questCollection *mongo.Collection = database.Quests()
@@ -32,7 +33,7 @@ type QuestRequest struct {
 
 type UpdateMentalHabitQuestRequest struct {
 	Name       *string  `json:"name,omitempty" validate:"omitempty,min=3,max=100"`
-	Goal       *float64 `json:"goal,omitempty" bson:"goal,omitempty" validate:"omitempty,gte=0"`
+	Type       *string  `json:"type,omitempty" bson:"type,omitempty" validate:"omitempty,gte=0"`
 	XPReward   *float64 `json:"xp_reward,omitempty" bson:"xp_reward,omitempty" validate:"omitempty,gte=0"`
 	GoldReward *float64 `json:"gold_reward,omitempty" bson:"gold_reward,omitempty" validate:"omitempty,gte=0"`
 }
@@ -279,36 +280,39 @@ func CompleteQuest() gin.HandlerFunc {
 		}
 
 		// 3. Update user to award XP/gold & mark quest as completed
-		// Using filtered positional operator to target the specific quest by ID
+		now := time.Now()
 		filter := bson.M{
 			"_id": userOID,
 		}
 		update := bson.M{
 			"$inc": bson.M{
-				"xp":   *quest.XPReward,
-				"gold": *quest.GoldReward,
+				"xp":                     *quest.XPReward,
+				"gold":                   *quest.GoldReward,
+				"completed_quests_count": 1, // Increment completed quests count
 			},
 			"$set": bson.M{
 				"quests.$[elem].is_completed": true,
+				"quests.$[elem].completed_at": now, // Record completion time
+				"updated_at":                  now,
 			},
 		}
 
 		// Define the array filter to match only the quest with the specified ID.
-		arrayFilters := []any{bson.M{"elem._id": questOID}}
-
-		// Use the UpdateOne options builder and pass arrayFilters directly.
-		opts := options.UpdateOne().SetArrayFilters(arrayFilters)
+		opts := options.UpdateOne().
+			SetArrayFilters([]any{
+				bson.D{{Key: "elem._id", Value: questOID}},
+			})
 
 		result, err := collection.UpdateOne(ctx, filter, update, opts)
 		if helpers.HandleError(c, err) {
 			return
 		}
 		if result.ModifiedCount == 0 {
-			c.JSON(http.StatusConflict, gin.H{"error": "quest completion failed"})
+			c.JSON(http.StatusConflict, gin.H{"error": "quest completion failed or already completed"})
 			return
 		}
 
-		// 4. Fetch updated user to get the new XP total
+		// 4. Fetch updated user to get the new XP total and other stats for achievement check
 		err = collection.FindOne(ctx, bson.M{"_id": userOID}).Decode(&user)
 		if helpers.HandleError(c, err) {
 			return
@@ -328,27 +332,111 @@ func CompleteQuest() gin.HandlerFunc {
 			}
 		}
 
-		// Update rank if user leveled up
 		if levelUps > 0 {
 			newRank := helpers.GetRankForLevel(user.Level)
+			const pointsPerLevel = 5
+
+			updateFields := bson.M{
+				"xp":    user.XP,
+				"level": user.Level,
+				"rank":  newRank,
+			}
+			updateRankAndPoints := bson.M{
+				"$set": updateFields,
+				"$inc": bson.M{"skillpoints": pointsPerLevel},
+			}
+
+			_, err := collection.UpdateOne(ctx, bson.M{"_id": userOID}, updateRankAndPoints)
+			if helpers.HandleError(c, err) {
+				return
+			}
 			user.Rank = newRank
 
-			_, err := collection.UpdateOne(
-				ctx,
-				bson.M{"_id": userOID},
-				bson.M{"$set": bson.M{
-					"xp":    user.XP,
-					"level": user.Level,
-					"rank":  user.Rank,
-				}},
-			)
+		}
+		if levelUps > 0 {
+			err = collection.FindOne(ctx, bson.M{"_id": userOID}).Decode(&user)
+			if helpers.HandleError(c, err) {
+				return
+			}
+		}
+		// Check for achievements after all updates
+		go services.AwardAchievements(context.Background(), userOID) // Run in a goroutine if it can be slow
+
+		// NEW: Handle streak update for running quests
+		if quest.Type != nil && *quest.Type == "Running" {
+			// Initialize map if it's nil
+			if user.DailyCompletions == nil {
+				user.DailyCompletions = make(map[string]bool)
+			}
+
+			currentTime := time.Now()
+			todayDate := currentTime.Truncate(24 * time.Hour)
+			todayKey := todayDate.Format("2006-01-02") // "YYYY-MM-DD"
+
+			// Debug: Log streak before reset check
+			logger.Infof("Before streak check - Current: %d, LastCompleted: %v", user.Streak.Current, user.Streak.LastCompleted)
+
+			// Check and reset streak for missed days first
+			streakWasReset := helpers.CheckAndResetStreakForMissedDays(&user)
+
+			// Debug: Log streak after reset check
+			logger.Infof("After streak check - Current: %d, WasReset: %v", user.Streak.Current, streakWasReset)
+
+			// If streak was reset, save it to database immediately
+			if streakWasReset {
+				logger.Infof("Saving streak reset to database - Current: %d", user.Streak.Current)
+				resetUpdate := bson.M{
+					"$set": bson.M{
+						"streak":     user.Streak,
+						"updated_at": currentTime,
+					},
+				}
+				_, err := collection.UpdateOne(ctx, bson.M{"_id": userOID}, resetUpdate)
+				if helpers.HandleError(c, err) {
+					return
+				}
+			}
+
+			// Mark today as completed
+			user.DailyCompletions[todayKey] = true
+
+			// Update streak logic
+			yesterdayDate := todayDate.AddDate(0, 0, -1)
+			yesterdayKey := yesterdayDate.Format("2006-01-02")
+
+			// Check if yesterday was actually completed and was the last day of the streak
+			wasYesterdayPartOfStreak := !user.Streak.LastCompleted.IsZero() &&
+				helpers.SameDay(user.Streak.LastCompleted, yesterdayDate) &&
+				user.DailyCompletions[yesterdayKey]
+
+			if wasYesterdayPartOfStreak && user.Streak.Current > 0 {
+				user.Streak.Current++
+			} else {
+				// Reset streak to 1 for today's completion
+				user.Streak.Current = 1
+			}
+			user.Streak.LastCompleted = todayDate
+
+			if user.Streak.Current > user.Streak.HighestCount {
+				user.Streak.HighestCount = user.Streak.Current
+			}
+
+			// Update user with streak and daily completions
+			streakUpdate := bson.M{
+				"$set": bson.M{
+					"streak":            user.Streak,
+					"daily_completions": user.DailyCompletions,
+					"updated_at":        currentTime,
+				},
+			}
+			_, err := collection.UpdateOne(ctx, bson.M{"_id": userOID}, streakUpdate)
 			if helpers.HandleError(c, err) {
 				return
 			}
 		}
 
-		// 6. Send response
-		c.JSON(http.StatusOK, gin.H{
+		// 6. Send response with streak info for running quests
+		response := gin.H{
 			"message":       "Quest completed!",
 			"xp_gained":     *quest.XPReward,
 			"gold_gained":   *quest.GoldReward,
@@ -356,84 +444,30 @@ func CompleteQuest() gin.HandlerFunc {
 			"current_xp":    user.XP,
 			"levels_gained": levelUps,
 			"new_rank":      user.Rank,
-		})
+		}
+
+		// Add streak info if it was a running quest
+		if quest.Type != nil && *quest.Type == "Running" {
+			response["streak"] = user.Streak
+			response["weekly_display"] = helpers.GenerateSunToSatWeeklyDisplay(user.DailyCompletions, time.Now())
+		}
+
+		c.JSON(http.StatusOK, response)
 	}
 }
 
-func UpdateStreakHandler() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		// 1. Get user id from context
-		userID := c.GetString("id")
-		if userID == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found in context"})
-			return
-		}
-
-		// Convert the userID to an ObjectID
-		userOID, err := bson.ObjectIDFromHex(userID)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
-			return
-		}
-
-		// 2. Fetch the user from the database
-		collection := database.Users() // Assume your database package exposes a Users() collection.
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-
-		var user models.User
-		if err := collection.FindOne(ctx, bson.M{"_id": userOID}).Decode(&user); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "User not found"})
-			return
-		}
-
-		// 3. Check if all quests are completed using the helper
-		if !helpers.AreAllQuestsCompleted(user.CurrentQuests) {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Not all quests are completed"})
-			return
-		}
-
-		// 4. Update the streak if the quests are all done
-		currentTime := time.Now()
-		today := currentTime.Truncate(24 * time.Hour)
-		yesterday := today.AddDate(0, 0, -1)
-
-		// Update the streak only if not already updated today.
-		if user.Streak.LastCompleted.IsZero() || !helpers.SameDay(user.Streak.LastCompleted, today) {
-			if helpers.SameDay(user.Streak.LastCompleted, yesterday) {
-				user.Streak.Current++ // Increment streak if completed yesterday
-			} else {
-				user.Streak.Current = 1 // Reset streak if a day was skipped
-			}
-			user.Streak.LastCompleted = today
-
-			// Optionally, update the highest streak record if you maintain a count.
-			if user.Streak.Current > user.Streak.HighestCount {
-				user.Streak.HighestCount = user.Streak.Current
-			}
-		}
-
-		// 5. Save the updated streak back to the database
-		update := bson.M{"$set": bson.M{"streak": user.Streak}}
-		_, err = collection.UpdateOne(ctx, bson.M{"_id": userOID}, update)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update streak"})
-			return
-		}
-
-		// 6. Respond with success and the updated streak information
-		c.JSON(http.StatusOK, gin.H{
-			"message": "Streak updated successfully",
-			"streak":  user.Streak,
-		})
-	}
-}
 func EditMentalOrHabitQuest() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 1. Get user ID from token/context
-		userID := c.GetString("id")
-		if userID == "" {
+		userIDStr := c.GetString("id")
+		if userIDStr == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized: missing user ID"})
+			return
+		}
+		userOID, err := bson.ObjectIDFromHex(userIDStr)
+		if err != nil {
+			logger.Errorf("Invalid user ID format for edit: %v", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
 			return
 		}
 
@@ -465,69 +499,129 @@ func EditMentalOrHabitQuest() gin.HandlerFunc {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
-		// 4. Fetch and verify ownership & type
-		var existing models.Quest
-		filter := bson.M{"_id": questOID, "user_id": userID}
-		if err := questCollection.FindOne(ctx, filter).Decode(&existing); err != nil {
+		userCollection := database.Users()
+
+		// 4. Fetch user and verify quest ownership, type, and custom status
+		var user models.User
+		err = userCollection.FindOne(ctx, bson.M{"_id": userOID}).Decode(&user)
+		if err != nil {
 			if err == mongo.ErrNoDocuments {
-				c.JSON(http.StatusNotFound, gin.H{"error": "Quest not found"})
+				c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 			} else {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve quest"})
+				logger.Errorf("Failed to retrieve user: %v", err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve user"})
 			}
 			return
 		}
-		if existing.Type == nil || (*existing.Type != "Mental" && *existing.Type != "Habit") {
-			c.JSON(http.StatusForbidden, gin.H{"error": fmt.Sprintf("Cannot edit a '%s' quest", ptrToString(existing.Type))})
+
+		var existingQuest *models.Quest
+		for i, q := range user.CurrentQuests {
+			if q.ID == questOID {
+				existingQuest = &user.CurrentQuests[i]
+				break
+			}
+		}
+
+		if existingQuest == nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Quest not found in user's list"})
 			return
 		}
 
-		// 5. Build update document
-		updates := bson.M{}
-		if upd.Name != nil {
-			updates["name"] = *upd.Name
+		if !existingQuest.IsCustom {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Cannot edit a non-custom quest"})
+			return
 		}
-		if upd.Goal != nil {
-			updates["goal"] = *upd.Goal
+		if existingQuest.Type == nil || (*existingQuest.Type != "Mental" && *existingQuest.Type != "Habit") {
+			c.JSON(http.StatusForbidden, gin.H{"error": fmt.Sprintf("Cannot edit a '%s' quest via this endpoint", ptrToString(existingQuest.Type))})
+			return
+		}
+
+		// 5. Build update document for the specific quest in the array
+		updateFields := bson.M{}
+		if upd.Name != nil {
+			updateFields["quests.$[elem].name"] = *upd.Name
+		}
+		if upd.Type != nil {
+			updateFields["quests.$[elem].type"] = *upd.Type
 		}
 		if upd.XPReward != nil {
-			updates["xp_reward"] = *upd.XPReward
+			updateFields["quests.$[elem].xp_reward"] = *upd.XPReward
 		}
 		if upd.GoldReward != nil {
-			updates["gold_reward"] = *upd.GoldReward
+			updateFields["quests.$[elem].gold_reward"] = *upd.GoldReward
 		}
-		if len(updates) == 0 {
+
+		if len(updateFields) == 0 {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "No fields to update"})
 			return
 		}
 
-		// 6. Perform update
-		result, err := questCollection.UpdateOne(ctx, filter, bson.M{"$set": updates})
+		// 6. Perform update on the user document
+		filter := bson.M{"_id": userOID}
+		// Use options.UpdateOne() and pass the slice of filters directly to SetArrayFilters.
+		opts := options.UpdateOne().
+			SetArrayFilters([]interface{}{
+				bson.D{
+					{Key: "elem._id", Value: questOID},
+					{Key: "elem.is_custom", Value: true},
+					{Key: "elem.type", Value: bson.D{{Key: "$in", Value: []string{"Mental", "Habit"}}}},
+				},
+			})
+
+		result, err := userCollection.UpdateOne(
+			ctx,
+			filter,
+			bson.D{{Key: "$set", Value: updateFields}},
+			opts,
+		)
 		if err != nil {
+			logger.Errorf("Failed to update quest in user document: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update quest"})
 			return
 		}
+
 		if result.MatchedCount == 0 {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Quest not found or not yours"})
-			return
-		}
-		if result.ModifiedCount == 0 {
-			c.JSON(http.StatusOK, gin.H{"message": "No changes were made", "quest_id": questIDStr})
+			c.JSON(http.StatusNotFound, gin.H{"error": "Quest not found or does not meet update criteria"})
 			return
 		}
 
-		// 7. Return updated quest
-		var updated models.Quest
-		_ = questCollection.FindOne(ctx, filter).Decode(&updated)
-		c.JSON(http.StatusOK, gin.H{"message": "Quest updated successfully", "quest": updated})
+		if result.ModifiedCount == 0 {
+			c.JSON(http.StatusOK, gin.H{"message": "No changes were made to the quest", "quest_id": questIDStr})
+			return
+		}
+
+		// 7. Return updated quest (fetch user again to get the modified quest data)
+		var updatedUser models.User
+		err = userCollection.FindOne(ctx, bson.M{"_id": userOID}).Decode(&updatedUser)
+		if err != nil {
+			logger.Errorf("Failed to retrieve updated user data: %v", err)
+			c.JSON(http.StatusOK, gin.H{"message": "Quest updated successfully, but failed to retrieve updated quest details", "quest_id": questIDStr})
+			return
+		}
+
+		for _, q := range updatedUser.CurrentQuests {
+			if q.ID == questOID {
+				c.JSON(http.StatusOK, gin.H{"message": "Quest updated successfully", "quest": q})
+				return
+			}
+		}
+
+		c.JSON(http.StatusOK, gin.H{"message": "Quest updated successfully, but could not find it in user's list post-update", "quest_id": questIDStr})
 	}
 }
 
 func DeleteMentalOrHabitQuest() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 1. Get user ID
-		userID := c.GetString("id")
-		if userID == "" {
+		userIDStr := c.GetString("id")
+		if userIDStr == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized: missing user ID"})
+			return
+		}
+		userOID, err := bson.ObjectIDFromHex(userIDStr)
+		if err != nil {
+			logger.Errorf("Invalid user ID format for delete: %v", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
 			return
 		}
 
@@ -542,30 +636,62 @@ func DeleteMentalOrHabitQuest() gin.HandlerFunc {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
-		// 3. Fetch to verify ownership & type
-		var toDelete models.Quest
-		filter := bson.M{"_id": questOID, "user_id": userID}
-		if err := questCollection.FindOne(ctx, filter).Decode(&toDelete); err != nil {
+		userCollection := database.Users()
+
+		// 3. Fetch user to verify quest existence and properties before deletion
+		var user models.User
+		err = userCollection.FindOne(ctx, bson.M{"_id": userOID}).Decode(&user)
+		if err != nil {
 			if err == mongo.ErrNoDocuments {
-				c.JSON(http.StatusNotFound, gin.H{"error": "Quest not found"})
+				c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 			} else {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve quest"})
+				logger.Errorf("Failed to retrieve user for quest deletion: %v", err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve user information"})
 			}
 			return
 		}
-		if toDelete.Type == nil || (*toDelete.Type != "Mental" && *toDelete.Type != "Habit") {
-			c.JSON(http.StatusForbidden, gin.H{"error": fmt.Sprintf("Cannot delete a '%s' quest", ptrToString(toDelete.Type))})
+
+		var questToDelete *models.Quest
+		for _, q := range user.CurrentQuests {
+			if q.ID == questOID {
+				questToDelete = &q
+				break
+			}
+		}
+
+		if questToDelete == nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Quest not found in user's list"})
+			return
+		}
+		if !questToDelete.IsCustom {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Cannot delete a non-custom quest"})
+			return
+		}
+		if questToDelete.Type == nil || (*questToDelete.Type != "Mental" && *questToDelete.Type != "Habit") {
+			c.JSON(http.StatusForbidden, gin.H{"error": fmt.Sprintf("Cannot delete a '%s' quest via this endpoint", ptrToString(questToDelete.Type))})
 			return
 		}
 
-		// 4. Delete
-		result, err := questCollection.DeleteOne(ctx, filter)
+		// 4. Delete quest from user's CurrentQuests array using $pull
+		update := bson.M{
+			"$pull": bson.M{
+				"quests": bson.M{
+					"_id":       questOID,
+					"is_custom": true,                                       // Ensure it's a custom quest
+					"type":      bson.M{"$in": []string{"Mental", "Habit"}}, // Ensure it's Mental or Habit
+				},
+			},
+		}
+
+		result, err := userCollection.UpdateOne(ctx, bson.M{"_id": userOID}, update)
 		if err != nil {
+			logger.Errorf("Failed to delete quest from user document: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete quest"})
 			return
 		}
-		if result.DeletedCount == 0 {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Quest not found or not yours"})
+
+		if result.ModifiedCount == 0 {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Quest not found or not eligible for deletion"})
 			return
 		}
 

@@ -9,6 +9,7 @@ import '../../../../core/theme/text_style.dart';
 import '../../../../core/utils/validate_input.dart';
 import '../../../../core/widget/custom_primary_button.dart';
 import '../../../../core/widget/custom_text_form_field.dart';
+import '../../../../core/widget/snackabars.dart';
 
 class ContinueRegister extends StatefulWidget {
   const ContinueRegister({super.key});
@@ -32,9 +33,7 @@ class _ContinueRegisterState extends State<ContinueRegister> {
         Navigator.pushReplacementNamed(context, Routes.loginScreen);
       }
       if (state is RegisterErrorState) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(state.failure.message)),
-        );
+        Snackbars.showErrorSnackbar(context, state.failure.message);
       }
     }, builder: (context, state) {
       var cubit = context.read<RegisterCubit>();
@@ -56,7 +55,7 @@ class _ContinueRegisterState extends State<ContinueRegister> {
                           style: TextStyles.extraBold32White,
                         ),
                         SizedBox(
-                          height: h * 0.03,
+                          height: h * 0.04,
                         ),
                         CustomTextFormField(
                           hintText: "Username",
@@ -156,11 +155,10 @@ class _ContinueRegisterState extends State<ContinueRegister> {
                             }
                           },
                           buttonText: "Register",
-                          height: 45,
                           isLoading: state is RegisterLoadingState,
                         ),
                         SizedBox(
-                          height: h * 0.04,
+                          height: h * 0.02,
                         ),
                         BackButton(
                           onPressed: () {

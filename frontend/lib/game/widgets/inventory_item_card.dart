@@ -44,6 +44,8 @@ class InventoryItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    var w = MediaQuery.of(context).size.width;
+    var h = MediaQuery.of(context).size.height;
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       color: ColorManager.navyColor,
@@ -51,15 +53,15 @@ class InventoryItemCard extends StatelessWidget {
         leading: Stack(
           children: [
             Container(
-              width: 40,
-              height: 40,
+              width: w * 0.12,
+              height: h * 0.08,
               decoration: BoxDecoration(
                 color: _getTierColor(item.tier).withOpacity(0.2),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: _getTierColor(item.tier)),
               ),
               child: itemPhoto != null
-                  ? Image.asset(itemPhoto!, width: 40, height: 40)
+                  ? Image.asset(itemPhoto!, width: w * 0.12, height: h * 0.08)
                   : Icon(
                       item.type == ItemType.consumable
                           ? Icons.medication
@@ -75,9 +77,9 @@ class InventoryItemCard extends StatelessWidget {
                   padding: const EdgeInsets.all(2),
                   decoration: BoxDecoration(
                     color: ColorManager.blackColor,
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Text('x$quantity', style: TextStyles.bold10White),
+                  child: Text('x$quantity', style: TextStyles.bold12White),
                 ),
               ),
           ],
@@ -91,7 +93,7 @@ class InventoryItemCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(item.description, style: TextStyles.regular12LightGrey),
-            const SizedBox(height: 4),
+            SizedBox(height: h * 0.008),
             if (item.effects.isNotEmpty)
               ...item.effects.entries.where((e) => e.value > 0).map((e) => Text(
                   '• ${_formatEffectName(e.key)}: +${e.value}',

@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -9,8 +10,10 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/HarDizzeR/Project/backend/internal/database"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"go.mongodb.org/mongo-driver/v2/bson"
 
 	"github.com/HarDizzeR/Project/backend/internal/models" // Replace with your actual import path
 )
@@ -128,6 +131,28 @@ func (manager *WebSocketManager) HandleConnection(c *gin.Context) {
 				log.Printf("Error sending save data error message to userID %s: %v", userID, errResp)
 			}
 			continue
+		}
+
+		// Increment accumulated distance
+		{
+			userObjID, err2 := bson.ObjectIDFromHex(userID)
+			if err2 != nil {
+				log.Printf("WebSocket: invalid userID %s for accum_distance update: %v", userID, err2)
+			} else {
+				ctxDb, cancelDb := context.WithTimeout(context.Background(), 5*time.Second)
+				defer cancelDb()
+
+				if _, err3 := database.Users().UpdateOne(
+					ctxDb,
+					bson.M{"_id": userObjID},
+					bson.M{"$inc": bson.M{"accum_distance": runData.Distance}},
+				); err3 != nil {
+					log.Printf("WebSocket: failed to update accum_distance for user %s: %v", userID, err3)
+				} else {
+					// Award achievements in background
+					go AwardAchievements(context.Background(), userObjID)
+				}
+			}
 		}
 
 		log.Printf("Successfully processed and stored run data for userID %s: %+v", userID, runData)

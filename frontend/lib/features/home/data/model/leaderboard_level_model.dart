@@ -29,16 +29,23 @@ class LeaderboardLevelListModel {
 
 class LeaderboardLevelModel {
   String? sId;
+  String? avatarUrl;
   int? level;
   String? rank;
   String? username;
   int? xp;
 
   LeaderboardLevelModel(
-      {this.sId, this.level, this.rank, this.username, this.xp});
+      {this.sId,
+      this.avatarUrl,
+      this.level,
+      this.rank,
+      this.username,
+      this.xp});
 
   LeaderboardLevelModel.fromJson(Map<String, dynamic> json) {
     sId = json['_id'];
+    avatarUrl = json['avatar_url'];
     level = json['level'];
     rank = json['rank'];
     username = json['username'];
@@ -48,6 +55,7 @@ class LeaderboardLevelModel {
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['_id'] = sId;
+    data['avatar_url'] = avatarUrl;
     data['level'] = level;
     data['rank'] = rank;
     data['username'] = username;

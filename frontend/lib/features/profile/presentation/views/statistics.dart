@@ -1,157 +1,179 @@
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_2/features/home/data/model/user_model.dart';
+import 'package:flutter_application_2/features/profile/presentation/manager/distance_cubit.dart';
+import 'package:flutter_application_2/features/profile/presentation/manager/distance_state.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/routes/routes.dart';
 import '../../../../core/theme/color_manger.dart';
 import '../../../../core/theme/text_style.dart';
 import '../../../../core/utils/app_icons.dart';
+import '../../../home/presentation/views/widgets/custom_rich_text.dart';
+import 'widgets/rank_card.dart';
 
 class Statistics extends StatefulWidget {
   final UserModel user;
-  const Statistics({
-    super.key,
-    required this.user,
-  });
+
+  const Statistics({super.key, required this.user});
 
   @override
   State<Statistics> createState() => _StatisticsState();
 }
 
 class _StatisticsState extends State<Statistics> {
-  final Map<String, dynamic> weekStatus = {
-    'Su': true,
-    'M': false,
-    'Tu': true,
-    'W': false,
-    'Th': null,
-    'F': false,
-    'Sa': true,
-  };
+  final List<String> weekDays = ['Su', 'M', 'Tu', 'W', 'Th', 'F', 'Sa'];
+
+  @override
+  void initState() {
+    super.initState();
+    context.read<DistanceCubit>().getDistanceToday();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final weekDays = weekStatus.keys.toList();
+    // var w = MediaQuery.of(context).size.width;
+    var h = MediaQuery.of(context).size.height;
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            height: h * 0.02,
+          ),
+          RankCard(
+            userRank: widget.user.rank ?? 'E',
+          ),
+          SizedBox(
+            height: h * 0.02,
+          ),
+          SizedBox(
+            height: 150,
+            child: Card(
+              color: ColorManager.gunmetal,
+              child: Column(
+                children: [
+                  ListTile(
+                    leading: Image.asset(AppIcons.flameIcon,
+                        width: 24, fit: BoxFit.contain),
+                    title: Text("${widget.user.streak?.current}",
+                        style: TextStyles.bold20Primary),
+                    subtitle:
+                        Text("day streak", style: TextStyles.bold8Primary),
+                  ),
+                  SizedBox(
+                    height: 50,
+                    child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: weekDays.length,
+                        itemBuilder: (context, index) {
+                          final day = weekDays[index];
+                          final bool? weeklyStatus =
+                              (widget.user.weeklyDisplay != null &&
+                                      index < widget.user.weeklyDisplay!.length)
+                                  ? widget.user.weeklyDisplay![index]
+                                  : null;
 
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.start,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Card(
-          color: ColorManager.gunmetal,
-          child: Column(
-            children: [
-              ListTile(
-                leading: Image.asset(AppIcons.flameIcon,
-                    width: 25, fit: BoxFit.contain),
-                title: Text("${widget.user.streak?.current}",
-                    style: TextStyles.bold20Primary),
-                subtitle: Text("day streak", style: TextStyles.bold8Primary),
-              ),
-              SizedBox(
-                height: 70,
-                child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: weekDays.length,
-                    itemBuilder: (context, index) {
-                      final day = weekDays[index];
-                      final isChecked = weekStatus[day];
+                          bool? checkboxValue;
+                          if (weeklyStatus == true) {
+                            checkboxValue = true;
+                          } else if (weeklyStatus == false) {
+                            checkboxValue = null;
+                          } else {
+                            checkboxValue = false;
+                          }
 
-                      return SizedBox(
-                        width: MediaQuery.of(context).size.width / 8,
-                        child: Column(
-                          children: [
-                            Checkbox(
-                              shape: const CircleBorder(),
-                              activeColor: ColorManager.primaryColor,
-                              tristate: true,
-                              value: isChecked,
-                              onChanged: (bool? value) {},
+                          return SizedBox(
+                            width: MediaQuery.of(context).size.width / 8,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Checkbox(
+                                  visualDensity: VisualDensity.compact,
+                                  materialTapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                  shape: const CircleBorder(),
+                                  activeColor: ColorManager.primaryColor,
+                                  tristate: true,
+                                  value: checkboxValue,
+                                  onChanged: (bool? value) {},
+                                ),
+                                Text(day,
+                                    style: TextStyles.semiBold12lightGrey),
+                              ],
                             ),
-                            Text(day, style: TextStyles.semiBold12lightGrey),
-                          ],
-                        ),
-                      );
-                    }),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(
-          height: 50,
-        ),
-        Expanded(
-          child: BarChart(
-            BarChartData(
-                borderData: FlBorderData(show: false),
-                gridData: const FlGridData(show: false),
-                barGroups: [
-                  BarChartGroupData(x: 0, barRods: [
-                    BarChartRodData(
-                        borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(25),
-                            topRight: Radius.circular(25)),
-                        toY: 100,
-                        width: 25,
-                        color: ColorManager.primaryColor)
-                  ]),
-                  BarChartGroupData(x: 0, barRods: [
-                    BarChartRodData(
-                        borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(25),
-                            topRight: Radius.circular(25)),
-                        toY: 130,
-                        width: 25,
-                        color: ColorManager.primaryColor)
-                  ]),
-                  BarChartGroupData(x: 0, barRods: [
-                    BarChartRodData(
-                        borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(25),
-                            topRight: Radius.circular(25)),
-                        toY: 200,
-                        width: 25,
-                        color: ColorManager.primaryColor)
-                  ]),
-                  BarChartGroupData(x: 0, barRods: [
-                    BarChartRodData(
-                        borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(25),
-                            topRight: Radius.circular(25)),
-                        toY: 250,
-                        width: 25,
-                        color: ColorManager.primaryColor)
-                  ]),
-                  BarChartGroupData(x: 0, barRods: [
-                    BarChartRodData(
-                        borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(25),
-                            topRight: Radius.circular(25)),
-                        toY: 150,
-                        width: 25,
-                        color: ColorManager.primaryColor)
-                  ]),
-                  BarChartGroupData(x: 0, barRods: [
-                    BarChartRodData(
-                        borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(25),
-                            topRight: Radius.circular(25)),
-                        toY: 90,
-                        width: 25,
-                        color: ColorManager.primaryColor)
-                  ]),
+                          );
+                        }),
+                  ),
                 ],
-                titlesData: const FlTitlesData(
-                    leftTitles: AxisTitles(),
-                    rightTitles: AxisTitles(),
-                    topTitles: AxisTitles(),
-                    bottomTitles: AxisTitles(
-                        sideTitles: SideTitles(showTitles: true),
-                        drawBelowEverything: true,
-                        axisNameWidget: Text("m")))),
-            duration: const Duration(milliseconds: 150), // Optional
-            curve: Curves.linear, // Optional
+              ),
+            ),
           ),
-        )
-      ],
+          SizedBox(
+            height: h * 0.02,
+          ),
+          SizedBox(
+            height: 180,
+            child: Card(
+              color: ColorManager.gunmetal,
+              child: ListTile(
+                title: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("Distance", style: TextStyles.semiBold16White),
+                        Text("Last 7 days",
+                            style: TextStyles.semiBold12lightGrey)
+                      ],
+                    ),
+                    BlocBuilder<DistanceCubit, DistanceState>(
+                      builder: (context, state) {
+                        if (state is DistanceLoading) {
+                          return const CircularProgressIndicator();
+                        } else if (state is DistanceTodayLoaded) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              CustomRichText(
+                                text1: (state.distanceToday != null)
+                                    ? state.distanceToday!.toStringAsFixed(2)
+                                    : "0.00",
+                                textStyle1: TextStyles.semiBold16Primary,
+                                text2: "m",
+                                textStyle2: TextStyles.semiBold12Primary,
+                              ),
+                              Text("Today",
+                                  style: TextStyles.semiBold12Primary),
+                            ],
+                          );
+                        }
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            CustomRichText(
+                              text1: "0.00",
+                              textStyle1: TextStyles.semiBold16Primary,
+                              text2: "m",
+                              textStyle2: TextStyles.semiBold12Primary,
+                            ),
+                            Text("Today", style: TextStyles.semiBold12Primary),
+                          ],
+                        );
+                      },
+                    ),
+                  ],
+                ),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 28),
+                onTap: () {
+                  Navigator.pushNamed(context, Routes.distanceScreen);
+                },
+              ),
+            ),
+          )
+        ],
+      ),
     );
   }
 }

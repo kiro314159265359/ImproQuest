@@ -47,7 +47,7 @@ class QuestsList extends StatelessWidget {
                   : 0.0);
 
           return Padding(
-            padding: const EdgeInsets.only(bottom: 5),
+            padding: const EdgeInsets.only(bottom: 4),
             child: QuestCard(
               questName: quest.name ?? "Unnamed Quest",
               questDesc:

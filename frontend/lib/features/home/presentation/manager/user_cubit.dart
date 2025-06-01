@@ -1,11 +1,13 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_application_2/features/home/data/quest_reward_data.dart';
 import 'package:flutter_application_2/game/models/shop_item.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:flutter_application_2/features/home/presentation/manager/user_state.dart';
 import 'package:image_picker/image_picker.dart'; // Added for XFile
 import '../../../../core/error/failure.dart';
+import '../../../../core/service/cache_helper.dart';
 import '../../../../core/utils/get_it_constants.dart';
 import '../../../../game/logic/shop_bloc.dart';
 import '../../data/model/user_model.dart';
@@ -16,11 +18,11 @@ class UserCubit extends HydratedCubit<UserState> {
   final UserRepo userRepo;
   UserModel? currentUser;
   List<ShopItem>? itemsList;
+  bool _isFetching = false; // Flag to prevent concurrent fetches
   UserCubit(this.userRepo) : super(UserInitial());
 
   TextEditingController userNameController = TextEditingController();
   TextEditingController emailController = TextEditingController();
-  // TextEditingController passController = TextEditingController();
   TextEditingController weightController = TextEditingController();
   TextEditingController heightController = TextEditingController();
   TextEditingController birthDayController = TextEditingController();
@@ -30,7 +32,29 @@ class UserCubit extends HydratedCubit<UserState> {
   double get _currentDistance =>
       (state is UserLoaded) ? (state as UserLoaded).totalDistance : 0.0;
 
-  Future<UserModel> fetchUserData() async {
+  Future<UserModel> fetchUserData({bool forceRefresh = false}) async {
+    // Prevent concurrent fetches
+    if (_isFetching) {
+      print("Fetch already in progress, waiting for it to complete...");
+      // Wait for the current fetch to complete
+      while (_isFetching) {
+        await Future.delayed(Duration(milliseconds: 100));
+      }
+      if (currentUser != null) {
+        return currentUser!;
+      }
+    }
+
+    // Check if we already have fresh data and don't need to refetch
+    if (!forceRefresh &&
+        (state is UserLoaded || state is UserUpdated) &&
+        currentUser != null) {
+      print("User data already loaded, skipping fetch");
+      return currentUser!;
+    }
+
+    _isFetching = true;
+
     // Capture the previous distance before emitting a new state.
     double previousDistance = 0.0;
     if (state is UserLoaded) {
@@ -38,11 +62,13 @@ class UserCubit extends HydratedCubit<UserState> {
     }
     print("Captured previousDistance: $previousDistance");
 
-    // Now emit loading without affecting the captured value.
-    emit(UserLoading());
     try {
+      // Now emit loading without affecting the captured value.
+      emit(UserLoading());
+
       print("Fetching fresh user data from API...");
       final freshUser = await userRepo.getUserData();
+      print("GAY: ${freshUser.toJson()}");
       print("Fetched new user data. Preserving distance: $previousDistance");
       currentUser = freshUser;
       // Emit the new state with the preserved distance.
@@ -65,6 +91,8 @@ class UserCubit extends HydratedCubit<UserState> {
         emit(UserError(ServerFailure(error.toString())));
       }
       rethrow;
+    } finally {
+      _isFetching = false;
     }
   }
 
@@ -87,7 +115,7 @@ class UserCubit extends HydratedCubit<UserState> {
           weight: int.parse(weightController.text),
           gender: genderController.text,
           birthDate: isoDate,
-          profilePicture: profilePicture); 
+          profilePicture: profilePicture);
 
       currentUser!.username = userNameController.text;
       currentUser!.email = emailController.text;
@@ -136,8 +164,11 @@ class UserCubit extends HydratedCubit<UserState> {
 
       currentUser = await userRepo.getUserData();
 
-      if (totalQuestCount > 0 && completedQuestCount == totalQuestCount) {
-        await userRepo.completeStreak();
+      // Check if all non-custom (running) quests are completed for streak completion
+      bool allRunningQuestsCompleted = quests.isNotEmpty &&
+          quests.every((quest) => quest.isCompleted == true);
+
+      if (allRunningQuestsCompleted) {
         currentUser = await userRepo.getUserData();
       }
 
@@ -146,8 +177,7 @@ class UserCubit extends HydratedCubit<UserState> {
 
       _updateGetItRegistrations(currentUser!);
 
-      if (quests.isNotEmpty &&
-          quests.every((quest) => quest.isCompleted == true)) {
+      if (allRunningQuestsCompleted) {
         // Send reset command to the background service.
         await FlutterForegroundTask.stopService();
         // Optionally, update the local state to reflect that totalDistance is now reset.
@@ -166,49 +196,26 @@ class UserCubit extends HydratedCubit<UserState> {
     }
   }
 
-  Future<void> addCustomQuest(
-      String questName, int questDifficultyLevel, String questType) async {
+  Future<void> editQuest(Quests quest, String questName,
+      int questDifficultyLevel, String questType) async {
     emit(UserUpdating());
     try {
-      int questXp = 0;
-      int questGold = 0;
+      final rewards = QuestRewardData.questRewards(questDifficultyLevel);
 
-      switch (questDifficultyLevel) {
-        case 0:
-          questXp = 10;
-          questGold = 10;
-          break;
-        case 1:
-          questXp = 20;
-          questGold = 20;
-          break;
-        case 2:
-          questXp = 30;
-          questGold = 30;
-          break;
-        case 3:
-          questXp = 40;
-          questGold = 40;
-          break;
-        case 4:
-          questXp = 50;
-          questGold = 50;
-          break;
-        case 5:
-          questXp = 60;
-          questGold = 60;
-          break;
-        default:
-          questXp = 0;
-          questGold = 0;
-          break;
+      await userRepo.editQuest(
+          quest.sId, questName, rewards.xp, rewards.gold, questType);
+
+      if (currentUser != null && currentUser!.quests != null) {
+        final questIndex =
+            currentUser!.quests!.indexWhere((q) => q.sId == quest.sId);
+        if (questIndex != -1) {
+          currentUser!.quests![questIndex].name = questName;
+          currentUser!.quests![questIndex].type = questType;
+          currentUser!.quests![questIndex].xpReward = rewards.xp;
+          currentUser!.quests![questIndex].goldReward = rewards.gold;
+        }
       }
-      await userRepo.addCustomQuest(questName, questXp, questGold, questType);
 
-      currentUser = await userRepo.getUserData();
-
-      // Emit loaded state with preserved distance
-      emit(UserLoaded(currentUser!, totalDistance: _currentDistance));
       emit(UserUpdated(currentUser!));
 
       _updateGetItRegistrations(currentUser!);
@@ -218,64 +225,48 @@ class UserCubit extends HydratedCubit<UserState> {
       } else {
         emit(UpdateError(ServerFailure(error.toString())));
         if (currentUser != null) {
-          emit(UserLoaded(currentUser!, totalDistance: _currentDistance));
           emit(UserUpdated(currentUser!));
         }
       }
     }
   }
 
-  Future<void> getUserItems(String? slot) async {
-    emit(InventoryLoading());
+  Future<void> deleteQuest(Quests? q) async {
     try {
-      await userRepo.getUserItems();
-      final invModel = await userRepo.getUserItems();
-      itemsList = invModel.items?.where((inv) => inv.slot == slot).toList();
+      await userRepo.deleteQuest(q?.sId);
 
-      emit(InventoryLoaded(itemsList!));
+      if (currentUser != null && currentUser!.quests != null) {
+        currentUser!.quests =
+            currentUser!.quests!.where((quest) => quest.sId != q?.sId).toList();
+      }
+
+      emit(UserLoaded(currentUser!));
+
+      _updateGetItRegistrations(currentUser!);
     } catch (error) {
       if (error is DioException) {
         emit(UserError(ServerFailure.fromDioError(error)));
       } else {
         emit(UserError(ServerFailure(error.toString())));
         if (currentUser != null) {
-          emit(InventoryLoaded(itemsList!));
+          emit(UserLoaded(currentUser!));
         }
       }
     }
   }
 
-  Future<void> equipItem(String? itemId, String? slot) async {
+  Future<void> addCustomQuest(
+      String questName, int questDifficultyLevel, String questType) async {
     emit(UserUpdating());
     try {
-      await userRepo.equipItem(itemId, slot);
+      final rewards = QuestRewardData.questRewards(questDifficultyLevel);
+
+      await userRepo.addCustomQuest(
+          questName, rewards.xp, rewards.gold, questType);
 
       currentUser = await userRepo.getUserData();
 
-      emit(UserLoaded(currentUser!, totalDistance: _currentDistance));
-      emit(UserUpdated(currentUser!));
-
-      _updateGetItRegistrations(currentUser!);
-    } catch (error) {
-      if (error is DioException) {
-        emit(UpdateError(ServerFailure.fromDioError(error)));
-      } else {
-        emit(UpdateError(ServerFailure(error.toString())));
-        if (currentUser != null) {
-          emit(UserLoaded(currentUser!, totalDistance: _currentDistance));
-          emit(UserUpdated(currentUser!));
-        }
-      }
-    }
-  }
-
-  Future<void> unequipItem(String? itemId, String? slot) async {
-    emit(UserUpdating());
-    try {
-      await userRepo.unequipItem(itemId, slot);
-
-      currentUser = await userRepo.getUserData();
-
+      // Emit loaded state with preserved distance
       emit(UserLoaded(currentUser!, totalDistance: _currentDistance));
       emit(UserUpdated(currentUser!));
 
@@ -315,7 +306,7 @@ class UserCubit extends HydratedCubit<UserState> {
         // completing quests that might have been completed in another session
         try {
           print("Fetching fresh data before completing quests");
-          await fetchUserData();
+          await fetchUserData(forceRefresh: true);
 
           // Re-evaluate quests with fresh data while preserving distance
           if (state is UserLoaded) {
@@ -351,8 +342,9 @@ class UserCubit extends HydratedCubit<UserState> {
       await userRepo.deleteAccount(currentUser!);
 
       currentUser = null;
-      emit(UserDeleted());
       await clear();
+      clearTokens();
+      emit(UserInitial());
 
       if (getIt.isRegistered<UserModel>()) {
         getIt.unregister<UserModel>();
@@ -367,6 +359,30 @@ class UserCubit extends HydratedCubit<UserState> {
       } else {
         emit(UpdateError(ServerFailure(error.toString())));
       }
+    }
+  }
+
+  Future<void> logout() async {
+    emit(UserDeleting());
+    try {
+      currentUser = null;
+      await clear();
+      clearTokens();
+
+      // Reset the fetching flag
+      _isFetching = false;
+
+      emit(UserInitial()); // Reset to initial state instead of UserDeleted
+
+      if (getIt.isRegistered<UserModel>()) {
+        getIt.unregister<UserModel>();
+      }
+
+      if (getIt.isRegistered<ShopBloc>()) {
+        getIt.unregister<ShopBloc>();
+      }
+    } catch (error) {
+      emit(UpdateError(ServerFailure(error.toString())));
     }
   }
 

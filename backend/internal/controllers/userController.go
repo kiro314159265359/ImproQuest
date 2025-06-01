@@ -145,16 +145,41 @@ func GetMyData() gin.HandlerFunc {
 			return
 		}
 
-		// 4. Build response with computed maxXp
-		resp := struct {
-			models.User
-			MaxXp int `json:"maxXp"`
-		}{
-			User:  user,
-			MaxXp: user.Level * 100,
+		// 4. Check and reset streak for missed days
+		streakWasReset := helpers.CheckAndResetStreakForMissedDays(&user)
+
+		// 5. Update user in database if streak was reset
+		if streakWasReset {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+
+			update := bson.M{
+				"$set": bson.M{
+					"streak":     user.Streak,
+					"updated_at": time.Now(),
+				},
+			}
+			_, err := database.Users().UpdateOne(ctx, bson.M{"_id": objId}, update)
+			if err != nil {
+				logger.Errorf("Failed to update user streak reset: %v", err)
+				// Don't return error, just log it - user data is still valid
+			}
 		}
 
-		// 5. Return
+		// 6. Generate weekly display
+		currentTime := time.Now()
+		weeklyDisplay := helpers.GenerateSunToSatWeeklyDisplay(user.DailyCompletions, currentTime)
+
+		// 7. Build response with weekly_display
+		resp := struct {
+			models.User
+			WeeklyDisplay [7]any `json:"weekly_display"`
+		}{
+			User:          user,
+			WeeklyDisplay: weeklyDisplay,
+		}
+
+		// 8. Return
 		c.JSON(http.StatusOK, resp)
 	}
 }
@@ -287,9 +312,11 @@ func UpdateUser() gin.HandlerFunc {
 		}
 
 		if birthDateStr := c.PostForm("birth_date"); birthDateStr != "" {
-			birthDate, err := time.Parse(time.RFC3339, birthDateStr)
+			birthDate, err := helpers.ParseFlexibleDate(birthDateStr)
 			if err != nil {
 				logger.Errorf("Failed to parse birth_date: %v", err)
+				c.JSON(http.StatusBadRequest, gin.H{"error": "invalid birth_date format. Supported formats: YYYY-MM-DD, YYYY-MM-DDTHH:MM:SS, YYYY-MM-DDTHH:MM:SS.sssZ"})
+				return
 			} else {
 				logger.Infof("Updating birth_date to: %s", birthDate)
 				set["birth_date"] = birthDate
@@ -299,12 +326,12 @@ func UpdateUser() gin.HandlerFunc {
 		// Handle JSON payload (for when not using multipart)
 		if c.ContentType() == "application/json" {
 			var jsonPayload struct {
-				Username  *string    `json:"username"`
-				Email     *string    `json:"email"`
-				Height    *float64   `json:"height"`
-				BirthDate *time.Time `json:"birth_date"`
-				Weight    *float64   `json:"weight"`
-				Gender    *string    `json:"gender"`
+				Username  *string  `json:"username"`
+				Email     *string  `json:"email"`
+				Height    *float64 `json:"height"`
+				BirthDate *string  `json:"birth_date"`
+				Weight    *float64 `json:"weight"`
+				Gender    *string  `json:"gender"`
 			}
 
 			if err := c.ShouldBindJSON(&jsonPayload); err == nil {
@@ -317,8 +344,14 @@ func UpdateUser() gin.HandlerFunc {
 				if jsonPayload.Height != nil {
 					set["height"] = *jsonPayload.Height
 				}
-				if jsonPayload.BirthDate != nil && !jsonPayload.BirthDate.IsZero() {
-					set["birth_date"] = *jsonPayload.BirthDate
+				if jsonPayload.BirthDate != nil && *jsonPayload.BirthDate != "" {
+					birthDate, err := helpers.ParseFlexibleDate(*jsonPayload.BirthDate)
+					if err != nil {
+						logger.Errorf("Failed to parse birth_date from JSON: %v", err)
+						c.JSON(http.StatusBadRequest, gin.H{"error": "invalid birth_date format. Supported formats: YYYY-MM-DD, YYYY-MM-DDTHH:MM:SS, YYYY-MM-DDTHH:MM:SS.sssZ"})
+						return
+					}
+					set["birth_date"] = birthDate
 				}
 				if jsonPayload.Weight != nil {
 					set["weight"] = *jsonPayload.Weight
@@ -362,6 +395,7 @@ func UpdateUser() gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not fetch updated user"})
 			return
 		}
+		// If any updated fields (e.g. AccumDistance if it were part of this update) trigger achievements:
 		c.JSON(http.StatusOK, gin.H{
 			"message": "User updated successfully",
 			"user":    updated,
@@ -394,19 +428,28 @@ func AssignRandomQuests() gin.HandlerFunc {
 			return
 		}
 
-		// Separate custom quests from daily quests
+		// Separate custom quests from daily quests and reset custom quests daily
 		var customQuests, dailyQuests []models.Quest
 		var hasRunningQuest bool
+		now := time.Now()
+		today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 
 		for _, quest := range user.CurrentQuests {
 			if quest.IsCustom {
+				// Reset custom quest if it was completed before today
+				if quest.IsCompleted && quest.CompletedAt != nil {
+					completedDate := time.Date(quest.CompletedAt.Year(), quest.CompletedAt.Month(), quest.CompletedAt.Day(), 0, 0, 0, 0, quest.CompletedAt.Location())
+					if completedDate.Before(today) {
+						// Reset the quest for today
+						quest.IsCompleted = false
+						quest.CompletedAt = nil
+					}
+				}
 				customQuests = append(customQuests, quest)
 			} else if quest.Type != nil && *quest.Type == "Running" {
 				// Check if the running quest is still valid (assigned after today's midnight)
-				now := time.Now().In(quest.GivenAt.Location())
-				todayMidnight := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
-
-				if quest.GivenAt.After(todayMidnight) {
+				questDate := time.Date(quest.GivenAt.Year(), quest.GivenAt.Month(), quest.GivenAt.Day(), 0, 0, 0, 0, quest.GivenAt.Location())
+				if !questDate.Before(today) {
 					dailyQuests = append(dailyQuests, quest)
 					hasRunningQuest = true
 				}
@@ -416,9 +459,18 @@ func AssignRandomQuests() gin.HandlerFunc {
 		// If we already have a valid running quest, just return the combined quests
 		if hasRunningQuest {
 			combinedQuests := append(customQuests, dailyQuests...)
+
+			// Update user with reset custom quests
+			filter := bson.M{"_id": objectID}
+			update := bson.M{"$set": bson.M{"quests": combinedQuests}}
+			_, err = userCollection.UpdateOne(ctx, filter, update)
+			if err != nil {
+				logger.Errorf("Error updating user quests: %v", err)
+			}
+
 			c.JSON(http.StatusOK, gin.H{
 				"quests":  combinedQuests,
-				"message": "Found existing valid running quest",
+				"message": "Found existing valid running quest and reset custom quests",
 			})
 			return
 		}
@@ -437,7 +489,6 @@ func AssignRandomQuests() gin.HandlerFunc {
 		multiplier := helpers.GetQuestMultiplier(user.Rank)
 
 		// Apply rank multiplier to rewards and goal
-		now := time.Now()
 		runningQuest.GivenAt = now
 
 		if runningQuest.XPReward != nil {
@@ -540,116 +591,6 @@ func UpdateUserStats() gin.HandlerFunc {
 		})
 	}
 
-}
-
-func UpdateRunningQuestProgress() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		// Get user ID from context (set by auth middleware)
-		userID := c.GetString("id")
-		if userID == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "user ID not found in context"})
-			return
-		}
-
-		// Parse request body
-		var requestData struct {
-			Progress float64 `json:"progress" binding:"required,gte=0"`
-		}
-		if err := c.ShouldBindJSON(&requestData); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request data: " + err.Error()})
-			return
-		}
-
-		// Convert user ID to ObjectID
-		userOID, err := bson.ObjectIDFromHex(userID)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID format"})
-			return
-		}
-
-		// Get database collections
-		userCollection := database.Users()
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-
-		// Find user and their quests
-		var user models.User
-		err = userCollection.FindOne(ctx, bson.M{"_id": userOID}).Decode(&user)
-		if err != nil {
-			if err == mongo.ErrNoDocuments {
-				c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
-			} else {
-				logger.Errorf("Error fetching user: %v", err)
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "database error"})
-			}
-			return
-		}
-
-		// Check if user has any quests
-		if len(user.CurrentQuests) == 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "user has no active quests"})
-			return
-		}
-
-		// Find the running quest
-		var runningQuest *models.Quest
-		for i, quest := range user.CurrentQuests {
-			if quest.Type != nil && *quest.Type == "Running" {
-				runningQuest = &user.CurrentQuests[i]
-				break
-			}
-		}
-
-		if runningQuest == nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": "no running quest found"})
-			return
-		}
-
-		// Check if quest is already completed
-		if runningQuest.IsCompleted {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "quest is already completed"})
-			return
-		}
-
-		// Update progress
-		progress := requestData.Progress
-		runningQuest.Progress = &progress
-
-		// Check if quest goal has been met and set as completed if so
-		if runningQuest.Goal != nil && progress >= *runningQuest.Goal {
-			runningQuest.Progress = runningQuest.Goal
-			runningQuest.IsCompleted = true
-		}
-
-		// Update in database using the $ positional operator to update the specific quest in the array
-		updateResult, err := userCollection.UpdateOne(
-			ctx,
-			bson.M{"_id": userOID, "quests._id": runningQuest.ID},
-			bson.M{
-				"$set": bson.M{
-					"quests.$.progress":     progress,
-					"quests.$.is_completed": runningQuest.IsCompleted,
-				},
-			},
-		)
-
-		if err != nil {
-			logger.Errorf("Error updating quest progress: %v", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update quest progress"})
-			return
-		}
-
-		if updateResult.MatchedCount == 0 {
-			c.JSON(http.StatusNotFound, gin.H{"error": "quest not found"})
-			return
-		}
-
-		// Return success response with updated quest
-		c.JSON(http.StatusOK, gin.H{
-			"message": "Quest progress updated successfully",
-			"quest":   runningQuest,
-		})
-	}
 }
 
 func CreateCustomQuest() gin.HandlerFunc {
@@ -1127,12 +1068,12 @@ func AddStatsWithSkillPoints() gin.HandlerFunc {
 		}
 
 		// 10. Execute the update.
-		result, err := collection.UpdateOne(ctx, bson.M{"_id": userOID}, update)
+		updateResult, err := collection.UpdateOne(ctx, bson.M{"_id": userOID}, update) // Renamed result to updateResult
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update stats", "details": err.Error()})
 			return
 		}
-		if result.ModifiedCount == 0 {
+		if updateResult.ModifiedCount == 0 { // Used updateResult
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "no changes were made; please check the request"})
 			return
 		}

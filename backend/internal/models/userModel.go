@@ -16,6 +16,11 @@ type Streak struct {
 	LastCompleted time.Time     `bson:"last_completed" json:"last_completed" validate:"required"`
 }
 
+type UserEarnedAchievement struct {
+	AchievementID bson.ObjectID `json:"achievement_id" bson:"achievement_id"`
+	DateEarned    time.Time     `json:"date_earned" bson:"date_earned"`
+}
+
 type User struct {
 	ID                     bson.ObjectID            `json:"_id,omitempty" bson:"_id,omitempty"`
 	Username               *string                  `json:"username" bson:"username" validate:"required,min=2,max=200"`
@@ -34,14 +39,16 @@ type User struct {
 	Level                  int                      `json:"level" bson:"level" validate:"gte=1"`
 	Gold                   float64                  `json:"gold" bson:"gold" validate:"gte=0"`
 	Streak                 Streak                   `json:"streak" bson:"streak" validate:"required"`
-	InventoryID            bson.ObjectID            `json:"inventory_id" bson:"inventory_id" validate:"required"`      // Reference to Inventory
-	Achievements           []bson.ObjectID          `json:"achievements" bson:"achievements" validate:"dive,required"` // Reference to Achievements
-	CurrentQuests          []Quest                  `json:"quests" bson:"quests" validate:"dive,required"`             // Embedded Quests
+	DailyCompletions       map[string]bool          `json:"-" bson:"daily_completions,omitempty"`
+	InventoryID            bson.ObjectID            `json:"inventory_id" bson:"inventory_id" validate:"required"`       // Reference to Inventory
+	UserAchievements       []UserEarnedAchievement  `json:"user_achievements" bson:"user_achievements" validate:"dive"` // Changed from Achievements []bson.ObjectID
+	CurrentQuests          []Quest                  `json:"quests" bson:"quests" validate:"dive,required"`              // Embedded Quests
 	Stats                  Stats                    `json:"stats" bson:"stats" validate:"required"`
 	EquippedItems          map[string]bson.ObjectID `json:"equipped_items,omitempty" bson:"equipped_items,omitempty"`
 	AccumDistance          float64                  `json:"accum_distance" bson:"accum_distance" validate:"gte=0"`
 	Rank                   string                   `json:"rank" bson:"rank" validate:"required,oneof=E D C B A S"`
 	SkillPoints            int                      `json:"skill_points" bson:"skill_points" validate:"gte=0"`
+	CompletedQuestsCount   int                      `json:"completed_quests_count" bson:"completed_quests_count" validate:"gte=0"`
 	PasswordResetToken     *string                  `json:"-" bson:"password_reset_token,omitempty"`
 	PasswordResetExpiresAt *time.Time               `json:"-" bson:"password_reset_expires_at,omitempty"`
 	Created_at             time.Time                `json:"created_at" bson:"Created_at" validate:"required"`

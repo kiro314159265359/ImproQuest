@@ -8,6 +8,7 @@ import '../../../../core/utils/validate_input.dart';
 import '../../../../core/widget/custom_primary_button.dart';
 import '../../../../core/theme/text_style.dart';
 import '../../../../core/widget/custom_text_form_field.dart';
+import '../../../../core/widget/snackabars.dart';
 
 class Forgetpassword extends StatefulWidget {
   const Forgetpassword({super.key});
@@ -30,9 +31,7 @@ class _ForgetpasswordState extends State<Forgetpassword> {
         Navigator.pushReplacementNamed(context, Routes.verifyOTPScreen);
       }
       if (state is EmailErrorState) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(state.failure.message)),
-        );
+        Snackbars.showErrorSnackbar(context, state.failure.message);
       }
     }, builder: (context, state) {
       var cubit = context.read<ForgetPasswordCubit>();
@@ -55,11 +54,11 @@ class _ForgetpasswordState extends State<Forgetpassword> {
                           ),
                           Text(
                             "Enter the email to send Verification code",
-                            style: TextStyles.semiBold18White,
+                            style: TextStyles.semiBold16White,
                             textAlign: TextAlign.center,
                           ),
                           SizedBox(
-                            height: h * 0.06,
+                            height: h * 0.04,
                           ),
                           CustomTextFormField(
                             hintText: "Email",
@@ -67,7 +66,7 @@ class _ForgetpasswordState extends State<Forgetpassword> {
                             validator: ValidateInput.email,
                           ),
                           SizedBox(
-                            height: h * 0.06,
+                            height: h * 0.04,
                           ),
                           CustomPrimaryButton(
                               onPressed: () {
@@ -78,10 +77,9 @@ class _ForgetpasswordState extends State<Forgetpassword> {
                                 }
                               },
                               buttonText: "Send",
-                              height: 45,
                               isLoading: state is EmailSendingState),
                           SizedBox(
-                            height: h * 0.06,
+                            height: h * 0.04,
                           ),
                           BackButton(
                             onPressed: () {

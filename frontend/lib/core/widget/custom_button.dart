@@ -35,6 +35,8 @@ class CustomButton extends StatefulWidget {
 class _CustomButtonState extends State<CustomButton> {
   @override
   Widget build(BuildContext context) {
+    final w = MediaQuery.of(context).size.width;
+
     return SizedBox(
       width: widget.width,
       height: widget.height,
@@ -46,19 +48,23 @@ class _CustomButtonState extends State<CustomButton> {
                   side: BorderSide(color: widget.borderColor),
                   borderRadius: BorderRadius.circular(8.0),
                 ),
+                padding: EdgeInsets.symmetric(horizontal: w * 0.02),
               ),
               onPressed: widget.isLoading ? null : widget.onPressed,
               child: Text(
                 widget.buttonText,
                 style: TextStyles.styleBold(context,
                     fontSize: widget.fontSize, color: ColorManager.whiteColor),
+                softWrap: false,
+                maxLines: 1,
+                overflow: TextOverflow.clip,
               ),
             )
           : ElevatedButton.icon(
               icon: ImageIcon(
                 AssetImage(widget.buttonIcon!),
                 color: widget.iconColor,
-                size: 25,
+                size: 24,
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: widget.fillColor,
@@ -66,12 +72,16 @@ class _CustomButtonState extends State<CustomButton> {
                   side: BorderSide(color: widget.borderColor),
                   borderRadius: BorderRadius.circular(8.0),
                 ),
+                padding: EdgeInsets.symmetric(horizontal: w * 0.02),
               ),
               onPressed: widget.isLoading ? null : widget.onPressed,
               label: Text(
                 widget.buttonText,
                 style: TextStyles.styleBold(context,
                     fontSize: widget.fontSize, color: ColorManager.whiteColor),
+                softWrap: false,
+                maxLines: 1,
+                overflow: TextOverflow.clip,
               ),
             ),
     );

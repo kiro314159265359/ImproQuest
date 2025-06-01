@@ -45,7 +45,7 @@ class _RegisterState extends State<Register> {
                         children: [
                           Text(
                             "Already a player?",
-                            style: TextStyles.semiBold18White,
+                            style: TextStyles.semiBold16White,
                           ),
                           InkWell(
                             onTap: () {
@@ -54,7 +54,7 @@ class _RegisterState extends State<Register> {
                             },
                             child: Text(
                               "login",
-                              style: TextStyles.semiBold18Primary,
+                              style: TextStyles.semiBold16Primary,
                             ),
                           )
                         ],
@@ -96,7 +96,6 @@ class _RegisterState extends State<Register> {
                           }
                         },
                         buttonText: "Continue",
-                        height: 45,
                       ),
                     ],
                   ),

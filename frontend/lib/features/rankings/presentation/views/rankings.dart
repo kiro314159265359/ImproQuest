@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_2/features/home/presentation/views/widgets/custom_rich_text.dart';
 import 'package:flutter_application_2/features/rankings/presentation/views/widgets/leaderboards_list.dart';
 import '../../../../core/theme/background_theme.dart';
 import '../../../../core/theme/color_manger.dart';
 import '../../../../core/theme/text_style.dart';
+import '../../../../core/utils/get_it_constants.dart';
+import '../../../home/data/model/user_model.dart';
 
 class Rankings extends StatefulWidget {
   const Rankings({super.key});
@@ -26,22 +29,27 @@ class _RankingsState extends State<Rankings> {
                 child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      SizedBox(height: h * 0.025),
-                      Text('Leaderboards', style: TextStyles.extraBold38White),
-                      SizedBox(height: h * 0.035),
-                      const TabBar(
+                      SizedBox(height: h * 0.032),
+                      Text('Leaderboards', style: TextStyles.extraBold28White),
+                      CustomRichText(
+                          text1: "${getIt<UserModel>().rank}",
+                          textStyle1: TextStyles.bold24Primary,
+                          text2: " Tier",
+                          textStyle2: TextStyles.bold24White),
+                      SizedBox(height: h * 0.024),
+                      TabBar(
+                        labelStyle: TextStyles.bold12White,
                         dividerColor: Colors.transparent,
                         labelColor: ColorManager.primaryColor,
                         unselectedLabelColor: ColorManager.darkGreyColor,
                         indicatorColor: ColorManager.primaryColor,
-                        tabs: [
+                        tabs: const [
                           Tab(text: 'STREAK'),
                           Tab(text: 'LEVEL'),
                         ],
                       ),
                       const Expanded(
                         child: TabBarView(
-                          physics: NeverScrollableScrollPhysics(),
                           children: <Widget>[
                             LeaderboardsList(leaderboardType: 'streak'),
                             LeaderboardsList(leaderboardType: 'level'),

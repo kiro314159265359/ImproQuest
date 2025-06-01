@@ -142,6 +142,7 @@ func Signup() gin.HandlerFunc {
 			Gender:      req.Gender,
 			Created_at:  time.Now(),
 			Updated_at:  time.Now(),
+			Rank:        "E",
 			Level:       1,
 			Stats: models.Stats{
 				Vitality:  &defaultVitality,
