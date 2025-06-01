@@ -291,9 +291,11 @@ func UpdateUser() gin.HandlerFunc {
 		}
 
 		if birthDateStr := c.PostForm("birth_date"); birthDateStr != "" {
-			birthDate, err := time.Parse(time.RFC3339, birthDateStr)
+			birthDate, err := helpers.ParseFlexibleDate(birthDateStr)
 			if err != nil {
 				logger.Errorf("Failed to parse birth_date: %v", err)
+				c.JSON(http.StatusBadRequest, gin.H{"error": "invalid birth_date format. Supported formats: YYYY-MM-DD, YYYY-MM-DDTHH:MM:SS, YYYY-MM-DDTHH:MM:SS.sssZ"})
+				return
 			} else {
 				logger.Infof("Updating birth_date to: %s", birthDate)
 				set["birth_date"] = birthDate
@@ -303,12 +305,12 @@ func UpdateUser() gin.HandlerFunc {
 		// Handle JSON payload (for when not using multipart)
 		if c.ContentType() == "application/json" {
 			var jsonPayload struct {
-				Username  *string    `json:"username"`
-				Email     *string    `json:"email"`
-				Height    *float64   `json:"height"`
-				BirthDate *time.Time `json:"birth_date"`
-				Weight    *float64   `json:"weight"`
-				Gender    *string    `json:"gender"`
+				Username  *string  `json:"username"`
+				Email     *string  `json:"email"`
+				Height    *float64 `json:"height"`
+				BirthDate *string  `json:"birth_date"`
+				Weight    *float64 `json:"weight"`
+				Gender    *string  `json:"gender"`
 			}
 
 			if err := c.ShouldBindJSON(&jsonPayload); err == nil {
@@ -321,8 +323,14 @@ func UpdateUser() gin.HandlerFunc {
 				if jsonPayload.Height != nil {
 					set["height"] = *jsonPayload.Height
 				}
-				if jsonPayload.BirthDate != nil && !jsonPayload.BirthDate.IsZero() {
-					set["birth_date"] = *jsonPayload.BirthDate
+				if jsonPayload.BirthDate != nil && *jsonPayload.BirthDate != "" {
+					birthDate, err := helpers.ParseFlexibleDate(*jsonPayload.BirthDate)
+					if err != nil {
+						logger.Errorf("Failed to parse birth_date from JSON: %v", err)
+						c.JSON(http.StatusBadRequest, gin.H{"error": "invalid birth_date format. Supported formats: YYYY-MM-DD, YYYY-MM-DDTHH:MM:SS, YYYY-MM-DDTHH:MM:SS.sssZ"})
+						return
+					}
+					set["birth_date"] = birthDate
 				}
 				if jsonPayload.Weight != nil {
 					set["weight"] = *jsonPayload.Weight
