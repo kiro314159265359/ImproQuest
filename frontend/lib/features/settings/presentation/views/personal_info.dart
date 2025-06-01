@@ -81,6 +81,7 @@ class _PersonalInfoState extends State<PersonalInfo> {
             Dialogs.loadingDialog(context: context);
           }
           if (state is UserError || state is UpdateError) {
+            Navigator.pop(context);
             Snackbars.showErrorSnackbar(
                 context,
                 state is UserError
@@ -169,8 +170,7 @@ class _PersonalInfoState extends State<PersonalInfo> {
                         showCalendarIcon: true,
                         hintText: "",
                         controller: cubit.birthDayController,
-                        validator: (value) =>
-                            value?.isEmpty ?? true ? 'Required' : null)),
+                        validator: ValidateInput.birthday)),
                 SizedBox(height: h * 0.012),
                 LabelBox(
                     leadingIcon: Icons.height,
