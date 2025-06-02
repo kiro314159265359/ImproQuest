@@ -13,4 +13,5 @@ class Routes {
   static const String gameScreen = 'GameScreen';
   static const String shopScreen = 'ShopScreen';
   static const String personalInfoScreen = 'PersonalInfo';
+  static const String aboutScreen = 'AboutScreen';
 }

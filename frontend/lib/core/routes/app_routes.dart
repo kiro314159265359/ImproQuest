@@ -4,6 +4,7 @@ import 'package:flutter_application_2/features/auth/presentation/views/forgetpas
 import 'package:flutter_application_2/features/auth/presentation/views/resetpassword.dart';
 import 'package:flutter_application_2/features/home/presentation/views/add_quest.dart';
 import 'package:flutter_application_2/features/onboarding/presentation/views/onboarding.dart';
+import 'package:flutter_application_2/features/settings/presentation/views/about.dart';
 import 'package:flutter_application_2/features/settings/presentation/views/personal_info.dart';
 import 'package:flutter_application_2/game/game_page.dart';
 import '../../features/app_layout/presentation/views/app_layout.dart';
@@ -59,6 +60,9 @@ class AppRoutes {
 
       case Routes.personalInfoScreen:
         return MaterialPageRoute(builder: (_) => const PersonalInfo());
+
+      case Routes.aboutScreen:
+        return MaterialPageRoute(builder: (_) => const About());
     }
 
     return null;
