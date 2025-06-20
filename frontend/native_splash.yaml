@@ -1,16 +1,12 @@
 flutter_native_splash:
-  android: true 
-  ios: true 
-  web: false 
+  android: true
+  ios: true
+  web: false
 
- 
-  color: "#1C1C1E"
+  color: "#000000"
   image: "assets/images/MQ_Logo.png"
   branding: "assets/images/ImproQuest_Logo.png"
   android_12:
-    color: "#1C1C1E"
+    color: "#000000"
     image: "assets/images/MQ_Logo.png"
     branding: "assets/images/ImproQuest_Logo.png"
-
-
-

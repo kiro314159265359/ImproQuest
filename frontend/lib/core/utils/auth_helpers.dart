@@ -47,14 +47,21 @@ Future<void> _saveNewTokens(Map<String, dynamic> response) async {
 }
 
 Future<String> determineInitialRoute(LoginRepo loginRepo) async {
+  final accessToken = await getAccessToken();
+  if (await hasValidAccessToken(accessToken)) {
+    final firstTime = await isFirstTime();
+    if (firstTime) {
+      return Routes.onboardingScreen;
+    }
+    return Routes.appLayoutScreen;
+  }
+  return await _handleInvalidAccessToken(loginRepo, accessToken);
+}
+
+Future<String> determinePostLoginRoute() async {
   final firstTime = await isFirstTime();
   if (firstTime) {
     return Routes.onboardingScreen;
   }
-
-  final accessToken = await getAccessToken();
-  if (await hasValidAccessToken(accessToken)) {
-    return Routes.appLayoutScreen;
-  }
-  return await _handleInvalidAccessToken(loginRepo, accessToken);
+  return Routes.appLayoutScreen;
 }

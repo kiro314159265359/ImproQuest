@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_2/core/theme/background_theme.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_application_2/features/auth/domain/repo/login_repo.dart';
+import 'package:flutter_application_2/core/utils/auth_helpers.dart';
 import '../../../../core/utils/get_it_constants.dart';
 import '../../../../core/utils/validate_input.dart';
 import '../../../../core/widget/custom_primary_button.dart';
@@ -30,12 +31,18 @@ class _LoginState extends State<Login> {
 
     return BlocProvider(
         create: (context) => LoginCubit(getIt<LoginRepo>()),
-        child: BlocConsumer<LoginCubit, LoginState>(listener: (context, state) {
+        child: BlocConsumer<LoginCubit, LoginState>(
+            listener: (context, state) async {
           if (state is LoginSuccessState) {
-            Navigator.pushReplacementNamed(context, Routes.appLayoutScreen);
+            final route = await determinePostLoginRoute();
+            if (context.mounted) {
+              Navigator.pushReplacementNamed(context, route);
+            }
           }
           if (state is LoginErrorState) {
-            Snackbars.showErrorSnackbar(context, state.failure.message);
+            if (context.mounted) {
+              Snackbars.showErrorSnackbar(context, state.failure.message);
+            }
           }
         }, builder: (context, state) {
           var cubit = context.read<LoginCubit>();

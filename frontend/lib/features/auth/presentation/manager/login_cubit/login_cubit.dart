@@ -12,10 +12,8 @@ class LoginCubit extends Cubit<LoginState> {
   final LoginRepo loginRepo;
 
   LoginCubit(this.loginRepo) : super(LoginInitial());
-  TextEditingController emailController =
-      TextEditingController(text: "nigga@gmail.com");
-  TextEditingController passController =
-      TextEditingController(text: "nigga123");
+  TextEditingController emailController = TextEditingController();
+  TextEditingController passController = TextEditingController();
 
   Future<void> loginUser() async {
     emit(LoginLoadingState());

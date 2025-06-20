@@ -68,7 +68,7 @@ class _OnboardingState extends State<Onboarding> {
                             await notFirstTime();
                             if (context.mounted) {
                               Navigator.pushReplacementNamed(
-                                  context, Routes.loginScreen);
+                                  context, Routes.appLayoutScreen);
                             }
                           },
                           child: Text("Get Started",
