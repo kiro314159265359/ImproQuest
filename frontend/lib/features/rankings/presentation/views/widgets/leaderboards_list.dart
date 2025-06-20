@@ -108,7 +108,7 @@ class _LeaderboardsListState extends State<LeaderboardsList> {
                 playerImage: leaderboardItem?.avatarUrl,
                 playerPlace: index,
                 playerName: leaderboardItem?.username,
-                playerPoints: leaderboardItem?.highestStreak ?? 0,
+                playerPoints: leaderboardItem?.currentStreak ?? 0,
                 isUser: isUser,
               );
             }),

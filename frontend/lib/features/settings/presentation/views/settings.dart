@@ -171,7 +171,9 @@ class _SettingsState extends State<Settings> {
                         CustomSingleListTile(
                             titleText: 'About',
                             leadingIcon: Icons.info_outline,
-                            onTap: () {}),
+                            onTap: () {
+                              Navigator.pushNamed(context, Routes.aboutScreen);
+                            }),
                         SizedBox(height: h * 0.02),
                         DividerBox(
                             child1: ListTile(

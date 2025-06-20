@@ -74,13 +74,13 @@ class ValidateInput {
       return 'Please enter your birthday';
     }
     try {
-      final date = DateFormat('MM/dd/yyyy').parseStrict(value);
+      final date = DateFormat('M/d/yyyy').parseStrict(value);
       final minimumDate = DateTime.now().subtract(const Duration(days: 4745));
       if (date.isAfter(minimumDate)) {
         return 'You must be at least 13 years old';
       }
     } catch (e) {
-      return 'Use DD/MM/YYYY format';
+      return 'Use MM/DD/YYYY format';
     }
     return null;
   }

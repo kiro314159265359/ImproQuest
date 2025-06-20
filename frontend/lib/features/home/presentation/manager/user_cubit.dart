@@ -103,7 +103,7 @@ class UserCubit extends HydratedCubit<UserState> {
       String isoDate;
       try {
         final dt = DateFormat('MM/dd/yyyy').parseStrict(raw);
-        isoDate = dt.toUtc().toIso8601String();
+        isoDate = DateTime(dt.year, dt.month, dt.day).toIso8601String();
       } catch (_) {
         isoDate = raw;
       }
