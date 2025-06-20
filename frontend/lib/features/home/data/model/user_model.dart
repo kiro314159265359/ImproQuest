@@ -65,7 +65,8 @@ class UserModel {
     if (json['birth_date'] != null) {
       try {
         final dateTime = DateTime.parse(json['birth_date']);
-        birthDate = DateFormat('MM/dd/yyyy').format(dateTime);
+        final localDate = DateTime(dateTime.year, dateTime.month, dateTime.day);
+        birthDate = DateFormat('MM/dd/yyyy').format(localDate);
       } catch (e) {
         birthDate = json['birth_date'];
       }
@@ -200,7 +201,7 @@ class Quests {
     sId = json['_id'];
     name = json['name'];
     type = json['type'];
-    goal = json['goal'];
+    goal = json['goal'] != null ? (json['goal'] as num).truncate() : null;
     progress = json['progress'];
     xpReward = json['xp_reward'];
     goldReward = json['gold_reward'];

@@ -4,6 +4,7 @@ import 'package:flutter_application_2/features/auth/domain/repo/register_repo.da
 import 'package:flutter_application_2/features/auth/presentation/manager/register_cubit/register_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../../core/error/failure.dart';
+import 'package:intl/intl.dart';
 
 class RegisterCubit extends Cubit<RegisterState> {
   final RegisterRepo registerRepo;
@@ -19,6 +20,10 @@ class RegisterCubit extends Cubit<RegisterState> {
   Future<void> registerUser(String gender) async {
     emit(RegisterLoadingState());
     try {
+      final raw = birthDayController.text;
+      final parsedDate = DateFormat('M/d/yyyy').parseStrict(raw);
+      final formattedDate = DateFormat('MM/dd/yyyy').format(parsedDate);
+
       await registerRepo.register(
           emailController.text,
           passController.text,
@@ -26,7 +31,7 @@ class RegisterCubit extends Cubit<RegisterState> {
           int.parse(heightController.text),
           int.parse(weightController.text),
           gender,
-          birthDayController.text);
+          formattedDate);
       emit(RegisterSuccessState());
     } catch (error) {
       if (error is DioException) {

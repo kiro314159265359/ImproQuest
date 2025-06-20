@@ -44,7 +44,7 @@ class InventoryItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var w = MediaQuery.of(context).size.width;
+    // var w = MediaQuery.of(context).size.width;
     var h = MediaQuery.of(context).size.height;
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
@@ -53,15 +53,18 @@ class InventoryItemCard extends StatelessWidget {
         leading: Stack(
           children: [
             Container(
-              width: w * 0.12,
-              height: h * 0.08,
+              width: 56,
+              height: 56,
               decoration: BoxDecoration(
                 color: _getTierColor(item.tier).withOpacity(0.2),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: _getTierColor(item.tier)),
               ),
               child: itemPhoto != null
-                  ? Image.asset(itemPhoto!, width: w * 0.12, height: h * 0.08)
+                  ? Image.asset(
+                      itemPhoto!,
+                      fit: BoxFit.scaleDown,
+                    )
                   : Icon(
                       item.type == ItemType.consumable
                           ? Icons.medication
