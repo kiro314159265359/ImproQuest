@@ -51,30 +51,32 @@ class HomeBloc extends HydratedBloc<HomeEvent, HomeState> {
     emit(HomeLoading());
 
     try {
-      // Trigger user data fetch if needed - let UserCubit handle deduplication
-      print("HomeBloc: Ensuring fresh user data is available");
+      // Always trigger user data fetch to ensure fresh data
+      print("HomeBloc: Fetching fresh user data");
       await userCubit.fetchUserData(forceRefresh: true);
 
       // Check the service distance
       add(CheckServiceDistance());
 
-      // // Ensure the service is running if needed
-      // final userState = userCubit.state;
-      // if (userState is UserLoaded) {
-      //   await distanceService.startServiceIfNeeded(userState);
-
+      // Setup WebSocket connection
       channel = WebSocketChannel.connect(
         Uri.parse(
             'ws://api.improquest.mavoid.com/ws/runs?userId=${userCubit.currentUser?.sId}'),
       );
-      print("connected with sockets to $channel");
-      //   // Send current distance to service
-      //   if (!_distanceSent) {
-      //     _distanceSent = true;
-      //     distanceService.sendDistanceToService(userState.totalDistance);
-      //     print("HomeBloc sent initial distance: ${userState.totalDistance}");
-      //   }
-      // }
+      print("Connected with sockets to $channel");
+
+      // Ensure the service is running if needed
+      final userState = userCubit.state;
+      if (userState is UserLoaded) {
+        await distanceService.startServiceIfNeeded(userState);
+
+        // Send current distance to service
+        if (!_distanceSent) {
+          _distanceSent = true;
+          distanceService.sendDistanceToService(userState.totalDistance);
+          print("HomeBloc sent initial distance: ${userState.totalDistance}");
+        }
+      }
 
       emit(const HomeReady());
     } catch (e) {

@@ -18,18 +18,6 @@ class CustomQuestsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (quests == null || quests!.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.only(top: 150),
-        child: Center(
-          child: Text(
-            "No custom quests available",
-            style: TextStyles.semiBold20White,
-          ),
-        ),
-      );
-    }
-
     return BlocBuilder<HomeBloc, HomeState>(
       buildWhen: (previous, current) =>
           current is HomeReady ||
@@ -40,6 +28,18 @@ class CustomQuestsList extends StatelessWidget {
       builder: (context, state) {
         final loadingStates =
             state is HomeReady ? state.questLoadingStates : {};
+
+        if (quests == null || quests!.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.only(top: 150),
+            child: Center(
+              child: Text(
+                "No custom quests available",
+                style: TextStyles.semiBold20White,
+              ),
+            ),
+          );
+        }
 
         return Skeletonizer(
           enabled: context.read<UserCubit>().state is UserLoading,

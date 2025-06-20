@@ -143,8 +143,6 @@ class _TemporaryShopPageState extends State<TemporaryShopPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   CustomButton(
-                    width: null,
-                    height: null,
                     borderColor: ColorManager.lightGrey,
                     fillColor: Colors.transparent,
                     buttonText: "Refresh Items",
@@ -153,14 +151,6 @@ class _TemporaryShopPageState extends State<TemporaryShopPage> {
                           .read<ShopBloc>()
                           .add(ResetTemporaryShopItemsEvent());
                     },
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      context
-                          .read<ShopBloc>()
-                          .add(RewardTemporaryGoldEvent(50));
-                    },
-                    child: const Text("+ 50 Gold (Test)"),
                   ),
                 ],
               ),
