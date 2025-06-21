@@ -57,29 +57,27 @@ class _InventoryUIState extends State<InventoryUI> {
 
     String? equippedItemId;
     String? equippedItemIcon;
-    if (equippedItems != null) {
-      switch (widget.title!.toLowerCase()) {
-        case 'helmet':
-          equippedItemId = equippedItems.helmet;
-          equippedItemIcon = AppImages.helmetPhoto;
-          break;
-        case 'armor':
-          equippedItemId = equippedItems.armor;
-          equippedItemIcon = AppImages.armorPhoto;
-          break;
-        case 'gloves':
-          equippedItemId = equippedItems.gloves;
-          equippedItemIcon = AppImages.glovesPhoto;
-          break;
-        case 'boots':
-          equippedItemId = equippedItems.boots;
-          equippedItemIcon = AppImages.bootsPhoto;
-          break;
-        case 'weapon':
-          equippedItemId = equippedItems.weapon;
-          equippedItemIcon = AppImages.swordPhoto;
-          break;
-      }
+    switch (widget.title!.toLowerCase()) {
+      case 'helmet':
+        equippedItemId = equippedItems?.helmet;
+        equippedItemIcon = AppImages.helmetPhoto;
+        break;
+      case 'armor':
+        equippedItemId = equippedItems?.armor;
+        equippedItemIcon = AppImages.armorPhoto;
+        break;
+      case 'gloves':
+        equippedItemId = equippedItems?.gloves;
+        equippedItemIcon = AppImages.glovesPhoto;
+        break;
+      case 'boots':
+        equippedItemId = equippedItems?.boots;
+        equippedItemIcon = AppImages.bootsPhoto;
+        break;
+      case 'weapon':
+        equippedItemId = equippedItems?.weapon;
+        equippedItemIcon = AppImages.swordPhoto;
+        break;
     }
 
     return Stack(
