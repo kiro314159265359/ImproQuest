@@ -139,20 +139,13 @@ class _TemporaryShopPageState extends State<TemporaryShopPage> {
               padding: EdgeInsets.symmetric(
                   vertical: screenHeight * 0.02,
                   horizontal: screenWidth * 0.05),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  CustomButton(
-                    borderColor: ColorManager.lightGrey,
-                    fillColor: Colors.transparent,
-                    buttonText: "Refresh Items",
-                    onPressed: () {
-                      context
-                          .read<ShopBloc>()
-                          .add(ResetTemporaryShopItemsEvent());
-                    },
-                  ),
-                ],
+              child: CustomButton(
+                borderColor: ColorManager.lightGrey,
+                fillColor: Colors.transparent,
+                buttonText: "Refresh Items",
+                onPressed: () {
+                  context.read<ShopBloc>().add(ResetTemporaryShopItemsEvent());
+                },
               ),
             ),
           ],
