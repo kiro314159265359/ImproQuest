@@ -11,6 +11,8 @@ import 'package:flutter_application_2/features/home/presentation/views/widgets/c
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
+import '../../../../../core/widget/dialogs.dart';
+
 class CustomQuestsList extends StatelessWidget {
   final List<Quests>? quests;
 
@@ -63,7 +65,15 @@ class CustomQuestsList extends StatelessWidget {
                     context.read<HomeBloc>().add(CompleteCustomQuest(questId));
                   },
                   onDeleteQuest: () {
-                    context.read<UserCubit>().deleteQuest(quest);
+                    Dialogs.confirmDialog(
+                        context: context,
+                        title: 'Delete Quest',
+                        content:
+                            'Are you sure you want to delete this quest? This action cannot be undone.',
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          context.read<UserCubit>().deleteQuest(quest);
+                        });
                   },
                   isLoading: isLoading,
                 ),
