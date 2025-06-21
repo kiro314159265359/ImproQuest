@@ -62,7 +62,7 @@ class _VerifyOtpState extends State<VerifyOtp> {
                           CustomTextFormField(
                             hintText: "OTP",
                             controller: cubit.otpController,
-                            validator: (value) => value?.isEmpty ?? true
+                            validator: (value) => value?.trim().isEmpty ?? true
                                 ? 'Please enter the OTP'
                                 : null,
                           ),

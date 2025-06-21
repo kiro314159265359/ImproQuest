@@ -2,10 +2,10 @@ import 'package:intl/intl.dart';
 
 class ValidateInput {
   static String? email(String? value) {
-    if (value == null || value.isEmpty) {
+    if (value == null || value.trim().isEmpty) {
       return 'Please enter your email';
     }
-    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value.trim())) {
       return 'Please enter a valid email address';
     }
     return null;
@@ -32,20 +32,20 @@ class ValidateInput {
   }
 
   static String? username(String? value) {
-    if (value == null || value.isEmpty) {
+    if (value == null || value.trim().isEmpty) {
       return 'Please enter your username';
     }
-    if (value.length < 3) {
+    if (value.trim().length < 3) {
       return 'Username must be at least 3 characters';
     }
     return null;
   }
 
   static String? weight(String? value) {
-    if (value == null || value.isEmpty) {
+    if (value == null || value.trim().isEmpty) {
       return 'Please enter your weight';
     }
-    final numericValue = double.tryParse(value);
+    final numericValue = double.tryParse(value.trim());
     if (numericValue == null) {
       return 'Enter a valid number';
     }
@@ -56,10 +56,10 @@ class ValidateInput {
   }
 
   static String? height(String? value) {
-    if (value == null || value.isEmpty) {
+    if (value == null || value.trim().isEmpty) {
       return 'Please enter your height';
     }
-    final numericValue = double.tryParse(value);
+    final numericValue = double.tryParse(value.trim());
     if (numericValue == null) {
       return 'Enter a valid number';
     }
@@ -70,17 +70,27 @@ class ValidateInput {
   }
 
   static String? birthday(String? value) {
-    if (value == null || value.isEmpty) {
+    if (value == null || value.trim().isEmpty) {
       return 'Please enter your birthday';
     }
     try {
-      final date = DateFormat('M/d/yyyy').parseStrict(value);
+      final date = DateFormat('M/d/yyyy').parseStrict(value.trim());
       final minimumDate = DateTime.now().subtract(const Duration(days: 4745));
       if (date.isAfter(minimumDate)) {
         return 'You must be at least 13 years old';
       }
     } catch (e) {
       return 'Use MM/DD/YYYY format';
+    }
+    return null;
+  }
+
+  static String? questname(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Please enter the quest name';
+    }
+    if (value.trim().length < 3) {
+      return 'Quest name must be at least 3 characters';
     }
     return null;
   }

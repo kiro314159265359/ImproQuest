@@ -194,7 +194,7 @@ class _PersonalInfoState extends State<PersonalInfo> {
                     child: CustomTextFormField(
                       hintText: "",
                       controller: cubit.genderController,
-                      validator: (value) => value?.isEmpty ?? true
+                      validator: (value) => value?.trim().isEmpty ?? true
                           ? 'Please enter your gender'
                           : null,
                     )),

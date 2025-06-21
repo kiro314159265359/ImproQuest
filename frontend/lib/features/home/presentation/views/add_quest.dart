@@ -10,6 +10,7 @@ import '../../../../core/routes/routes.dart';
 import '../../../../core/theme/background_theme.dart';
 import '../../../../core/theme/color_manger.dart';
 import '../../../../core/theme/text_style.dart';
+import '../../../../core/utils/validate_input.dart';
 import '../../../../core/widget/custom_primary_button.dart';
 import '../../../../core/widget/custom_text_form_field.dart';
 import '../../../../core/widget/snackabars.dart';
@@ -102,9 +103,7 @@ class _AddQuestState extends State<AddQuest> {
                           CustomTextFormField(
                             hintText: "Quest Name",
                             controller: questNameController,
-                            validator: (value) => value?.isEmpty ?? true
-                                ? 'Please enter quest name'
-                                : null,
+                            validator: ValidateInput.questname,
                           ),
                           SizedBox(
                             height: h * 0.02,
